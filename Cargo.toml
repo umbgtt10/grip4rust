@@ -1,6 +1,6 @@
 [package]
 name = "cargo-grip"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 rust-version = "1.85"
 description = "A cargo subcommand for measuring Rust testability"
@@ -19,6 +19,14 @@ name = "grip"
 [[test]]
 name = "all_tests"
 path = "tests/all_tests.rs"
+
+[[test]]
+name = "sloppy_calc_tests"
+path = "tests/fixtures/sloppy_calc/tests/analysis_tests.rs"
+
+[[test]]
+name = "clean_calc_tests"
+path = "tests/fixtures/clean_calc/tests/analysis_tests.rs"
 
 [dependencies]
 anyhow = "1"

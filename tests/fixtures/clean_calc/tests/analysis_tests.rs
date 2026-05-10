@@ -32,9 +32,11 @@ impl Reporter for CaptureReporter {
     }
 }
 
-fn analyze_fixture(name: &str) -> serde_json::Value {
-    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let fixture_path = manifest_dir.join("tests").join("fixtures").join(name);
+fn analyze() -> serde_json::Value {
+    let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("fixtures")
+        .join("clean_calc");
     let config = Config {
         path: fixture_path,
         json: true,
@@ -55,50 +57,12 @@ fn analyze_fixture(name: &str) -> serde_json::Value {
 }
 
 #[test]
-fn sloppy_calc_scores_bad() {
-    let parsed = analyze_fixture("sloppy_calc");
+fn scores_good() {
+    // Arrange & Act
+    let parsed = analyze();
 
+    // Assert
     let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
-
-    assert!(
-        grip_score < 50,
-        "expected bad score < 50, got {}",
-        grip_score
-    );
-}
-
-#[test]
-fn sloppy_calc_has_few_public_items() {
-    let parsed = analyze_fixture("sloppy_calc");
-
-    let public_items = parsed["overall"]["public_items"].as_u64().unwrap();
-
-    assert!(
-        public_items < 6,
-        "expected few public items, got {}",
-        public_items
-    );
-}
-
-#[test]
-fn sloppy_calc_low_pure_ratio() {
-    let parsed = analyze_fixture("sloppy_calc");
-
-    let pure_ratio = parsed["overall"]["pure_ratio"].as_f64().unwrap();
-
-    assert!(
-        pure_ratio < 0.7,
-        "expected low pure ratio, got {}",
-        pure_ratio
-    );
-}
-
-#[test]
-fn clean_calc_scores_good() {
-    let parsed = analyze_fixture("clean_calc");
-
-    let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
-
     assert!(
         grip_score >= 80,
         "expected good score >= 80, got {}",
@@ -112,11 +76,12 @@ fn clean_calc_scores_good() {
 }
 
 #[test]
-fn clean_calc_has_many_public_items() {
-    let parsed = analyze_fixture("clean_calc");
+fn has_many_public_items() {
+    // Arrange & Act
+    let parsed = analyze();
 
+    // Assert
     let public_items = parsed["overall"]["public_items"].as_u64().unwrap();
-
     assert!(
         public_items >= 10,
         "expected many public items, got {}",
@@ -125,11 +90,12 @@ fn clean_calc_has_many_public_items() {
 }
 
 #[test]
-fn clean_calc_high_pure_ratio() {
-    let parsed = analyze_fixture("clean_calc");
+fn high_pure_ratio() {
+    // Arrange & Act
+    let parsed = analyze();
 
+    // Assert
     let pure_ratio = parsed["overall"]["pure_ratio"].as_f64().unwrap();
-
     assert!(
         pure_ratio >= 0.9,
         "expected high pure ratio, got {}",
@@ -138,17 +104,46 @@ fn clean_calc_high_pure_ratio() {
 }
 
 #[test]
-fn clean_calc_scores_higher_than_sloppy() {
-    let clean = analyze_fixture("clean_calc");
-    let sloppy = analyze_fixture("sloppy_calc");
+fn scores_higher_than_sloppy() {
+    // Arrange & Act
+    let clean_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("fixtures")
+        .join("clean_calc");
+    let sloppy_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("tests")
+        .join("fixtures")
+        .join("sloppy_calc");
+    let clean = analyze_at(&clean_path);
+    let sloppy = analyze_at(&sloppy_path);
 
+    // Assert
     let clean_score = clean["overall"]["grip_score"].as_u64().unwrap();
     let sloppy_score = sloppy["overall"]["grip_score"].as_u64().unwrap();
-
     assert!(
         clean_score > sloppy_score + 30,
         "expected clean ({}) to be > sloppy ({}) + 30",
         clean_score,
         sloppy_score,
     );
+}
+
+fn analyze_at(fixture_path: &PathBuf) -> serde_json::Value {
+    let config = Config {
+        path: fixture_path.clone(),
+        json: true,
+        min_score: None,
+    };
+    let reporter = CaptureReporter {
+        captured: RefCell::new(String::new()),
+    };
+    let app: App<FsWalk, DefaultScorer, CaptureReporter> = App::with_deps(
+        FsWalk::new(&config.path),
+        DefaultScorer::new(),
+        reporter,
+        config,
+    );
+    let _ = app.run().unwrap();
+    let captured = app.reporter().captured.borrow().clone();
+    serde_json::from_str(&captured).unwrap()
 }
