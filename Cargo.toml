@@ -7,7 +7,7 @@ description = "A cargo subcommand for measuring Rust testability"
 authors = ["Umberto Gotti <umberto.gotti@umbertogotti.dev>"]
 license = "MIT"
 readme = "README.md"
-repository = "https://github.com/umbgtt10/grip"
+repository = "https://github.com/umbgtt10/grip4rust"
 keywords = ["cargo", "subcommand", "search", "grep", "cli"]
 categories = ["development-tools::cargo-plugins", "command-line-utilities"]
 

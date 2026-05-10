@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to `cargo-grip` are documented here.
+All notable changes to `cargo-grip4rust` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
+
+### Added
+- Per-function tracking: `FunctionInfo` struct with `name`, `file`, `is_pure`, `is_public`
+- `Collector::collect` returns `(ItemCounts, Vec<FunctionInfo>)` — per-function data alongside aggregates
+- `GripReport.functions` field — all functions with file paths in JSON output
+- `type CollectedFiles` alias for cleaner return types
+- Private functions visible in JSON output (`is_public` field on each function entry)
+
+### Changed
+- Grip score simplified to `grip = pure_ratio × 100` (no public_ratio weighting)
+
+---
+
+## [0.1.3] — 2026-05-08
+
+### Added
+- `FunctionInfo` first version with per-function tracking
+- Grip score formula refined
+
+---
+
+## [0.1.2] — 2026-05-08
 
 ### Added
 - `Walk`, `Scorer`, `Reporter` traits in `src/traits/` — protocol dependency seams
@@ -29,11 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Phase 0: public surface + pure function ratio analysis
-- CLI: `cargo grip [PATH]`, `--json`, `--min-score N`
+- CLI: `cargo grip [PATH]`, `--json`, `--threshold N`
 - `#[cfg(test)]` and `#[cfg_attr(..., test)]` detection — test code excluded from analysis
 - Purity heuristic: no `&mut` params, non-`()` return, no `unsafe` blocks
 - JSON output with `--json` flag
-- `--module PATH` filter (planned, not yet wired)
 - 46 integration tests across 13 source files, AAA-compliant
 - `scripts/run_stage_1.ps1` and `scripts/run_stage_2.ps1` CI gates
 - README with formula, score table, roadmap, and limitations
@@ -58,6 +79,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hello-world binary with cargo subcommand support
 - `Cargo.toml` metadata, MIT license, README placeholder
 
-[Unreleased]: https://github.com/umbgtt10/grip/compare/v0.1.1...HEAD
-[0.1.1]: https://github.com/umbgtt10/grip/compare/v0.1.0...v0.1.1
-[0.1.0]: https://github.com/umbgtt10/grip/releases/tag/v0.1.0
+[Unreleased]: https://github.com/umbgtt10/grip4rust/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/umbgtt10/grip4rust/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/umbgtt10/grip4rust/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/umbgtt10/grip4rust/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/umbgtt10/grip4rust/releases/tag/v0.1.0

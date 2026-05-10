@@ -20,6 +20,8 @@ use crate::traits::reporter::Reporter;
 use crate::traits::scorer::Scorer;
 use crate::traits::walk::Walk;
 
+type CollectedFiles = (Vec<(String, ItemCounts)>, Vec<FunctionInfo>);
+
 #[derive(Debug)]
 pub struct App<W: Walk, S: Scorer, R: Reporter> {
     walker: W,
@@ -78,10 +80,7 @@ impl<W: Walk, S: Scorer, R: Reporter> App<W, S, R> {
         self.handle_output(&report)
     }
 
-    fn collect_files(
-        &self,
-        cache: &mut Cache,
-    ) -> Result<(Vec<(String, ItemCounts)>, Vec<FunctionInfo>)> {
+    fn collect_files(&self, cache: &mut Cache) -> Result<CollectedFiles> {
         let files = self.walker.rust_files()?;
         let mut indexed = Vec::with_capacity(files.len());
         let mut all_functions = Vec::new();
