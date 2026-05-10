@@ -2,12 +2,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-fn main() -> std::process::ExitCode {
+use std::process::ExitCode;
+
+fn main() -> ExitCode {
     match grip::run() {
         Ok(ec) => ec,
         Err(e) => {
             eprintln!("error: {e}");
-            std::process::ExitCode::FAILURE
+            ExitCode::FAILURE
         }
     }
 }

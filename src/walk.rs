@@ -3,23 +3,23 @@
 // SPDX-License-Identifier: MIT
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
 use walkdir::WalkDir;
 
 #[derive(Debug, Clone)]
 pub struct Walk {
-    pub root: std::path::PathBuf,
+    pub root: PathBuf,
 }
 
 impl Walk {
     #[must_use]
-    pub fn new(path: impl Into<std::path::PathBuf>) -> Self {
+    pub fn new(path: impl Into<PathBuf>) -> Self {
         Self { root: path.into() }
     }
 
-    pub fn rust_files(&self) -> Result<Vec<(std::path::PathBuf, String)>> {
+    pub fn rust_files(&self) -> Result<Vec<(PathBuf, String)>> {
         let mut files = Vec::new();
         for entry in WalkDir::new(&self.root)
             .into_iter()
