@@ -18,17 +18,17 @@ pub mod stdout_reporter;
 pub mod traits;
 pub mod unsafe_finder;
 
+use std::ffi::OsString;
 use std::process::ExitCode;
 
 use anyhow::Result;
-use clap::Parser;
 
 use crate::app::App;
 use crate::args::Args;
 use crate::config::Config;
 
 pub fn run() -> Result<ExitCode> {
-    let args = Args::parse();
+    let args = Args::parse_cargo();
     let config = Config::from_args(args);
     App::new(config).run()
 }
@@ -36,7 +36,7 @@ pub fn run() -> Result<ExitCode> {
 pub fn run_from_args<I, T>(args: I) -> Result<ExitCode>
 where
     I: IntoIterator<Item = T>,
-    T: Into<std::ffi::OsString> + Clone,
+    T: Into<OsString> + Clone,
 {
     let args = Args::parse_from_args(args);
     let config = Config::from_args(args);

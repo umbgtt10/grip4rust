@@ -29,4 +29,15 @@ impl Args {
     {
         Self::parse_from(args)
     }
+
+    pub fn parse_cargo() -> Self {
+        let raw: Vec<OsString> = std::env::args_os().collect();
+        if raw.len() > 1 && raw[1].to_string_lossy() == "grip4rust" {
+            let mut filtered = vec![raw[0].clone()];
+            filtered.extend(raw.into_iter().skip(2));
+            Self::parse_from(filtered)
+        } else {
+            Self::parse()
+        }
+    }
 }
