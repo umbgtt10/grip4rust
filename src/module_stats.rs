@@ -1,0 +1,16 @@
+// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Licensed under the MIT License
+// SPDX-License-Identifier: MIT
+
+use serde::Serialize;
+
+#[derive(Debug, Clone, Serialize)]
+pub struct ModuleStats {
+    pub path: String,
+    pub grip_score: u32,
+    pub pure_ratio: f64,
+    pub public_items: usize,
+    pub total_functions: usize,
+    pub pure_functions: usize,
+    pub public_ratio: f64,
+}
