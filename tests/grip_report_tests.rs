@@ -23,21 +23,27 @@ fn sample() -> GripReport {
 
 #[test]
 fn report_serializes_to_json() {
+    // Arrange
     let report = sample();
 
+    // Act
     let json = serde_json::to_string(&report).unwrap();
 
+    // Assert
     assert!(json.contains("grip_score"));
     assert!(json.contains("\"test\""));
 }
 
 #[test]
 fn report_deserializes_from_json() {
+    // Arrange
     let report = sample();
     let json = serde_json::to_string(&report).unwrap();
 
+    // Act
     let parsed: GripReport = serde_json::from_str(&json).unwrap();
 
+    // Assert
     assert_eq!(parsed.version, "0.1.0");
     assert_eq!(parsed.overall.grip_score, 50);
 }

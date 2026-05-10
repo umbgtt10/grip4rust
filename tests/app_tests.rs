@@ -11,6 +11,7 @@ use tempfile::TempDir;
 
 #[test]
 fn run_on_empty_dir_errors() {
+    // Arrange
     let dir = TempDir::new().unwrap();
     let config = Config {
         path: dir.path().to_path_buf(),
@@ -19,13 +20,16 @@ fn run_on_empty_dir_errors() {
     };
     let app = App::new(config);
 
+    // Act
     let result = app.run();
 
+    // Assert
     assert!(result.is_err());
 }
 
 #[test]
 fn run_on_valid_dir_succeeds() {
+    // Arrange
     let dir = TempDir::new().unwrap();
     let src = dir.path().join("src");
     fs::create_dir_all(&src).unwrap();
@@ -41,7 +45,9 @@ fn run_on_valid_dir_succeeds() {
     };
     let app = App::new(config);
 
+    // Act
     let exit_code = app.run().unwrap();
 
+    // Assert
     assert_eq!(exit_code, ExitCode::SUCCESS);
 }

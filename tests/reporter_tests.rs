@@ -48,32 +48,41 @@ fn reporter(json: bool) -> Reporter {
 
 #[test]
 fn human_output_contains_score() {
+    // Arrange
     let report = dummy_report();
     let reporter = reporter(false);
 
+    // Act
     let out = reporter.render(&report).unwrap();
 
+    // Assert
     assert!(out.contains("71 / 100"));
 }
 
 #[test]
 fn human_output_contains_module_lines() {
+    // Arrange
     let report = dummy_report();
     let reporter = reporter(false);
 
+    // Act
     let out = reporter.render(&report).unwrap();
 
+    // Assert
     assert!(out.contains("alpha"));
     assert!(out.contains("beta"));
 }
 
 #[test]
 fn json_output_is_valid() {
+    // Arrange
     let report = dummy_report();
     let reporter = reporter(true);
 
+    // Act
     let out = reporter.render(&report).unwrap();
 
+    // Assert
     let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert_eq!(parsed["overall"]["grip_score"], 71);
     assert!(parsed.get("modules").is_some());
@@ -81,11 +90,14 @@ fn json_output_is_valid() {
 
 #[test]
 fn json_output_has_version() {
+    // Arrange
     let report = dummy_report();
     let reporter = reporter(true);
 
+    // Act
     let out = reporter.render(&report).unwrap();
 
+    // Assert
     let parsed: serde_json::Value = serde_json::from_str(&out).unwrap();
     assert_eq!(parsed["version"], "0.1.0");
 }

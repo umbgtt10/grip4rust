@@ -17,12 +17,15 @@ fn write_file(dir: &TempDir, name: &str, contents: &str) -> std::path::PathBuf {
 
 #[test]
 fn pure_function_is_counted() {
+    // Arrange
     let source = "pub fn add(a: i32, b: i32) -> i32 { a + b }\n";
     let dir = tempfile::tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
+    // Act
     let counts = Collector::collect(source);
 
+    // Assert
     assert_eq!(counts.total_functions, 1);
     assert_eq!(counts.pure_functions, 1);
     assert_eq!(counts.public_functions, 1);
@@ -32,48 +35,60 @@ fn pure_function_is_counted() {
 
 #[test]
 fn impure_function_is_not_counted_as_pure() {
+    // Arrange
     let source = "pub fn impure(x: &mut i32) { *x += 1; }\n";
     let dir = tempfile::tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
+    // Act
     let counts = Collector::collect(source);
 
+    // Assert
     assert_eq!(counts.total_functions, 1);
     assert_eq!(counts.pure_functions, 0);
 }
 
 #[test]
 fn unit_return_is_not_pure() {
+    // Arrange
     let source = "pub fn side_effect() { println!(\"hello\"); }\n";
     let dir = tempfile::tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
+    // Act
     let counts = Collector::collect(source);
 
+    // Assert
     assert_eq!(counts.total_functions, 1);
     assert_eq!(counts.pure_functions, 0);
 }
 
 #[test]
 fn unsafe_function_is_not_pure() {
+    // Arrange
     let source = "pub fn raw() -> i32 { unsafe { 42 } }\n";
     let dir = tempfile::tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
+    // Act
     let counts = Collector::collect(source);
 
+    // Assert
     assert_eq!(counts.total_functions, 1);
     assert_eq!(counts.pure_functions, 0);
 }
 
 #[test]
 fn private_function_is_not_public() {
+    // Arrange
     let source = "fn private() -> i32 { 42 }\n";
     let dir = tempfile::tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
+    // Act
     let counts = Collector::collect(source);
 
+    // Assert
     assert_eq!(counts.total_functions, 1);
     assert_eq!(counts.public_functions, 0);
     assert_eq!(counts.public_items, 0);
@@ -81,6 +96,7 @@ fn private_function_is_not_public() {
 
 #[test]
 fn mixed_items_are_counted() {
+    // Arrange
     let source = r#"
 pub fn a() -> i32 { 1 }
 pub fn b(x: &mut i32) { }
@@ -92,8 +108,10 @@ pub trait T {}
     let dir = tempfile::tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
+    // Act
     let counts = Collector::collect(source);
 
+    // Assert
     assert_eq!(counts.total_functions, 3);
     assert_eq!(counts.public_functions, 2);
     assert_eq!(counts.pure_functions, 2);
@@ -106,6 +124,7 @@ pub trait T {}
 
 #[test]
 fn test_attribute_is_skipped() {
+    // Arrange
     let source = r#"
 #[cfg(test)]
 mod tests {
@@ -115,20 +134,25 @@ mod tests {
     let dir = tempfile::tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
+    // Act
     let counts = Collector::collect(source);
 
+    // Assert
     assert_eq!(counts.total_functions, 0);
     assert_eq!(counts.public_items, 0);
 }
 
 #[test]
 fn pubcrate_is_public_item() {
+    // Arrange
     let source = "pub(crate) fn internal() -> i32 { 42 }\n";
     let dir = tempfile::tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
+    // Act
     let counts = Collector::collect(source);
 
+    // Assert
     assert_eq!(counts.total_functions, 1);
     assert_eq!(counts.pubcrate_functions, 1);
     assert_eq!(counts.public_items, 1);

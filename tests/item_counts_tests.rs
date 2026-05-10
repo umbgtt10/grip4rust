@@ -20,11 +20,14 @@ fn full_counts() -> ItemCounts {
 
 #[test]
 fn merge_adds_all_fields() {
+    // Arrange
     let a = full_counts();
     let b = full_counts();
 
+    // Act
     let merged = a.merged(&b);
 
+    // Assert
     assert_eq!(merged.total_functions, 10);
     assert_eq!(merged.pure_functions, 6);
     assert_eq!(merged.public_functions, 4);
@@ -38,11 +41,14 @@ fn merge_adds_all_fields() {
 
 #[test]
 fn merge_with_default_is_identity() {
+    // Arrange
     let a = full_counts();
     let empty = ItemCounts::default();
 
+    // Act
     let merged = a.merged(&empty);
 
+    // Assert
     assert_eq!(merged.total_functions, 5);
     assert_eq!(merged.total_items, 9);
 }

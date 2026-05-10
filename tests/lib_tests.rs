@@ -16,28 +16,36 @@ fn write_project(dir: &TempDir, source: &str) {
 
 #[test]
 fn run_from_args_empty_dir_errors() {
+    // Arrange
     let dir = TempDir::new().unwrap();
 
+    // Act
     let result = run_from_args(vec!["cargo-grip", &dir.path().to_string_lossy()]);
 
+    // Assert
     assert!(result.is_err());
 }
 
 #[test]
 fn run_from_args_valid_dir_succeeds() {
+    // Arrange
     let dir = TempDir::new().unwrap();
     write_project(&dir, "pub fn greet() -> &'static str { \"hello\" }\n");
 
+    // Act
     let result = run_from_args(vec!["cargo-grip", &dir.path().to_string_lossy()]);
 
+    // Assert
     assert_eq!(result.unwrap(), ExitCode::SUCCESS);
 }
 
 #[test]
 fn run_from_args_min_score_passes() {
+    // Arrange
     let dir = TempDir::new().unwrap();
     write_project(&dir, "pub fn greet() -> &'static str { \"hello\" }\n");
 
+    // Act
     let result = run_from_args(vec![
         "cargo-grip",
         &dir.path().to_string_lossy(),
@@ -45,14 +53,17 @@ fn run_from_args_min_score_passes() {
         "0",
     ]);
 
+    // Assert
     assert_eq!(result.unwrap(), ExitCode::SUCCESS);
 }
 
 #[test]
 fn run_from_args_min_score_fails() {
+    // Arrange
     let dir = TempDir::new().unwrap();
     write_project(&dir, "fn greet() -> &'static str { \"hello\" }\n");
 
+    // Act
     let result = run_from_args(vec![
         "cargo-grip",
         &dir.path().to_string_lossy(),
@@ -60,5 +71,6 @@ fn run_from_args_min_score_fails() {
         "100",
     ]);
 
+    // Assert
     assert_eq!(result.unwrap(), ExitCode::FAILURE);
 }

@@ -9,18 +9,22 @@ use tempfile::TempDir;
 
 #[test]
 fn binary_prints_error_on_empty_dir() {
+    // Arrange
     let dir = TempDir::new().unwrap();
 
+    // Act
     let assert = Command::cargo_bin("cargo-grip")
         .unwrap()
         .arg(dir.path())
         .assert();
 
+    // Assert
     assert.failure();
 }
 
 #[test]
 fn binary_prints_score_on_valid_dir() {
+    // Arrange
     let dir = TempDir::new().unwrap();
     let src = dir.path().join("src");
     fs::create_dir_all(&src).unwrap();
@@ -30,11 +34,13 @@ fn binary_prints_score_on_valid_dir() {
     )
     .unwrap();
 
+    // Act
     let assert = Command::cargo_bin("cargo-grip")
         .unwrap()
         .arg(dir.path())
         .assert();
 
+    // Assert
     assert
         .success()
         .stdout(predicates::str::contains("grip score"));
