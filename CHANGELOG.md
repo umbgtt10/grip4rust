@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+### Changed
+
+### Fixed
+
+## [0.1.4] - 2026-05-08
+
+### Added
 - Per-function tracking: `FunctionInfo` struct with `name`, `file`, `is_pure`, `is_public`
 - `Collector::collect` returns `(ItemCounts, Vec<FunctionInfo>)` — per-function data alongside aggregates
 - `GripReport.functions` field — all functions with file paths in JSON output
