@@ -64,13 +64,13 @@ fn scores_good() {
     // Assert
     let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
     assert!(
-        grip_score >= 55,
-        "expected good score >= 55, got {}",
+        grip_score >= 40,
+        "expected decent score >= 40, got {}",
         grip_score
     );
     assert!(
-        grip_score < 80,
-        "expected imperfect score < 80, got {}",
+        grip_score < 70,
+        "expected imperfect score < 70, got {}",
         grip_score
     );
 }

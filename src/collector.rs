@@ -12,6 +12,18 @@ use crate::function_info::FunctionInfo;
 use crate::item_counts::ItemCounts;
 use crate::unsafe_finder::UnsafeFinder;
 
+const KNOWN_FOREIGN_TRAITS: &[&str] = &[
+    "Display", "Debug", "Clone", "Default", "PartialEq", "Eq",
+    "PartialOrd", "Ord", "Hash", "Into", "From", "TryFrom",
+    "Drop", "Deref", "DerefMut", "Index", "IndexMut",
+    "Add", "Sub", "Mul", "Div", "Rem", "Neg", "Not",
+    "Fn", "FnMut", "FnOnce", "Send", "Sync", "Sized",
+    "ToString", "AsRef", "AsMut", "Borrow", "BorrowMut",
+    "Error", "Read", "Write", "Seek", "BufRead",
+    "Iterator", "IntoIterator", "Future", "IntoFuture",
+    "Serialize", "Deserialize",
+];
+
 #[derive(Debug)]
 pub struct Collector {
     counts: ItemCounts,
@@ -172,18 +184,23 @@ impl Collector {
         if method.sig.unsafety.is_some() {
             return true;
         }
-        self.has_unsafe_block(&method.block)
+        self.has_unsafe_block(&method.block) || self.has_io_call(&method.block)
     }
 
     fn is_foreign_trait(&self, path: &syn::Path) -> bool {
-        if path.segments.len() == 1 {
-            return false;
+        if let Some(last) = path.segments.last() {
+            let name = last.ident.to_string();
+            if KNOWN_FOREIGN_TRAITS.contains(&name.as_str()) {
+                return true;
+            }
         }
-        if let Some(first) = path.segments.first() {
-            let name = first.ident.to_string();
-            return name == "std" || name == "core" || name == "alloc";
+        if path.segments.len() > 1 {
+            if let Some(first) = path.segments.first() {
+                let name = first.ident.to_string();
+                return name == "std" || name == "core" || name == "alloc";
+            }
         }
-        true
+        false
     }
 
 
@@ -251,6 +268,12 @@ impl Collector {
 
     fn has_unsafe_block(&self, block: &syn::Block) -> bool {
         let mut finder = UnsafeFinder::new();
+        finder.visit_block(block);
+        finder.found
+    }
+
+    fn has_io_call(&self, block: &syn::Block) -> bool {
+        let mut finder = crate::io_call_finder::IoCallFinder::new();
         finder.visit_block(block);
         finder.found
     }

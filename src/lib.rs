@@ -18,3 +18,4 @@ pub mod overall_stats;
 pub mod stdout_reporter;
 pub mod traits;
 pub mod unsafe_finder;
+pub mod io_call_finder;

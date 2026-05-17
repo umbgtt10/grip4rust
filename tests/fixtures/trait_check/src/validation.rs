@@ -1,7 +1,7 @@
 pub trait PaymentGateway {
-    fn authorize(&self, card: &str, amount: f64) -> Result<String, String>;
-    fn capture(&self, amount: f64) -> Result<String, String>;
-    fn reverse(&self, tx_id: &str) -> Result<String, String>;
+    fn authorize(&mut self, card: &str, amount: f64) -> Result<String, String>;
+    fn capture(&mut self, amount: f64) -> Result<String, String>;
+    fn reverse(&mut self, tx_id: &str) -> Result<String, String>;
 }
 
 pub trait ReceiptLogger {
@@ -22,12 +22,12 @@ impl SeamedHandler {
         amount > 0.0
     }
 
-    pub fn charge(&self, card: &str, amount: f64) -> Result<String, String> {
+    pub fn charge(&mut self, card: &str, amount: f64) -> Result<String, String> {
         self.gateway.authorize(card, amount)?;
         self.gateway.capture(amount)
     }
 
-    pub fn refund(&self, tx_id: &str) -> Result<String, String> {
+    pub fn refund(&mut self, tx_id: &str) -> Result<String, String> {
         self.gateway.reverse(tx_id)
     }
 

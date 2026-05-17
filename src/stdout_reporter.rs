@@ -68,12 +68,21 @@ impl StdoutReporter {
             overall.pure_ratio * 100.0
         ));
         let total_impl = overall.inherent_methods + overall.local_trait_methods;
-        lines.push(format!(
-            "Trait methods:         {} / {} impl methods are trait-bound  ({:.1}%)",
-            overall.local_trait_methods,
-            total_impl,
-            overall.trait_ratio * 100.0
-        ));
+        if total_impl > 0 && overall.trait_ratio == 0.0 {
+            lines.push(format!(
+                "Trait methods:         {} / {} impl methods are trait-bound  (0.0%)",
+                overall.local_trait_methods, total_impl,
+            ));
+        } else if total_impl == 0 {
+            lines.push("Trait methods:         N/A    (no impl methods)".to_string());
+        } else {
+            lines.push(format!(
+                "Trait methods:         {} / {} impl methods are trait-bound  ({:.1}%)",
+                overall.local_trait_methods,
+                total_impl,
+                overall.trait_ratio * 100.0
+            ));
+        }
 
         lines.push("\nPer module:".to_string());
         for module in &report.modules {
@@ -98,13 +107,19 @@ impl StdoutReporter {
 
     fn render_module_line(&self, module: &ModuleStats) -> String {
         let marker = self.module_marker(module.grip_score);
+        let total_impl = module.inherent_methods + module.local_trait_methods;
+        let traits_display = if total_impl == 0 {
+            "   N/A".to_string()
+        } else {
+            format!("{:>5.1}%", module.trait_ratio * 100.0)
+        };
         format!(
-            "  {:<30}  grip: {:>3}   pure: {:>5.1}%   pub: {:>3}   traits: {:>5.1}%  {}",
+            "  {:<30}  grip: {:>3}   pure: {:>5.1}%   pub: {:>3}   traits: {}  {}",
             module.path,
             module.grip_score,
             module.pure_ratio * 100.0,
             module.public_items,
-            module.trait_ratio * 100.0,
+            traits_display,
             marker,
         )
     }
