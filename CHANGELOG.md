@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.4.0] — 2026-05-08
+## [0.4.0] — 2026-05-17
 
 ### Added
 - Weighted hidden dependency contributions: each dep has a weight (0.2–0.6)
@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FunctionInfo` has `dep_weight: f64` and `hidden_dep_labels: Vec<String>`.
 - Verbose output shows labels in `[brackets]` after contribution.
 
-## [0.3.0] — 2026-05-08
+## [0.3.0] — 2026-05-17
 
 ### Added
 - Phase 2: Hidden dependency detection
@@ -53,7 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Foreign trait impls no longer fall through to inherent counting
 - HiddenDepFinder handles multi-segment paths (`std::env::var`, `std::process::exit`)
 
-## [0.2.0] — 2026-05-08
+## [0.2.0] — 2026-05-17
 
 ### Added
 - Phase 1: Trait boundary ratio metric
