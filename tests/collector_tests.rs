@@ -573,3 +573,90 @@ impl Service<'_> {
     // Assert
     assert_eq!(fns[0].hidden_deps, 0, "self.handler on &dyn Handler should not be a hidden dep");
 }
+
+#[test]
+fn hidden_dep_free_function_is_detected() {
+    // Arrange
+    let source = "fn query_db() { Database::query(\"SELECT 1\"); }\n";
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 1, "free function with concrete call should be flagged");
+}
+
+#[test]
+fn hidden_dep_free_function_clean_not_flagged() {
+    // Arrange
+    let source = "fn add(a: i32, b: i32) -> i32 { a + b }\n";
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 0, "pure free function should have 0 hidden deps");
+}
+
+#[test]
+fn hidden_dep_eprintln_is_detected() {
+    // Arrange
+    let source = r#"
+struct Logger;
+impl Logger {
+    pub fn log() { eprintln!("error"); }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 1, "eprintln! should be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_arc_dyn_field_not_counted() {
+    // Arrange
+    let source = r#"
+struct Service {
+    db: Arc<dyn Database>,
+}
+impl Service {
+    pub fn query(&self, sql: &str) { self.db.query(sql); }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 0, "self.db on Arc<dyn Database> should not be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_input_argument_not_counted() {
+    // Arrange
+    let source = r#"
+struct Service;
+impl Service {
+    pub fn run(&self, db: &Database) { db.query("SELECT 1"); }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 0, "db.query on input argument should not be a hidden dep");
+}
