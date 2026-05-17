@@ -151,6 +151,9 @@ impl Collector {
             }
             for item in &item_impl.items {
                 if let syn::ImplItem::Fn(method) = item {
+                    if self.has_test_attr(&method.attrs) {
+                        continue;
+                    }
                     self.counts.total_functions += 1;
                     self.counts.local_trait_methods += 1;
                     if self.is_impl_method_impure(method) {

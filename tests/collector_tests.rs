@@ -239,6 +239,34 @@ impl inner::MyTrait for MyStruct {
 }
 
 #[test]
+fn test_attr_is_skipped_in_local_trait_impl() {
+    // Arrange
+    let source = r#"
+trait Helper {
+    fn do_thing(&self) -> i32;
+}
+
+struct Impl;
+
+impl Helper for Impl {
+    fn do_thing(&self) -> i32 { 42 }
+
+    #[test]
+    fn test_helper(&self) -> i32 { 99 }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, _fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(counts.local_trait_methods, 1, "test_helper should be skipped");
+    assert_eq!(counts.total_functions, 1, "only do_thing should be counted");
+}
+
+#[test]
 fn known_foreign_trait_is_excluded() {
     // Arrange
     let source = r#"
