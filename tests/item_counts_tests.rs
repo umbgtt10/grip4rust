@@ -19,6 +19,8 @@ fn full_counts() -> ItemCounts {
         inherent_impure: 1,
         local_trait_methods: 2,
         local_trait_impure: 2,
+        total_contribution: 4.0,
+        clean_functions: 2,
     }
 }
 
@@ -45,6 +47,8 @@ fn merge_adds_all_fields() {
     assert_eq!(merged.inherent_impure, 2);
     assert_eq!(merged.local_trait_methods, 4);
     assert_eq!(merged.local_trait_impure, 4);
+    assert_eq!(merged.total_contribution, 8.0);
+    assert_eq!(merged.clean_functions, 4);
 }
 
 #[test]

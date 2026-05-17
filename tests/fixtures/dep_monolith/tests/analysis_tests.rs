@@ -27,7 +27,7 @@ impl Reporter for CaptureReporter {
 
     fn write(&self, report: &GripReport) -> Result<()> {
         let json = self.render(report)?;
-        print!("{}", json);
+        print!("{json}");
         Ok(())
     }
 }
@@ -36,7 +36,7 @@ fn analyze() -> serde_json::Value {
     let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("fixtures")
-        .join("sloppy_calc");
+        .join("dep_monolith");
     let config = Config {
         path: fixture_path,
         json: true,
@@ -52,49 +52,40 @@ fn analyze() -> serde_json::Value {
         reporter,
         config,
     );
-    let _ = app.run().unwrap();
-    let captured = app.reporter().captured.borrow().clone();
-    serde_json::from_str(&captured).unwrap()
+    app.run().expect("app run failed");
+    let captured = app.reporter().captured.borrow();
+    serde_json::from_str(&captured).expect("valid JSON")
 }
 
 #[test]
-fn scores_bad() {
+fn monolith_has_low_score() {
     // Arrange & Act
-    let parsed = analyze();
+    let report = analyze();
+    let score = report["overall"]["grip_score"].as_u64().unwrap();
 
     // Assert
-    let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
-    assert!(
-        grip_score < 50,
-        "expected bad score < 50, got {}",
-        grip_score
-    );
+    assert!(score <= 35, "monolith should have low score <= 35, got {score}");
 }
 
 #[test]
-fn has_few_public_items() {
+fn monolith_all_functions_have_hidden_deps() {
     // Arrange & Act
-    let parsed = analyze();
+    let report = analyze();
+    let functions = report["functions"].as_array().unwrap();
 
     // Assert
-    let public_items = parsed["overall"]["public_items"].as_u64().unwrap();
-    assert!(
-        public_items < 6,
-        "expected few public items, got {}",
-        public_items
-    );
+    for f in functions {
+        let deps = f["hidden_deps"].as_u64().unwrap();
+        assert!(deps >= 1, "function {} should have >=1 hidden dep", f["name"]);
+    }
 }
 
 #[test]
-fn low_pure_ratio() {
+fn monolith_has_zero_clean_functions() {
     // Arrange & Act
-    let parsed = analyze();
+    let report = analyze();
+    let clean = report["overall"]["clean_fn_ratio"].as_f64().unwrap();
 
     // Assert
-    let pure_ratio = parsed["overall"]["pure_ratio"].as_f64().unwrap();
-    assert!(
-        pure_ratio < 0.7,
-        "expected low pure ratio, got {}",
-        pure_ratio
-    );
+    assert_eq!(clean, 0.0, "monolith should have 0 clean functions");
 }

@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] — 2026-05-08
+
+### Added
+- Phase 2: Hidden dependency detection
+- `HiddenDepFinder` — scans function bodies for time, randomness, filesystem,
+  environment, process, output, and network hidden dependencies
+- 8-case contribution matrix: `contribution_schedule::contribution(pure, seam, deps)`
+  maps every function to a 0.0–1.0 contribution value
+- Per-function `hidden_deps: usize` and `has_trait_seam: bool` in JSON output
+- `avg_contribution` and `clean_fn_ratio` in ModuleStats and OverallStats
+- Updated grip formula: `(pure * 0.30 + public * 0.20 + trait * 0.25 + avg_contribution * 0.25) * 100`
+- `--verbose` flag with per-function detail table (hidden deps, seam status, contribution)
+- Three fixture crates: `dep_clean` (all clean), `dep_mixed` (all 8 cases),
+  `dep_monolith` (5 case-8 functions)
+
+### Changed
+- `FunctionInfo` now tracks `hidden_deps` and `has_trait_seam`
+- `StdoutReporter::new()` takes `(json, verbose)` instead of `(json)`
+- `Config.verbose` and `Args.verbose` added
+- `Scorer::score_counts` returns 6-tuple (added `avg_contribution`, `clean_fn_ratio`)
+- Impl methods now include FunctionInfo entries in report
+- `ItemCounts` tracks `total_contribution: f64` for per-function contribution aggregation
+
+### Fixed
+- `pure_functions` counter was not incremented for impl block methods
+- Foreign trait impls no longer fall through to inherent counting
+- HiddenDepFinder handles multi-segment paths (`std::env::var`, `std::process::exit`)
+
 ## [0.2.0] — 2026-05-08
 
 ### Added
@@ -108,6 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hello-world binary with cargo subcommand support
 - `Cargo.toml` metadata, MIT license, README placeholder
 
+[0.3.0]: https://github.com/umbgtt10/grip4rust/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/umbgtt10/grip4rust/compare/v0.1.4...v0.2.0
 [Unreleased]: https://github.com/umbgtt10/grip4rust/compare/v0.2.0...HEAD
 [0.1.3]: https://github.com/umbgtt10/grip4rust/compare/v0.1.2...v0.1.3

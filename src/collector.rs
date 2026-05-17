@@ -77,9 +77,16 @@ impl Collector {
             VisibilityLevel::Pub | VisibilityLevel::PubCrate
         );
         let is_pure = self.is_probably_pure(item_fn);
+        let hidden_deps = self.count_hidden_deps_in_block(&item_fn.block);
+        let has_trait_seam = false;
+        let contr = crate::contribution_schedule::contribution(is_pure, has_trait_seam, hidden_deps);
 
         self.counts.total_functions += 1;
         self.counts.total_items += 1;
+        self.counts.total_contribution += contr;
+        if contr == 1.0 {
+            self.counts.clean_functions += 1;
+        }
         match self.classify_visibility(&item_fn.vis) {
             VisibilityLevel::Pub => {
                 self.counts.public_functions += 1;
@@ -100,6 +107,8 @@ impl Collector {
             file: self.current_file.clone(),
             is_pure,
             is_public: is_pub,
+            hidden_deps,
+            has_trait_seam,
         });
     }
 
@@ -145,34 +154,55 @@ impl Collector {
     }
 
     fn visit_impl(&mut self, item_impl: &syn::ItemImpl) {
-        if let Some((_, trait_path, _)) = &item_impl.trait_ {
-            if self.is_foreign_trait(trait_path) {
-                return;
-            }
-            for item in &item_impl.items {
-                if let syn::ImplItem::Fn(method) = item {
-                    if self.has_test_attr(&method.attrs) {
-                        continue;
-                    }
-                    self.counts.total_functions += 1;
+        if item_impl.trait_.as_ref().is_some_and(|(_, p, _)| self.is_foreign_trait(p)) {
+            return;
+        }
+        let is_trait_impl = item_impl.trait_.is_some();
+
+        for item in &item_impl.items {
+            if let syn::ImplItem::Fn(method) = item {
+                if self.has_test_attr(&method.attrs) {
+                    continue;
+                }
+                let is_pure = !self.is_impl_method_impure(method);
+                let hidden_deps = self.count_hidden_deps_in_impl_method(method);
+                let has_trait_seam = is_trait_impl;
+                let contr = crate::contribution_schedule::contribution(is_pure, has_trait_seam, hidden_deps);
+
+                self.counts.total_functions += 1;
+                self.counts.total_contribution += contr;
+                if contr == 1.0 {
+                    self.counts.clean_functions += 1;
+                }
+                if is_pure {
+                    self.counts.pure_functions += 1;
+                }
+
+                let is_pub = matches!(
+                    self.classify_visibility(&method.vis),
+                    VisibilityLevel::Pub | VisibilityLevel::PubCrate
+                );
+
+                if is_trait_impl {
                     self.counts.local_trait_methods += 1;
-                    if self.is_impl_method_impure(method) {
+                    if !is_pure {
                         self.counts.local_trait_impure += 1;
                     }
-                }
-            }
-        } else {
-            for item in &item_impl.items {
-                if let syn::ImplItem::Fn(method) = item {
-                    self.counts.total_functions += 1;
+                } else {
                     self.counts.inherent_methods += 1;
-                    if self.has_test_attr(&method.attrs) {
-                        continue;
-                    }
-                    if self.is_impl_method_impure(method) {
+                    if !is_pure {
                         self.counts.inherent_impure += 1;
                     }
                 }
+
+                self.functions.push(FunctionInfo {
+                    name: method.sig.ident.to_string(),
+                    file: self.current_file.clone(),
+                    is_pure,
+                    is_public: is_pub,
+                    hidden_deps,
+                    has_trait_seam,
+                });
             }
         }
     }
@@ -279,6 +309,18 @@ impl Collector {
         let mut finder = crate::io_call_finder::IoCallFinder::new();
         finder.visit_block(block);
         finder.found
+    }
+
+    fn count_hidden_deps_in_block(&self, block: &syn::Block) -> usize {
+        let mut finder = crate::hidden_dep_finder::HiddenDepFinder::new();
+        finder.visit_block(block);
+        finder.count
+    }
+
+    fn count_hidden_deps_in_impl_method(&self, method: &syn::ImplItemFn) -> usize {
+        let mut finder = crate::hidden_dep_finder::HiddenDepFinder::new();
+        finder.visit_block(&method.block);
+        finder.count
     }
 }
 

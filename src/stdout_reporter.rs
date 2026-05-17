@@ -13,12 +13,13 @@ use crate::traits::reporter::Reporter;
 #[derive(Debug, Clone)]
 pub struct StdoutReporter {
     json: bool,
+    verbose: bool,
 }
 
 impl StdoutReporter {
     #[must_use]
-    pub fn new(json: bool) -> Self {
-        Self { json }
+    pub fn new(json: bool, verbose: bool) -> Self {
+        Self { json, verbose }
     }
 }
 
@@ -43,9 +44,14 @@ impl StdoutReporter {
     fn render_human(&self, report: &GripReport) -> String {
         let mut lines = Vec::new();
         let target = &report.target;
+        let version = &report.version;
+        let header = if self.verbose {
+            format!("grip {version} — {target} — verbose")
+        } else {
+            format!("cargo-grip4rust {version} -- {target}")
+        };
         lines.push(format!(
-            "cargo-grip4rust {} -- {}\n══════════════════════════════════════════════════════\n",
-            report.version, target,
+            "{header}\n══════════════════════════════════════════════════════\n"
         ));
 
         let overall = &report.overall;
@@ -67,6 +73,7 @@ impl StdoutReporter {
             overall.total_functions,
             overall.pure_ratio * 100.0
         ));
+
         let total_impl = overall.inherent_methods + overall.local_trait_methods;
         if total_impl > 0 && overall.trait_ratio == 0.0 {
             lines.push(format!(
@@ -83,6 +90,13 @@ impl StdoutReporter {
                 overall.trait_ratio * 100.0
             ));
         }
+
+        lines.push(format!(
+            "Hidden deps:           avg {:.2}  — {:.1}% clean  ({:.1}% avg contribution)",
+            overall.total_functions as f64 - overall.avg_contribution * overall.total_functions as f64,
+            overall.clean_fn_ratio * 100.0,
+            overall.avg_contribution * 100.0,
+        ));
 
         lines.push("\nPer module:".to_string());
         for module in &report.modules {
@@ -102,6 +116,28 @@ impl StdoutReporter {
             }
         }
 
+        if self.verbose && !report.functions.is_empty() {
+            lines.push("\nPer-function detail:".to_string());
+            let mut sorted = report.functions.clone();
+            sorted.sort_by(|a, b| a.file.cmp(&b.file).then(a.name.cmp(&b.name)));
+            let mut current_file = String::new();
+            for f in &sorted {
+                if f.file != current_file {
+                    current_file = f.file.clone();
+                    lines.push(format!("\n  {}:", current_file));
+                }
+                let marker = contribution_marker(f.hidden_deps);
+                lines.push(format!(
+                    "    {:<35}  pure: {:>5}  seam: {:>5}  hidden: {:>2}  contr: {:>5.0}%  {marker}",
+                    f.name,
+                    if f.is_pure { "yes" } else { "no" },
+                    if f.has_trait_seam { "yes" } else { "no " },
+                    f.hidden_deps,
+                    crate::contribution_schedule::contribution(f.is_pure, f.has_trait_seam, f.hidden_deps) * 100.0,
+                ));
+            }
+        }
+
         lines.join("\n")
     }
 
@@ -114,12 +150,13 @@ impl StdoutReporter {
             format!("{:>5.1}%", module.trait_ratio * 100.0)
         };
         format!(
-            "  {:<30}  grip: {:>3}   pure: {:>5.1}%   pub: {:>3}   traits: {}  {}",
+            "  {:<30}  grip: {:>3}   pure: {:>5.1}%   pub: {:>3}   traits: {}   clean: {:>5.1}%  {}",
             module.path,
             module.grip_score,
             module.pure_ratio * 100.0,
             module.public_items,
             traits_display,
+            module.clean_fn_ratio * 100.0,
             marker,
         )
     }
@@ -132,5 +169,15 @@ impl StdoutReporter {
         } else {
             ""
         }
+    }
+}
+
+fn contribution_marker(hidden_deps: usize) -> &'static str {
+    if hidden_deps == 0 {
+        "✅"
+    } else if hidden_deps == 1 {
+        "⚠️"
+    } else {
+        "❌"
     }
 }

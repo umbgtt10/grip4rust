@@ -27,7 +27,7 @@ impl Reporter for CaptureReporter {
 
     fn write(&self, report: &GripReport) -> Result<()> {
         let json = self.render(report)?;
-        print!("{}", json);
+        print!("{json}");
         Ok(())
     }
 }
@@ -36,7 +36,7 @@ fn analyze() -> serde_json::Value {
     let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("fixtures")
-        .join("sloppy_calc");
+        .join("dep_mixed");
     let config = Config {
         path: fixture_path,
         json: true,
@@ -52,49 +52,43 @@ fn analyze() -> serde_json::Value {
         reporter,
         config,
     );
-    let _ = app.run().unwrap();
-    let captured = app.reporter().captured.borrow().clone();
-    serde_json::from_str(&captured).unwrap()
+    app.run().expect("app run failed");
+    let captured = app.reporter().captured.borrow();
+    serde_json::from_str(&captured).expect("valid JSON")
 }
 
 #[test]
-fn scores_bad() {
+fn mixed_has_all_eight_cases() {
     // Arrange & Act
-    let parsed = analyze();
+    let report = analyze();
+    let functions = report["functions"].as_array().unwrap();
 
     // Assert
-    let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
-    assert!(
-        grip_score < 50,
-        "expected bad score < 50, got {}",
-        grip_score
-    );
+    assert_eq!(functions.len(), 8, "should have 8 functions (1 per case)");
 }
 
 #[test]
-fn has_few_public_items() {
+fn mixed_has_clean_and_dirty_functions() {
     // Arrange & Act
-    let parsed = analyze();
+    let report = analyze();
+    let overall = &report["overall"];
+    let avg = overall["avg_contribution"].as_f64().unwrap();
 
     // Assert
-    let public_items = parsed["overall"]["public_items"].as_u64().unwrap();
-    assert!(
-        public_items < 6,
-        "expected few public items, got {}",
-        public_items
-    );
+    assert!(avg > 0.0, "avg contribution should be > 0");
+    assert!(avg < 1.0, "avg contribution should be < 1.0 (mix of clean and dirty)");
 }
 
 #[test]
-fn low_pure_ratio() {
+fn mixed_hidden_deps_count_correct() {
     // Arrange & Act
-    let parsed = analyze();
+    let report = analyze();
+    let functions = report["functions"].as_array().unwrap();
 
     // Assert
-    let pure_ratio = parsed["overall"]["pure_ratio"].as_f64().unwrap();
-    assert!(
-        pure_ratio < 0.7,
-        "expected low pure ratio, got {}",
-        pure_ratio
-    );
+    let mut total_deps = 0u64;
+    for f in functions {
+        total_deps += f["hidden_deps"].as_u64().unwrap();
+    }
+    assert!(total_deps >= 4, "should have at least 4 hidden deps across all functions");
 }

@@ -19,6 +19,8 @@ pub struct ItemCounts {
     pub inherent_impure: usize,
     pub local_trait_methods: usize,
     pub local_trait_impure: usize,
+    pub total_contribution: f64,
+    pub clean_functions: usize,
 }
 
 impl ItemCounts {
@@ -38,6 +40,8 @@ impl ItemCounts {
             inherent_impure: self.inherent_impure + other.inherent_impure,
             local_trait_methods: self.local_trait_methods + other.local_trait_methods,
             local_trait_impure: self.local_trait_impure + other.local_trait_impure,
+            total_contribution: self.total_contribution + other.total_contribution,
+            clean_functions: self.clean_functions + other.clean_functions,
         }
     }
 }

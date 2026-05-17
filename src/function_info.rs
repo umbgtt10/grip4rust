@@ -10,4 +10,6 @@ pub struct FunctionInfo {
     pub file: String,
     pub is_pure: bool,
     pub is_public: bool,
+    pub hidden_deps: usize,
+    pub has_trait_seam: bool,
 }

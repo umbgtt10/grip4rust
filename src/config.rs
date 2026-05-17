@@ -11,6 +11,7 @@ pub struct Config {
     pub path: PathBuf,
     pub json: bool,
     pub threshold: Option<u32>,
+    pub verbose: bool,
 }
 
 impl Config {
@@ -20,6 +21,7 @@ impl Config {
             path: args.path,
             json: args.json,
             threshold: args.threshold,
+            verbose: args.verbose,
         }
     }
 }

@@ -17,6 +17,7 @@ fn run_on_empty_dir_errors() {
         path: dir.path().to_path_buf(),
         json: false,
         threshold: None,
+        verbose: false,
     };
     let app = App::new(config);
 
@@ -42,6 +43,7 @@ fn run_on_valid_dir_succeeds() {
         path: dir.path().to_path_buf(),
         json: false,
         threshold: None,
+        verbose: false,
     };
     let app = App::new(config);
 

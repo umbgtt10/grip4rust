@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use clap::Parser;
 
 #[derive(Debug, Clone, Parser)]
-#[command(name = "cargo-grip4rust", version = "0.1.4")]
+#[command(name = "cargo-grip4rust", version = "0.2.0")]
 #[command(about = "Measure Rust testability")]
 pub struct Args {
     #[arg(default_value = ".")]
@@ -19,6 +19,9 @@ pub struct Args {
 
     #[arg(long, alias = "min-score")]
     pub threshold: Option<u32>,
+
+    #[arg(long)]
+    pub verbose: bool,
 }
 
 impl Args {

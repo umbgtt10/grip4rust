@@ -42,7 +42,7 @@ impl
         Self {
             walker: crate::fs_walk::FsWalk::new(&config.path),
             scorer: crate::default_scorer::DefaultScorer::new(),
-            reporter: crate::stdout_reporter::StdoutReporter::new(config.json),
+            reporter: crate::stdout_reporter::StdoutReporter::new(config.json, config.verbose),
             config,
         }
     }
@@ -102,7 +102,8 @@ impl<W: Walk, S: Scorer, R: Reporter> App<W, S, R> {
         functions: Vec<FunctionInfo>,
     ) -> GripReport {
         let (overall_counts, modules) = self.scorer.agg_modules(indexed);
-        let (grip_score, pure_ratio, public_ratio, trait_ratio) = self.scorer.score_counts(&overall_counts);
+        let (grip_score, pure_ratio, public_ratio, trait_ratio, avg_contribution, clean_fn_ratio) =
+            self.scorer.score_counts(&overall_counts);
         let overall = OverallStats {
             grip_score,
             public_items: overall_counts.public_items,
@@ -113,6 +114,8 @@ impl<W: Walk, S: Scorer, R: Reporter> App<W, S, R> {
             inherent_methods: overall_counts.inherent_methods,
             local_trait_methods: overall_counts.local_trait_methods,
             trait_ratio,
+            avg_contribution,
+            clean_fn_ratio,
         };
         let target = self
             .config

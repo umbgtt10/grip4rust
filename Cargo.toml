@@ -1,6 +1,6 @@
 [package]
 name = "cargo-grip4rust"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2024"
 rust-version = "1.85"
 description = "A cargo subcommand for measuring Rust testability"
@@ -31,6 +31,18 @@ path = "tests/fixtures/clean_calc/tests/analysis_tests.rs"
 [[test]]
 name = "trait_check_tests"
 path = "tests/fixtures/trait_check/tests/analysis_tests.rs"
+
+[[test]]
+name = "dep_clean_tests"
+path = "tests/fixtures/dep_clean/tests/analysis_tests.rs"
+
+[[test]]
+name = "dep_mixed_tests"
+path = "tests/fixtures/dep_mixed/tests/analysis_tests.rs"
+
+[[test]]
+name = "dep_monolith_tests"
+path = "tests/fixtures/dep_monolith/tests/analysis_tests.rs"
 
 [dependencies]
 anyhow = "1"

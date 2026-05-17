@@ -19,3 +19,5 @@ pub mod stdout_reporter;
 pub mod traits;
 pub mod unsafe_finder;
 pub mod io_call_finder;
+pub mod hidden_dep_finder;
+pub mod contribution_schedule;

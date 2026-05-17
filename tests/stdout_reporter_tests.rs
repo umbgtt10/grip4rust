@@ -22,6 +22,8 @@ fn dummy_report() -> GripReport {
             inherent_methods: 0,
             local_trait_methods: 0,
             trait_ratio: 0.0,
+            avg_contribution: 0.0,
+            clean_fn_ratio: 0.0,
         },
         modules: vec![
             ModuleStats {
@@ -35,6 +37,8 @@ fn dummy_report() -> GripReport {
                 inherent_methods: 0,
                 local_trait_methods: 0,
                 trait_ratio: 0.0,
+                avg_contribution: 0.0,
+                clean_fn_ratio: 0.0,
             },
             ModuleStats {
                 path: "beta".to_string(),
@@ -47,6 +51,8 @@ fn dummy_report() -> GripReport {
                 inherent_methods: 0,
                 local_trait_methods: 0,
                 trait_ratio: 0.0,
+                avg_contribution: 0.0,
+                clean_fn_ratio: 0.0,
             },
         ],
         offenders: vec![],
@@ -56,7 +62,7 @@ fn dummy_report() -> GripReport {
 }
 
 fn reporter(json: bool) -> StdoutReporter {
-    StdoutReporter::new(json)
+    StdoutReporter::new(json, false)
 }
 
 #[test]
@@ -130,6 +136,8 @@ fn human_output_shows_offenders_section() {
             inherent_methods: 0,
             local_trait_methods: 0,
             trait_ratio: 0.0,
+            avg_contribution: 0.0,
+            clean_fn_ratio: 0.0,
         }],
         offenders: vec![grip::offender::Offender {
             path: "bad_mod".to_string(),

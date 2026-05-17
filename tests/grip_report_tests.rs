@@ -19,6 +19,8 @@ fn sample() -> GripReport {
             inherent_methods: 0,
             local_trait_methods: 0,
             trait_ratio: 0.0,
+            avg_contribution: 0.0,
+            clean_fn_ratio: 0.0,
         },
         modules: vec![],
         offenders: vec![],
