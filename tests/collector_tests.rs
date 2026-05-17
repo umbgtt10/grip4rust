@@ -288,3 +288,219 @@ impl std::fmt::Display for MyStruct {
     assert_eq!(counts.local_trait_methods, 0);
     assert_eq!(counts.inherent_methods, 0);
 }
+
+#[test]
+fn hidden_dep_uppercase_type_constructor() {
+    // Arrange
+    let source = r#"
+struct Handler;
+impl Handler {
+    pub fn handle() { TcpStream::connect("127.0.0.1:8080").unwrap(); }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 1, "TcpStream::connect should be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_std_constructor_not_counted() {
+    // Arrange
+    let source = r#"
+struct Builder;
+impl Builder {
+    pub fn build() -> String { String::new() }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 0, "String::new should not be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_vec_new_not_counted() {
+    // Arrange
+    let source = r#"
+struct Collector;
+impl Collector {
+    pub fn collect() -> Vec<i32> { Vec::new() }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 0, "Vec::new should not be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_box_new_not_counted() {
+    // Arrange
+    let source = r#"
+struct Wrapper;
+impl Wrapper {
+    pub fn wrap(x: i32) -> Box<i32> { Box::new(x) }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 0, "Box::new should not be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_domain_type_is_detected() {
+    // Arrange
+    let source = r#"
+struct Service;
+impl Service {
+    pub fn process() { MyDatabase::new("prod:5432"); }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 1, "MyDatabase::new should be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_third_party_type_is_detected() {
+    // Arrange
+    let source = r#"
+struct Service;
+impl Service {
+    pub fn charge() { StripeGateway::charge(100); }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 1, "StripeGateway::charge should be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_self_call_not_counted() {
+    // Arrange
+    let source = r#"
+struct Factory;
+impl Factory {
+    pub fn create() -> Self { Self::new() }
+    pub fn new() -> Self { Self }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 0, "Self::new should not be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_macro_println_is_detected() {
+    // Arrange
+    let source = r#"
+struct Logger;
+impl Logger {
+    pub fn log() { println!("hello"); }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 1, "println! should be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_multiple_calls_accumulate() {
+    // Arrange
+    let source = r#"
+struct Service;
+impl Service {
+    pub fn run() {
+        TcpStream::connect("127.0.0.1:8080").unwrap();
+        MyDatabase::query("SELECT 1");
+        File::create("/tmp/test.txt").unwrap();
+    }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 3, "should detect all 3 concrete type calls");
+}
+
+#[test]
+fn hidden_dep_zero_deps_on_clean_function() {
+    // Arrange
+    let source = r#"
+struct Calc;
+impl Calc {
+    pub fn add(a: i32, b: i32) -> i32 { a + b }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 0, "pure function should have 0 hidden deps");
+}
+
+#[test]
+fn hidden_dep_self_field_invocation_not_counted() {
+    // Arrange
+    let source = r#"
+struct Service {
+    db: Box<dyn Database>,
+}
+impl Service {
+    pub fn query(&self, sql: &str) { self.db.query(sql); }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 0, "self.db.query should not be a hidden dep");
+}

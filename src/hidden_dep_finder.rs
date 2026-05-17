@@ -4,6 +4,24 @@
 
 use syn::visit::Visit;
 
+const STD_CONSTRUCTORS: &[&str] = &[
+    "Box", "Arc", "Rc", "String", "Vec", "HashMap", "HashSet",
+    "Option", "Result", "Ok", "Err", "Some", "None",
+    "Ordering", "Duration", "Path", "PathBuf", "CString", "CStr",
+    "OsString", "OsStr", "Default", "Clone",
+];
+
+const STD_MODULE_CALLS: &[&str] = &[
+    "fs::read", "fs::write", "fs::read_to_string", "fs::read_dir",
+    "fs::create_dir", "fs::create_dir_all", "fs::remove_file",
+    "fs::remove_dir", "fs::remove_dir_all", "fs::copy", "fs::rename",
+    "fs::metadata", "env::var", "env::args", "env::temp_dir",
+    "env::current_dir", "env::current_exe", "env::set_var",
+    "process::exit", "process::abort", "process::id",
+    "thread::sleep", "thread::spawn",
+    "net::TcpStream", "net::TcpListener", "net::UdpSocket",
+];
+
 pub(crate) struct HiddenDepFinder {
     pub(crate) count: usize,
 }
@@ -12,114 +30,73 @@ impl HiddenDepFinder {
     pub(crate) fn new() -> Self {
         Self { count: 0 }
     }
+
+    fn check_path(&mut self, path: &syn::Path) {
+        let segments: Vec<_> = path.segments.iter().map(|s| s.ident.to_string()).collect();
+        if segments.is_empty() {
+            return;
+        }
+
+        let tail_start = segments.len().saturating_sub(2);
+        let tail = segments[tail_start..].join("::");
+
+        if STD_MODULE_CALLS.contains(&tail.as_str())
+            && (segments.len() <= 2 || segments[0] == "std" || segments[0] == "core")
+        {
+            self.count += 1;
+            return;
+        }
+
+        let first = &segments[0];
+        if first == "Self" || first == "self" {
+            return;
+        }
+        if first.starts_with(|c: char| c.is_ascii_uppercase())
+            && !STD_CONSTRUCTORS.contains(&first.as_str())
+        {
+            self.count += 1;
+        }
+    }
+}
+
+fn is_print_macro(path: &syn::Path) -> bool {
+    if let Some(name) = path.get_ident() {
+        let n = name.to_string();
+        return n == "println" || n == "eprintln" || n == "print" || n == "eprint";
+    }
+    false
 }
 
 impl<'ast> Visit<'ast> for HiddenDepFinder {
+    fn visit_stmt(&mut self, stmt: &'ast syn::Stmt) {
+        if let syn::Stmt::Macro(stmt_macro) = stmt {
+            if is_print_macro(&stmt_macro.mac.path) {
+                self.count += 1;
+                return;
+            }
+        }
+        syn::visit::visit_stmt(self, stmt);
+    }
+
     fn visit_expr(&mut self, expr: &'ast syn::Expr) {
         match expr {
-            // std::time::Instant::now()
             syn::Expr::Call(expr_call) => {
                 if let syn::Expr::Path(expr_path) = &*expr_call.func {
-                    let segments: Vec<_> = expr_path
-                        .path
-                        .segments
-                        .iter()
-                        .map(|s| s.ident.to_string())
-                        .collect();
-                    let path_str = segments.join("::");
-                    let is_direct_match = matches!(
-                        path_str.as_str(),
-                        "Instant::now"
-                            | "SystemTime::now"
-                            | "Utc::now"
-                            | "Local::now"
-                            | "rand::random"
-                            | "thread_rng"
-                            | "random"
-                            | "env::var"
-                            | "env::args"
-                            | "env::temp_dir"
-                            | "env::current_dir"
-                            | "process::exit"
-                            | "process::abort"
-                            | "fs::read"
-                            | "fs::write"
-                            | "fs::read_to_string"
-                            | "fs::read_dir"
-                            | "fs::create_dir"
-                            | "fs::create_dir_all"
-                            | "fs::remove_file"
-                            | "fs::remove_dir"
-                            | "fs::remove_dir_all"
-                            | "fs::copy"
-                            | "fs::rename"
-                            | "fs::metadata"
-                            | "File::open"
-                            | "File::create"
-                            | "OpenOptions::new"
-                            | "TcpStream::connect"
-                            | "TcpStream::bind"
-                            | "UdpSocket::bind"
-                    );
-                    let tail_start = segments.len().saturating_sub(2);
-                    let tail = segments[tail_start..].join("::");
-                    let is_tail_match = matches!(
-                        tail.as_str(),
-                        "env::var"
-                            | "env::args"
-                            | "env::temp_dir"
-                            | "env::current_dir"
-                            | "process::exit"
-                            | "process::abort"
-                            | "fs::read"
-                            | "fs::write"
-                            | "fs::read_to_string"
-                            | "fs::read_dir"
-                            | "fs::create_dir"
-                            | "fs::create_dir_all"
-                            | "fs::remove_file"
-                            | "fs::remove_dir"
-                            | "fs::remove_dir_all"
-                            | "fs::copy"
-                            | "fs::rename"
-                            | "fs::metadata"
-                            | "File::open"
-                            | "File::create"
-                            | "OpenOptions::new"
-                            | "TcpStream::connect"
-                            | "TcpStream::bind"
-                            | "UdpSocket::bind"
-                            | "Instant::now"
-                            | "SystemTime::now"
-                    ) && (segments.len() <= 2 || segments[0] == "std" || segments[0] == "core");
-                    if is_direct_match || is_tail_match {
-                        self.count += 1;
-                        return;
-                    }
-                    if segments.len() >= 2
-                        && (segments[0] == "rand" && segments.last().map_or(false, |s| s.contains("rng") || s == "random"))
-                    {
-                        self.count += 1;
+                    self.check_path(&expr_path.path);
+                }
+            }
+            syn::Expr::MethodCall(expr_method) => {
+                if let syn::Expr::Path(expr_path) = &*expr_method.receiver {
+                    let first = expr_path.path.segments.first().map(|s| s.ident.to_string());
+                    if first.as_deref() == Some("Self") {
                         return;
                     }
                 }
             }
-            // Method calls: .now(), .thread_rng(), .gen(), .elapsed()
-            syn::Expr::MethodCall(expr_method) => {
-                let method = expr_method.method.to_string();
-                if method == "now" || method == "elapsed" || method == "thread_rng" || method == "gen" {
+            syn::Expr::Macro(expr_macro) => {
+                if is_print_macro(&expr_macro.mac.path) {
                     self.count += 1;
                     return;
-                }
-            }
-            // println!, eprintln!, print!, eprint!, writeln!, write!
-            syn::Expr::Macro(expr_macro) => {
-                if let Some(name) = expr_macro.mac.path.get_ident() {
-                    let n = name.to_string();
-                    if n == "println" || n == "eprintln" || n == "print" || n == "eprint" {
-                        self.count += 1;
-                        return;
-                    }
                 }
             }
             _ => {}
