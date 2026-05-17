@@ -44,6 +44,10 @@ path = "tests/fixtures/dep_mixed/tests/analysis_tests.rs"
 name = "dep_monolith_tests"
 path = "tests/fixtures/dep_monolith/tests/analysis_tests.rs"
 
+[[test]]
+name = "dep_injected_tests"
+path = "tests/fixtures/dep_injected/tests/analysis_tests.rs"
+
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
