@@ -15,6 +15,10 @@ fn full_counts() -> ItemCounts {
         public_enums: 1,
         total_items: 9,
         public_items: 6,
+        inherent_methods: 3,
+        inherent_impure: 1,
+        local_trait_methods: 2,
+        local_trait_impure: 2,
     }
 }
 
@@ -37,6 +41,10 @@ fn merge_adds_all_fields() {
     assert_eq!(merged.public_enums, 2);
     assert_eq!(merged.total_items, 18);
     assert_eq!(merged.public_items, 12);
+    assert_eq!(merged.inherent_methods, 6);
+    assert_eq!(merged.inherent_impure, 2);
+    assert_eq!(merged.local_trait_methods, 4);
+    assert_eq!(merged.local_trait_impure, 4);
 }
 
 #[test]
@@ -51,4 +59,6 @@ fn merge_with_default_is_identity() {
     // Assert
     assert_eq!(merged.total_functions, 5);
     assert_eq!(merged.total_items, 9);
+    assert_eq!(merged.inherent_methods, 3);
+    assert_eq!(merged.local_trait_methods, 2);
 }

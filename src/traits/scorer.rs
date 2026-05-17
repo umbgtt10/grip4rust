@@ -8,7 +8,7 @@ use crate::item_counts::ItemCounts;
 use crate::module_stats::ModuleStats;
 
 pub trait Scorer {
-    fn score_counts(&self, counts: &ItemCounts) -> (u32, f64, f64);
+    fn score_counts(&self, counts: &ItemCounts) -> (u32, f64, f64, f64);
     fn agg_modules(
         &self,
         files: Vec<(String, ItemCounts)>,

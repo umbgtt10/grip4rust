@@ -13,4 +13,7 @@ pub struct ModuleStats {
     pub total_functions: usize,
     pub pure_functions: usize,
     pub public_ratio: f64,
+    pub inherent_methods: usize,
+    pub local_trait_methods: usize,
+    pub trait_ratio: f64,
 }

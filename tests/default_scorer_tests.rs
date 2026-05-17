@@ -22,14 +22,19 @@ fn perfect_grip() {
         public_structs: 1,
         total_items: 3,
         public_items: 3,
+        inherent_methods: 1,
+        inherent_impure: 0,
+        local_trait_methods: 1,
+        local_trait_impure: 1,
         ..Default::default()
     };
 
     // Act
-    let (score, pure, public) = scorer().score_counts(&counts);
+    let (score, pure, public, trait_ratio) = scorer().score_counts(&counts);
 
     // Assert
     assert_eq!(score, 100);
+    assert_eq!(trait_ratio, 1.0);
     assert_eq!(pure, 1.0);
     assert_eq!(public, 1.0);
 }
@@ -46,7 +51,7 @@ fn zero_grip() {
     };
 
     // Act
-    let (score, pure, public) = scorer().score_counts(&counts);
+    let (score, pure, public, _) = scorer().score_counts(&counts);
 
     // Assert
     assert_eq!(score, 0);
@@ -60,7 +65,7 @@ fn empty_module_gives_zero() {
     let counts = ItemCounts::default();
 
     // Act
-    let (score, pure, public) = scorer().score_counts(&counts);
+    let (score, pure, public, _) = scorer().score_counts(&counts);
 
     // Assert
     assert_eq!(score, 0);
@@ -124,5 +129,6 @@ fn module_stats_sorted() {
     // Assert
     assert_eq!(stats.len(), 1);
     assert_eq!(stats[0].path, "alpha");
-    assert_eq!(stats[0].grip_score, 100);
+    assert_eq!(stats[0].grip_score, 70);
+    assert_eq!(stats[0].trait_ratio, 0.0);
 }

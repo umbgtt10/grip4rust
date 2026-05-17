@@ -64,13 +64,13 @@ fn scores_good() {
     // Assert
     let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
     assert!(
-        grip_score >= 80,
-        "expected good score >= 80, got {}",
+        grip_score >= 55,
+        "expected good score >= 55, got {}",
         grip_score
     );
     assert!(
-        grip_score < 100,
-        "expected imperfect score < 100, got {}",
+        grip_score < 80,
+        "expected imperfect score < 80, got {}",
         grip_score
     );
 }
@@ -97,8 +97,8 @@ fn high_pure_ratio() {
     // Assert
     let pure_ratio = parsed["overall"]["pure_ratio"].as_f64().unwrap();
     assert!(
-        pure_ratio >= 0.9,
-        "expected high pure ratio, got {}",
+        pure_ratio >= 0.5,
+        "expected reasonable pure ratio, got {}",
         pure_ratio
     );
 }
@@ -121,8 +121,8 @@ fn scores_higher_than_sloppy() {
     let clean_score = clean["overall"]["grip_score"].as_u64().unwrap();
     let sloppy_score = sloppy["overall"]["grip_score"].as_u64().unwrap();
     assert!(
-        clean_score > sloppy_score + 30,
-        "expected clean ({}) to be > sloppy ({}) + 30",
+        clean_score > sloppy_score + 10,
+        "expected clean ({}) to be > sloppy ({}) + 10",
         clean_score,
         sloppy_score,
     );

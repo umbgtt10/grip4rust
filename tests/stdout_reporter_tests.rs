@@ -19,6 +19,9 @@ fn dummy_report() -> GripReport {
             pure_functions: 12,
             pure_ratio: 0.6,
             public_ratio: 0.5,
+            inherent_methods: 0,
+            local_trait_methods: 0,
+            trait_ratio: 0.0,
         },
         modules: vec![
             ModuleStats {
@@ -29,6 +32,9 @@ fn dummy_report() -> GripReport {
                 total_functions: 10,
                 pure_functions: 8,
                 public_ratio: 0.5,
+                inherent_methods: 0,
+                local_trait_methods: 0,
+                trait_ratio: 0.0,
             },
             ModuleStats {
                 path: "beta".to_string(),
@@ -38,6 +44,9 @@ fn dummy_report() -> GripReport {
                 total_functions: 10,
                 pure_functions: 4,
                 public_ratio: 0.5,
+                inherent_methods: 0,
+                local_trait_methods: 0,
+                trait_ratio: 0.0,
             },
         ],
         offenders: vec![],
@@ -118,6 +127,9 @@ fn human_output_shows_offenders_section() {
             total_functions: 5,
             pure_functions: 1,
             public_ratio: 0.2,
+            inherent_methods: 0,
+            local_trait_methods: 0,
+            trait_ratio: 0.0,
         }],
         offenders: vec![grip::offender::Offender {
             path: "bad_mod".to_string(),

@@ -67,6 +67,13 @@ impl StdoutReporter {
             overall.total_functions,
             overall.pure_ratio * 100.0
         ));
+        let total_impl = overall.inherent_methods + overall.local_trait_methods;
+        lines.push(format!(
+            "Trait methods:         {} / {} impl methods are trait-bound  ({:.1}%)",
+            overall.local_trait_methods,
+            total_impl,
+            overall.trait_ratio * 100.0
+        ));
 
         lines.push("\nPer module:".to_string());
         for module in &report.modules {
@@ -92,11 +99,12 @@ impl StdoutReporter {
     fn render_module_line(&self, module: &ModuleStats) -> String {
         let marker = self.module_marker(module.grip_score);
         format!(
-            "  {:<30}  grip: {:>3}   pure: {:>5.1}%   pub: {:>3}  {}",
+            "  {:<30}  grip: {:>3}   pure: {:>5.1}%   pub: {:>3}   traits: {:>5.1}%  {}",
             module.path,
             module.grip_score,
             module.pure_ratio * 100.0,
             module.public_items,
+            module.trait_ratio * 100.0,
             marker,
         )
     }

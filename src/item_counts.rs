@@ -15,6 +15,10 @@ pub struct ItemCounts {
     pub public_enums: usize,
     pub total_items: usize,
     pub public_items: usize,
+    pub inherent_methods: usize,
+    pub inherent_impure: usize,
+    pub local_trait_methods: usize,
+    pub local_trait_impure: usize,
 }
 
 impl ItemCounts {
@@ -30,6 +34,10 @@ impl ItemCounts {
             public_enums: self.public_enums + other.public_enums,
             total_items: self.total_items + other.total_items,
             public_items: self.public_items + other.public_items,
+            inherent_methods: self.inherent_methods + other.inherent_methods,
+            inherent_impure: self.inherent_impure + other.inherent_impure,
+            local_trait_methods: self.local_trait_methods + other.local_trait_methods,
+            local_trait_impure: self.local_trait_impure + other.local_trait_impure,
         }
     }
 }

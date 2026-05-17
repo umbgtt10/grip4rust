@@ -51,6 +51,7 @@ impl<'ast> Visit<'ast> for Collector {
             Item::Trait(item_trait) => self.visit_trait(item_trait),
             Item::Enum(item_enum) => self.visit_enum(item_enum),
             Item::Mod(item_mod) if !self.has_test_attr(&item_mod.attrs) => self.visit_mod(item_mod),
+            Item::Impl(item_impl) => self.visit_impl(item_impl),
             _ => {}
         }
     }
@@ -131,6 +132,62 @@ impl Collector {
         }
     }
 
+    fn visit_impl(&mut self, item_impl: &syn::ItemImpl) {
+        if let Some((_, trait_path, _)) = &item_impl.trait_ {
+            if self.is_foreign_trait(trait_path) {
+                return;
+            }
+            for item in &item_impl.items {
+                if let syn::ImplItem::Fn(method) = item {
+                    self.counts.total_functions += 1;
+                    self.counts.local_trait_methods += 1;
+                    if self.is_impl_method_impure(method) {
+                        self.counts.local_trait_impure += 1;
+                    }
+                }
+            }
+        } else {
+            for item in &item_impl.items {
+                if let syn::ImplItem::Fn(method) = item {
+                    self.counts.total_functions += 1;
+                    self.counts.inherent_methods += 1;
+                    if self.has_test_attr(&method.attrs) {
+                        continue;
+                    }
+                    if self.is_impl_method_impure(method) {
+                        self.counts.inherent_impure += 1;
+                    }
+                }
+            }
+        }
+    }
+
+    fn is_impl_method_impure(&self, method: &syn::ImplItemFn) -> bool {
+        if self.has_mut_param(&method.sig) {
+            return true;
+        }
+        if self.is_unit_return(&method.sig) {
+            return true;
+        }
+        if method.sig.unsafety.is_some() {
+            return true;
+        }
+        self.has_unsafe_block(&method.block)
+    }
+
+    fn is_foreign_trait(&self, path: &syn::Path) -> bool {
+        if path.segments.len() == 1 {
+            return false;
+        }
+        if let Some(first) = path.segments.first() {
+            let name = first.ident.to_string();
+            return name == "std" || name == "core" || name == "alloc";
+        }
+        true
+    }
+
+
+
     fn classify_visibility(&self, vis: &Visibility) -> VisibilityLevel {
         match vis {
             Visibility::Public(_) => VisibilityLevel::Pub,
@@ -163,12 +220,9 @@ impl Collector {
     }
 
     fn has_mut_param(&self, sig: &syn::Signature) -> bool {
-        sig.inputs.iter().any(|arg| {
-            if let syn::FnArg::Typed(pat_type) = arg {
-                self.has_mut_in_type(&pat_type.ty)
-            } else {
-                false
-            }
+        sig.inputs.iter().any(|arg| match arg {
+            syn::FnArg::Receiver(recv) => recv.mutability.is_some(),
+            syn::FnArg::Typed(pat_type) => self.has_mut_in_type(&pat_type.ty),
         })
     }
 
