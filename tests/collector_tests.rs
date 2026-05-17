@@ -645,12 +645,7 @@ impl Service {
 #[test]
 fn hidden_dep_input_argument_not_counted() {
     // Arrange
-    let source = r#"
-struct Service;
-impl Service {
-    pub fn run(&self, db: &Database) { db.query("SELECT 1"); }
-}
-"#;
+    let source = "struct Service;\nimpl Service {\n    pub fn run(&self, db: &Database) { db.query(\"SELECT 1\"); }\n}\n";
     let dir = tempfile::tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
@@ -659,4 +654,37 @@ impl Service {
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 0, "db.query on input argument should not be a hidden dep");
+}
+
+#[test]
+fn hidden_dep_light_weight_vs_heavy() {
+    // Arrange
+    let source = "fn light() { println!(\"start\"); Instant::now(); }\n\
+fn heavy() { Database::new(\"prod\"); StripeGateway::charge(100.0); }\n";
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    let light_contr = grip::contribution_schedule::contribution(fns[0].is_pure, fns[0].has_trait_seam, fns[0].dep_weight);
+    let heavy_contr = grip::contribution_schedule::contribution(fns[1].is_pure, fns[1].has_trait_seam, fns[1].dep_weight);
+    assert!(light_contr > 0.0, "light deps should have positive contribution, got {light_contr}");
+    assert_eq!(heavy_contr, 0.0, "heavy deps should have zero contribution, got {heavy_contr}");
+}
+
+#[test]
+fn hidden_dep_labels_are_recorded() {
+    // Arrange
+    let source = "fn run() { Database::new(\"prod\"); println!(\"done\"); }\n";
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert!(fns[0].hidden_dep_labels.contains(&"Database::new".to_string()), "should contain Database::new label");
+    assert!(fns[0].hidden_dep_labels.contains(&"println".to_string()), "should contain println label");
 }

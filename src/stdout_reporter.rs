@@ -127,13 +127,17 @@ impl StdoutReporter {
                     lines.push(format!("\n  {}:", current_file));
                 }
                 let marker = contribution_marker(f.hidden_deps);
+                let contr = crate::contribution_schedule::contribution(f.is_pure, f.has_trait_seam, f.dep_weight);
+                let labels = f.hidden_dep_labels.join(", ");
                 lines.push(format!(
-                    "    {:<35}  pure: {:>5}  seam: {:>5}  hidden: {:>2}  contr: {:>5.0}%  {marker}",
+                    "    {:<35}  pure: {:>5}  seam: {:>5}  hidden: {:>2}  contr: {:>5.0}%  [{}]  {}",
                     f.name,
                     if f.is_pure { "yes" } else { "no" },
                     if f.has_trait_seam { "yes" } else { "no " },
                     f.hidden_deps,
-                    crate::contribution_schedule::contribution(f.is_pure, f.has_trait_seam, f.hidden_deps) * 100.0,
+                    contr * 100.0,
+                    if labels.is_empty() { "-" } else { &labels },
+                    marker,
                 ));
             }
         }

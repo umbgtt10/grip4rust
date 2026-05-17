@@ -22,8 +22,37 @@ const STD_MODULE_CALLS: &[&str] = &[
     "net::TcpStream", "net::TcpListener", "net::UdpSocket",
 ];
 
+fn dep_weight(label: &str) -> f64 {
+    if label.starts_with("println") || label.starts_with("eprintln")
+        || label.starts_with("print!") || label.starts_with("eprint!")
+    {
+        0.2
+    } else if label.starts_with("Instant") || label.starts_with("SystemTime")
+        || label.starts_with("Utc") || label.starts_with("Local")
+        || label.contains("elapsed")
+    {
+        0.3
+    } else if label.starts_with("env::") || label.starts_with("process::") {
+        0.4
+    } else if label.starts_with("unsafe") {
+        0.5
+    } else {
+        0.6
+    }
+}
+
+fn path_label(path: &syn::Path) -> String {
+    path.segments
+        .iter()
+        .map(|s| s.ident.to_string())
+        .collect::<Vec<_>>()
+        .join("::")
+}
+
 pub(crate) struct HiddenDepFinder {
     pub(crate) count: usize,
+    pub(crate) weight: f64,
+    pub(crate) labels: Vec<String>,
     concrete_fields: Vec<String>,
 }
 
@@ -31,6 +60,8 @@ impl HiddenDepFinder {
     pub(crate) fn new() -> Self {
         Self {
             count: 0,
+            weight: 0.0,
+            labels: Vec::new(),
             concrete_fields: Vec::new(),
         }
     }
@@ -39,30 +70,37 @@ impl HiddenDepFinder {
         self.concrete_fields = fields;
     }
 
+    fn add_dep(&mut self, label: &str) {
+        self.count += 1;
+        let w = dep_weight(label);
+        self.weight += w;
+        self.labels.push(label.to_string());
+    }
+
     fn check_path(&mut self, path: &syn::Path) {
         let segments: Vec<_> = path.segments.iter().map(|s| s.ident.to_string()).collect();
         if segments.is_empty() {
             return;
         }
+        if segments[0] == "Self" || segments[0] == "self" {
+            return;
+        }
 
         let tail_start = segments.len().saturating_sub(2);
         let tail = segments[tail_start..].join("::");
-
         if STD_MODULE_CALLS.contains(&tail.as_str())
             && (segments.len() <= 2 || segments[0] == "std" || segments[0] == "core")
         {
-            self.count += 1;
+            self.add_dep(&tail);
             return;
         }
 
         let first = &segments[0];
-        if first == "Self" || first == "self" {
-            return;
-        }
         if first.starts_with(|c: char| c.is_ascii_uppercase())
             && !STD_CONSTRUCTORS.contains(&first.as_str())
         {
-            self.count += 1;
+            let label = segments.join("::");
+            self.add_dep(&label);
         }
     }
 }
@@ -79,7 +117,7 @@ impl<'ast> Visit<'ast> for HiddenDepFinder {
     fn visit_stmt(&mut self, stmt: &'ast syn::Stmt) {
         if let syn::Stmt::Macro(stmt_macro) = stmt {
             if is_print_macro(&stmt_macro.mac.path) {
-                self.count += 1;
+                self.add_dep(&path_label(&stmt_macro.mac.path));
                 return;
             }
         }
@@ -109,8 +147,8 @@ impl<'ast> Visit<'ast> for HiddenDepFinder {
                             if let syn::Member::Named(ident) = &expr_field.member {
                                 let name = ident.to_string();
                                 if self.concrete_fields.contains(&name) {
-                                    self.count += 1;
-                                    return;
+                                    let label = format!("self.{name}.{}", expr_method.method);
+                                    self.add_dep(&label);
                                 }
                             }
                         }
@@ -119,7 +157,7 @@ impl<'ast> Visit<'ast> for HiddenDepFinder {
             }
             syn::Expr::Macro(expr_macro) => {
                 if is_print_macro(&expr_macro.mac.path) {
-                    self.count += 1;
+                    self.add_dep(&path_label(&expr_macro.mac.path));
                     return;
                 }
             }
@@ -129,6 +167,6 @@ impl<'ast> Visit<'ast> for HiddenDepFinder {
     }
 
     fn visit_expr_unsafe(&mut self, _expr: &'ast syn::ExprUnsafe) {
-        self.count += 1;
+        self.add_dep("unsafe { ... }");
     }
 }

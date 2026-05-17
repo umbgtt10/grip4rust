@@ -108,9 +108,9 @@ impl Collector {
             VisibilityLevel::Pub | VisibilityLevel::PubCrate
         );
         let is_pure = self.is_probably_pure(item_fn);
-        let hidden_deps = self.count_hidden_deps_in_block(&item_fn.block);
+        let finder = self.count_hidden_deps_in_block(&item_fn.block);
         let has_trait_seam = false;
-        let contr = crate::contribution_schedule::contribution(is_pure, has_trait_seam, hidden_deps);
+        let contr = crate::contribution_schedule::contribution(is_pure, has_trait_seam, finder.weight);
 
         self.counts.total_functions += 1;
         self.counts.total_items += 1;
@@ -138,8 +138,10 @@ impl Collector {
             file: self.current_file.clone(),
             is_pure,
             is_public: is_pub,
-            hidden_deps,
+            hidden_deps: finder.count,
             has_trait_seam,
+            dep_weight: finder.weight,
+            hidden_dep_labels: finder.labels,
         });
     }
 
@@ -207,9 +209,9 @@ impl Collector {
                 let is_pure = !self.is_impl_method_impure(method);
                 let self_ty_name = self::self_ty_name(&item_impl.self_ty);
                 let concrete_fields = self.struct_concrete_fields.get(&self_ty_name).cloned().unwrap_or_default();
-                let hidden_deps = self.count_hidden_deps_in_impl_method(method, concrete_fields);
+                let finder = self.count_hidden_deps_in_impl_method(method, concrete_fields);
                 let has_trait_seam = is_trait_impl;
-                let contr = crate::contribution_schedule::contribution(is_pure, has_trait_seam, hidden_deps);
+                let contr = crate::contribution_schedule::contribution(is_pure, has_trait_seam, finder.weight);
 
                 self.counts.total_functions += 1;
                 self.counts.total_contribution += contr;
@@ -242,8 +244,10 @@ impl Collector {
                     file: self.current_file.clone(),
                     is_pure,
                     is_public: is_pub,
-                    hidden_deps,
+                    hidden_deps: finder.count,
                     has_trait_seam,
+                    dep_weight: finder.weight,
+                    hidden_dep_labels: finder.labels,
                 });
             }
         }
@@ -353,17 +357,17 @@ impl Collector {
         finder.found
     }
 
-    fn count_hidden_deps_in_block(&self, block: &syn::Block) -> usize {
+    fn count_hidden_deps_in_block(&self, block: &syn::Block) -> crate::hidden_dep_finder::HiddenDepFinder {
         let mut finder = crate::hidden_dep_finder::HiddenDepFinder::new();
         finder.visit_block(block);
-        finder.count
+        finder
     }
 
-    fn count_hidden_deps_in_impl_method(&self, method: &syn::ImplItemFn, concrete_fields: Vec<String>) -> usize {
+    fn count_hidden_deps_in_impl_method(&self, method: &syn::ImplItemFn, concrete_fields: Vec<String>) -> crate::hidden_dep_finder::HiddenDepFinder {
         let mut finder = crate::hidden_dep_finder::HiddenDepFinder::new();
         finder.set_concrete_fields(concrete_fields);
         finder.visit_block(&method.block);
-        finder.count
+        finder
     }
 }
 

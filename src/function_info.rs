@@ -12,4 +12,6 @@ pub struct FunctionInfo {
     pub is_public: bool,
     pub hidden_deps: usize,
     pub has_trait_seam: bool,
+    pub dep_weight: f64,
+    pub hidden_dep_labels: Vec<String>,
 }
