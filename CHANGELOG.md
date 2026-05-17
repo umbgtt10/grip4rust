@@ -19,8 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `avg_contribution` and `clean_fn_ratio` in ModuleStats and OverallStats
 - Updated grip formula: `(pure * 0.30 + public * 0.20 + trait * 0.25 + avg_contribution * 0.25) * 100`
 - `--verbose` flag with per-function detail table (hidden deps, seam status, contribution)
-- Three fixture crates: `dep_clean` (all clean), `dep_mixed` (all 8 cases),
-  `dep_monolith` (5 case-8 functions)
+- Four fixture crates: `dep_clean` (all clean), `dep_mixed` (all 8 cases),
+  `dep_monolith` (5 case-8 functions), `dep_injected` (trait-injected, zero hidden deps)
 
 ### Changed
 - `FunctionInfo` now tracks `hidden_deps` and `has_trait_seam`
