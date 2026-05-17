@@ -3,7 +3,7 @@
 **Crate:** `cargo-grip`  
 **License:** MIT  
 **Last updated:** 2026-05-10  
-**Current status:** Phase 0 — ✅ Complete (v0.1.1 published)  
+**Current status:** Phase 2 — ✅ Complete (v0.4.0 published)
 
 ---
 
@@ -348,7 +348,7 @@ grip = (pure * 0.30 + public * 0.20 + trait * 0.25 + avg_contribution * 0.25) * 
 **Status:** Planned  
 **Target:** 4–6 hours  
 **Depends on:** Phase 2 complete, `braintax` v0.x JSON output stable  
-**Deliverable:** `grip` v0.4.0 on crates.io  
+**Deliverable:** `grip` v0.5.0 on crates.io  
 
 **The question Phase 3 answers:**
 
@@ -379,7 +379,7 @@ engineers and legible to managers.
 ### Output addition
 
 ```
-grip v0.4.0 — etheram-ibft — Testability Index
+grip v0.5.0 — etheram-ibft — Testability Index
 ══════════════════════════════════════════════════════
 
 Overall TI:   1.34  ✅
@@ -401,7 +401,7 @@ Ideal (protect these):
 - Danger zone list contains at least one function in `etheram-ibft` — known to exist
 - Ideal list contains at least one function in `etheram-ibft` — known to exist
 - TI values are stable across two consecutive runs on the same codebase
-- Published on crates.io as `grip` v0.4.0
+- Published on crates.io as `grip` v0.5.0
 
 ---
 
@@ -507,9 +507,9 @@ an informational note. Compatible with GitHub Code Scanning, VS Code, and Zed.
 | Phase | Deliverable | Key addition | Target | Status |
 |---|---|---|---|---|
 | 0 | v0.1.1 | Public surface + pure function ratio | 2 hours | ✅ Complete |
-| 1 | v0.2.0 | Trait boundary ratio | 4–6 hours | Planned |
-| 2 | v0.3.0 | Hidden dependency detection | 6–8 hours | Planned |
-| 3 | v0.4.0 | Testability Index (`grip / braintax`) | 4–6 hours | Planned |
+| 1 | v0.2.0 | Trait boundary ratio | 4–6 hours | ✅ Complete |
+| 2 | v0.3.0 | Hidden dependency detection | 6–8 hours | ✅ Complete |
+| 3 | v0.5.0 | Testability Index (`grip / braintax`) | 4–6 hours | Planned |
 | 4 | v1.0.0 | Git history, QI trend, cost projection | 8–12 hours | Planned |
 
 ---

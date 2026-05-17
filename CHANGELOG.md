@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] — 2026-05-08
+
+### Added
+- Weighted hidden dependency contributions: each dep has a weight (0.2–0.6)
+  instead of binary count. `dep_weight >= 1.0` → zero contribution.
+- Dependency labels in `--verbose` output: shows each hidden dep source
+  (e.g. `[Database::new, println]`) alongside per-function detail.
+- Continuous contribution formula: `contr = base × (1.0 − dep_weight)`
+  — smooth gradient instead of binary 0/1 dep tiers.
+- `dep_injected` fixture: gold standard with all deps behind `Box<dyn Trait>`.
+- Cross-fixture comparison test: verifies injected (≥70) ≫ monolith (<50).
+
+### Changed
+- `contribution_schedule::contribution()` takes `dep_weight: f64` not
+  `hidden_deps: usize`. Same call signature, different semantics.
+- `FunctionInfo` has `dep_weight: f64` and `hidden_dep_labels: Vec<String>`.
+- Verbose output shows labels in `[brackets]` after contribution.
+
 ## [0.3.0] — 2026-05-08
 
 ### Added
@@ -136,6 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hello-world binary with cargo subcommand support
 - `Cargo.toml` metadata, MIT license, README placeholder
 
+[0.4.0]: https://github.com/umbgtt10/grip4rust/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/umbgtt10/grip4rust/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/umbgtt10/grip4rust/compare/v0.1.4...v0.2.0
 [Unreleased]: https://github.com/umbgtt10/grip4rust/compare/v0.2.0...HEAD
