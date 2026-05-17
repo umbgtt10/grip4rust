@@ -366,7 +366,7 @@ impl Wrapper {
 }
 
 #[test]
-fn hidden_dep_domain_type_is_detected() {
+fn hidden_dep_constructor_new_not_flagged() {
     // Arrange
     let source = r#"
 struct Service;
@@ -381,7 +381,26 @@ impl Service {
     let (counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 1, "MyDatabase::new should be a hidden dep");
+    assert_eq!(fns[0].hidden_deps, 0, "MyDatabase::new is data creation, not a hidden dep");
+}
+
+#[test]
+fn hidden_dep_behavioral_method_is_flagged() {
+    // Arrange
+    let source = r#"
+struct Service;
+impl Service {
+    pub fn process() { MyDatabase::query("SELECT 1"); }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(fns[0].hidden_deps, 1, "MyDatabase::query should be a hidden dep");
 }
 
 #[test]
