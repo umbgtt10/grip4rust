@@ -1,10 +1,11 @@
-# Grip — Copilot Instructions
+# Grip
 
 ## Meaning
 
-`Grip` is self-contained.
+`grip` is a cargo subcommand that measures the testability of Rust code — a composite
+score across purity, public surface, trait seams, and hidden dependencies.
 
-Do not assume or rely on any other sibling repository or crate.
+It is self-contained.
 
 ## Boundary Rule
 
@@ -26,7 +27,9 @@ Run gates:
 `powershell -File scripts\run_stage_1.ps1`
 `powershell -File scripts\run_stage_2.ps1`
 
-### Orthogonality, trait surface and cognitive complexity
+If either gate is not green, the work is not complete.
+
+## Orthogonality, trait surface and cognitive complexity
 
 **When changing productive code, always maximize orthogonality and testable surface through traits, and minimize cognitive complexity.**
 
@@ -41,12 +44,12 @@ Specifically:
 - ALL dependencies are injected through the SINGLE constructor and stored in the struct
 - apply the same split recursively to nested dependencies: trait first, state/data model second, concrete implementation third
 
-### User coding standards
+## User coding standards
 
 - one struct per file
 - no unnecessary comments in code
 - unit tests are not allowed. Only integration tests are
-- consolidate scattered functions inside structs as appropriate- 
+- consolidate scattered functions inside structs as appropriate
 - no `&mut` input parameters; prefer return values
 - only use `pub mod` in `mod.rs` and `lib.rs`
 - split test files so there is one test file per source file, named `<source file name>_tests.rs`

@@ -171,8 +171,7 @@ This catches any concrete dependency regardless of crate — `StripeGateway`, `T
 | **0** | Pure function ratio, public surface | v0.1.x | ✅ Complete |
 | **1** | Trait boundary ratio (seams), foreign trait exclusion | v0.2.0 | ✅ Complete |
 | **2** | Hidden dependency detection, contribution matrix, `--verbose` | v0.3.0 | ✅ Complete |
-| **3** | Testability Index (`grip / braintax`) | v0.4.0 | 🔜 Planned |
-| **4** | Git history tracking + Quality Index trend | v1.0.0 | 🔜 Planned |
+| **3** | Git history tracking + Quality Index trend | v1.0.0 | 🔜 Planned |
 
 ---
 
