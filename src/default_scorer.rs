@@ -34,7 +34,7 @@ impl Scorer for DefaultScorer {
         let trait_ratio = if total_impure > 0 {
             counts.local_trait_impure as f64 / total_impure as f64
         } else {
-            0.0
+            1.0
         };
         let avg_contribution = if counts.total_functions > 0 {
             counts.total_contribution / counts.total_functions as f64

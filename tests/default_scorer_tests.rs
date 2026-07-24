@@ -48,6 +48,7 @@ fn zero_grip() {
         pure_functions: 0,
         total_items: 3,
         public_items: 0,
+        inherent_impure: 1,
         ..Default::default()
     };
 
@@ -130,8 +131,8 @@ fn module_stats_sorted() {
     // Assert
     assert_eq!(stats.len(), 1);
     assert_eq!(stats[0].path, "alpha");
-    assert_eq!(stats[0].grip_score, Some(50));
-    assert_eq!(stats[0].trait_ratio, 0.0);
+    assert_eq!(stats[0].grip_score, Some(75));
+    assert_eq!(stats[0].trait_ratio, 1.0);
     assert_eq!(stats[0].avg_contribution, 0.0);
     assert_eq!(stats[0].clean_fn_ratio, 0.0);
 }

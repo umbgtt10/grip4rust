@@ -127,11 +127,19 @@ impl<'ast> Visit<'ast> for Collector {
     fn visit_item(&mut self, item: &'ast Item) {
         match item {
             Item::Fn(item_fn) if !self.has_test_attr(&item_fn.attrs) => self.visit_fn(item_fn),
-            Item::Struct(item_struct) => self.visit_struct(item_struct),
-            Item::Trait(item_trait) => self.visit_trait(item_trait),
-            Item::Enum(item_enum) => self.visit_enum(item_enum),
+            Item::Struct(item_struct) if !self.has_test_attr(&item_struct.attrs) => {
+                self.visit_struct(item_struct);
+            }
+            Item::Trait(item_trait) if !self.has_test_attr(&item_trait.attrs) => {
+                self.visit_trait(item_trait);
+            }
+            Item::Enum(item_enum) if !self.has_test_attr(&item_enum.attrs) => {
+                self.visit_enum(item_enum);
+            }
             Item::Mod(item_mod) if !self.has_test_attr(&item_mod.attrs) => self.visit_mod(item_mod),
-            Item::Impl(item_impl) => self.visit_impl(item_impl),
+            Item::Impl(item_impl) if !self.has_test_attr(&item_impl.attrs) => {
+                self.visit_impl(item_impl);
+            }
             _ => {}
         }
     }

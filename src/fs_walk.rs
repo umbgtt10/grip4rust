@@ -45,17 +45,18 @@ impl Walk for FsWalk {
 
 impl FsWalk {
     fn is_excluded(&self, path: &Path) -> bool {
-        let normalized = path.to_string_lossy().replace('\\', "/");
-        if normalized.contains("/target/") || normalized.contains("/.git/") {
+        if path.file_name().and_then(|n| n.to_str()) == Some("build.rs") {
             return true;
         }
         let relative = match path.strip_prefix(&self.root) {
-            Ok(r) => r.to_string_lossy().replace('\\', "/"),
+            Ok(r) => r,
             Err(_) => return false,
         };
-        relative.starts_with("tests/")
-            || relative.starts_with("examples/")
-            || relative.starts_with("benches/")
-            || relative == "build.rs"
+        relative.components().any(|c| {
+            matches!(
+                c.as_os_str().to_str(),
+                Some("target" | ".git" | "tests" | "examples" | "benches")
+            )
+        })
     }
 }

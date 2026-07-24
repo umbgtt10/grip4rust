@@ -8,7 +8,8 @@ use std::path::PathBuf;
 use clap::Parser;
 
 #[derive(Debug, Clone, Parser)]
-#[command(name = "cargo-grip4rust", version = "0.4.0")]
+#[command(name = "cargo-grip4rust")]
+#[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "Measure Rust testability")]
 pub struct Args {
     #[arg(default_value = ".")]
