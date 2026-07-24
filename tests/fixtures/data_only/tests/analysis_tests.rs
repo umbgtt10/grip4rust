@@ -36,7 +36,7 @@ fn analyze() -> serde_json::Value {
     let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("tests")
         .join("fixtures")
-        .join("dep_mixed");
+        .join("data_only");
     let config = Config {
         path: fixture_path,
         json: true,
@@ -58,43 +58,36 @@ fn analyze() -> serde_json::Value {
 }
 
 #[test]
-fn mixed_has_all_eight_cases() {
+fn analyze_zero_function_module_has_null_score() {
     // Arrange & Act
     let report = analyze();
-    let functions = report["functions"].as_array().unwrap();
 
     // Assert
-    assert_eq!(functions.len(), 8, "should have 8 functions (1 per case)");
+    assert!(report["overall"]["grip_score"].is_null());
 }
 
 #[test]
-fn mixed_has_clean_and_dirty_functions() {
+fn analyze_zero_function_module_is_not_an_offender() {
     // Arrange & Act
     let report = analyze();
-    let overall = &report["overall"];
-    let avg = overall["avg_contribution"].as_f64().unwrap();
+    let offenders = report["offenders"].as_array().unwrap();
 
     // Assert
-    assert!(avg > 0.0, "avg contribution should be > 0");
     assert!(
-        avg < 1.0,
-        "avg contribution should be < 1.0 (mix of clean and dirty)"
+        offenders.is_empty(),
+        "zero-function module should never be flagged as an offender, got {offenders:?}"
     );
 }
 
 #[test]
-fn mixed_hidden_deps_count_correct() {
+fn analyze_zero_function_module_still_reports_public_items() {
     // Arrange & Act
     let report = analyze();
-    let functions = report["functions"].as_array().unwrap();
+    let public_items = report["overall"]["public_items"].as_u64().unwrap();
 
     // Assert
-    let mut total_deps = 0u64;
-    for f in functions {
-        total_deps += f["hidden_deps"].as_u64().unwrap();
-    }
     assert!(
-        total_deps >= 4,
-        "should have at least 4 hidden deps across all functions"
+        public_items > 0,
+        "public struct/enum items should still be counted even with no functions"
     );
 }

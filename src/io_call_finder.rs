@@ -5,8 +5,16 @@
 use syn::visit::Visit;
 
 const IO_METHOD_NAMES: &[&str] = &[
-    "connect", "send_to", "recv_from", "write_all", "read_to_string",
-    "flush", "open", "create", "bind", "accept",
+    "connect",
+    "send_to",
+    "recv_from",
+    "write_all",
+    "read_to_string",
+    "flush",
+    "open",
+    "create",
+    "bind",
+    "accept",
 ];
 
 fn is_io_method(name: &str) -> bool {
@@ -38,7 +46,11 @@ impl<'ast> Visit<'ast> for IoCallFinder {
                     let flagged = if segments.len() >= 2 {
                         matches!(
                             segments[0].as_str(),
-                            "fs" | "net" | "io" | "TcpStream" | "UdpSocket" | "File"
+                            "fs" | "net"
+                                | "io"
+                                | "TcpStream"
+                                | "UdpSocket"
+                                | "File"
                                 | "OpenOptions"
                         )
                     } else {

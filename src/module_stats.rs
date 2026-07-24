@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ModuleStats {
     pub path: String,
-    pub grip_score: u32,
+    pub grip_score: Option<u32>,
     pub pure_ratio: f64,
     pub public_items: usize,
     pub total_functions: usize,

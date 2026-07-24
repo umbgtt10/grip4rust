@@ -74,7 +74,10 @@ fn clean_module_has_high_contribution() {
     let avg = report["overall"]["avg_contribution"].as_f64().unwrap();
 
     // Assert
-    assert!(avg >= 0.75, "expected high avg contribution >= 0.75, got {avg}");
+    assert!(
+        avg >= 0.75,
+        "expected high avg contribution >= 0.75, got {avg}"
+    );
 }
 
 #[test]

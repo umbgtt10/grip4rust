@@ -63,7 +63,10 @@ fn overall_score_is_reasonable() {
     let overall = &report["overall"];
     let score = overall["grip_score"].as_u64().unwrap();
     assert!(score > 0, "grip score should be positive, got {score}");
-    assert!(score <= 100, "grip score should not exceed 100, got {score}");
+    assert!(
+        score <= 100,
+        "grip score should not exceed 100, got {score}"
+    );
 }
 
 #[test]
@@ -81,7 +84,10 @@ fn overall_trait_ratio_is_below_one() {
     let report = analyze();
     let overall = &report["overall"];
     let ratio = overall["trait_ratio"].as_f64().unwrap();
-    assert!(ratio < 1.0, "machinery's impure inherent methods should drag trait ratio below 1.0, got {ratio}");
+    assert!(
+        ratio < 1.0,
+        "machinery's impure inherent methods should drag trait ratio below 1.0, got {ratio}"
+    );
 }
 
 #[test]

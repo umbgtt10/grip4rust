@@ -8,7 +8,7 @@ use grip::overall_stats::OverallStats;
 fn overall_stats_serializes_to_json() {
     // Arrange
     let stats = OverallStats {
-        grip_score: 80,
+        grip_score: Some(80),
         public_items: 10,
         total_functions: 20,
         pure_functions: 15,
@@ -38,6 +38,6 @@ fn overall_stats_deserializes_from_json() {
     let stats: OverallStats = serde_json::from_str(json).unwrap();
 
     // Assert
-    assert_eq!(stats.grip_score, 60);
+    assert_eq!(stats.grip_score, Some(60));
     assert_eq!(stats.total_functions, 10);
 }

@@ -42,15 +42,52 @@ fn is_trait_object_type(ty: &syn::Type) -> bool {
 }
 
 const KNOWN_FOREIGN_TRAITS: &[&str] = &[
-    "Display", "Debug", "Clone", "Default", "PartialEq", "Eq",
-    "PartialOrd", "Ord", "Hash", "Into", "From", "TryFrom",
-    "Drop", "Deref", "DerefMut", "Index", "IndexMut",
-    "Add", "Sub", "Mul", "Div", "Rem", "Neg", "Not",
-    "Fn", "FnMut", "FnOnce", "Send", "Sync", "Sized",
-    "ToString", "AsRef", "AsMut", "Borrow", "BorrowMut",
-    "Error", "Read", "Write", "Seek", "BufRead",
-    "Iterator", "IntoIterator", "Future", "IntoFuture",
-    "Serialize", "Deserialize",
+    "Display",
+    "Debug",
+    "Clone",
+    "Default",
+    "PartialEq",
+    "Eq",
+    "PartialOrd",
+    "Ord",
+    "Hash",
+    "Into",
+    "From",
+    "TryFrom",
+    "Drop",
+    "Deref",
+    "DerefMut",
+    "Index",
+    "IndexMut",
+    "Add",
+    "Sub",
+    "Mul",
+    "Div",
+    "Rem",
+    "Neg",
+    "Not",
+    "Fn",
+    "FnMut",
+    "FnOnce",
+    "Send",
+    "Sync",
+    "Sized",
+    "ToString",
+    "AsRef",
+    "AsMut",
+    "Borrow",
+    "BorrowMut",
+    "Error",
+    "Read",
+    "Write",
+    "Seek",
+    "BufRead",
+    "Iterator",
+    "IntoIterator",
+    "Future",
+    "IntoFuture",
+    "Serialize",
+    "Deserialize",
 ];
 
 #[derive(Debug)]
@@ -110,7 +147,8 @@ impl Collector {
         let is_pure = self.is_probably_pure(item_fn);
         let finder = self.count_hidden_deps_in_block(&item_fn.block);
         let has_trait_seam = false;
-        let contr = crate::contribution_schedule::contribution(is_pure, has_trait_seam, finder.weight);
+        let contr =
+            crate::contribution_schedule::contribution(is_pure, has_trait_seam, finder.weight);
 
         self.counts.total_functions += 1;
         self.counts.total_items += 1;
@@ -196,7 +234,11 @@ impl Collector {
     }
 
     fn visit_impl(&mut self, item_impl: &syn::ItemImpl) {
-        if item_impl.trait_.as_ref().is_some_and(|(_, p, _)| self.is_foreign_trait(p)) {
+        if item_impl
+            .trait_
+            .as_ref()
+            .is_some_and(|(_, p, _)| self.is_foreign_trait(p))
+        {
             return;
         }
         let is_trait_impl = item_impl.trait_.is_some();
@@ -208,10 +250,18 @@ impl Collector {
                 }
                 let is_pure = !self.is_impl_method_impure(method);
                 let self_ty_name = self::self_ty_name(&item_impl.self_ty);
-                let concrete_fields = self.struct_concrete_fields.get(&self_ty_name).cloned().unwrap_or_default();
+                let concrete_fields = self
+                    .struct_concrete_fields
+                    .get(&self_ty_name)
+                    .cloned()
+                    .unwrap_or_default();
                 let finder = self.count_hidden_deps_in_impl_method(method, concrete_fields);
                 let has_trait_seam = is_trait_impl;
-                let contr = crate::contribution_schedule::contribution(is_pure, has_trait_seam, finder.weight);
+                let contr = crate::contribution_schedule::contribution(
+                    is_pure,
+                    has_trait_seam,
+                    finder.weight,
+                );
 
                 self.counts.total_functions += 1;
                 self.counts.total_contribution += contr;
@@ -281,8 +331,6 @@ impl Collector {
         }
         false
     }
-
-
 
     fn classify_visibility(&self, vis: &Visibility) -> VisibilityLevel {
         match vis {
@@ -357,13 +405,20 @@ impl Collector {
         finder.found
     }
 
-    fn count_hidden_deps_in_block(&self, block: &syn::Block) -> crate::hidden_dep_finder::HiddenDepFinder {
+    fn count_hidden_deps_in_block(
+        &self,
+        block: &syn::Block,
+    ) -> crate::hidden_dep_finder::HiddenDepFinder {
         let mut finder = crate::hidden_dep_finder::HiddenDepFinder::new();
         finder.visit_block(block);
         finder
     }
 
-    fn count_hidden_deps_in_impl_method(&self, method: &syn::ImplItemFn, concrete_fields: Vec<String>) -> crate::hidden_dep_finder::HiddenDepFinder {
+    fn count_hidden_deps_in_impl_method(
+        &self,
+        method: &syn::ImplItemFn,
+        concrete_fields: Vec<String>,
+    ) -> crate::hidden_dep_finder::HiddenDepFinder {
         let mut finder = crate::hidden_dep_finder::HiddenDepFinder::new();
         finder.set_concrete_fields(concrete_fields);
         finder.visit_block(&method.block);

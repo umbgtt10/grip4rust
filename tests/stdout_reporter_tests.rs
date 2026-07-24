@@ -13,7 +13,7 @@ fn dummy_report() -> GripReport {
         version: "0.1.0".to_string(),
         target: "my-crate".to_string(),
         overall: OverallStats {
-            grip_score: 71,
+            grip_score: Some(71),
             public_items: 10,
             total_functions: 20,
             pure_functions: 12,
@@ -28,7 +28,7 @@ fn dummy_report() -> GripReport {
         modules: vec![
             ModuleStats {
                 path: "alpha".to_string(),
-                grip_score: 80,
+                grip_score: Some(80),
                 pure_ratio: 0.8,
                 public_items: 5,
                 total_functions: 10,
@@ -42,7 +42,7 @@ fn dummy_report() -> GripReport {
             },
             ModuleStats {
                 path: "beta".to_string(),
-                grip_score: 50,
+                grip_score: Some(50),
                 pure_ratio: 0.4,
                 public_items: 5,
                 total_functions: 10,
@@ -127,7 +127,7 @@ fn human_output_shows_offenders_section() {
     let report = GripReport {
         modules: vec![ModuleStats {
             path: "bad_mod".to_string(),
-            grip_score: 30,
+            grip_score: Some(30),
             pure_ratio: 0.3,
             public_items: 1,
             total_functions: 5,

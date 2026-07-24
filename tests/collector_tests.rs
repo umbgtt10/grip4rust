@@ -262,7 +262,10 @@ impl Helper for Impl {
     let (counts, _fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(counts.local_trait_methods, 1, "test_helper should be skipped");
+    assert_eq!(
+        counts.local_trait_methods, 1,
+        "test_helper should be skipped"
+    );
     assert_eq!(counts.total_functions, 1, "only do_thing should be counted");
 }
 
@@ -302,10 +305,13 @@ impl Handler {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 1, "TcpStream::connect should be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps, 1,
+        "TcpStream::connect should be a hidden dep"
+    );
 }
 
 #[test]
@@ -321,10 +327,13 @@ impl Builder {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 0, "String::new should not be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "String::new should not be a hidden dep"
+    );
 }
 
 #[test]
@@ -340,7 +349,7 @@ impl Collector {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 0, "Vec::new should not be a hidden dep");
@@ -359,7 +368,7 @@ impl Wrapper {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 0, "Box::new should not be a hidden dep");
@@ -378,10 +387,13 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 1, "MyDatabase::new constructs a concrete dependency");
+    assert_eq!(
+        fns[0].hidden_deps, 1,
+        "MyDatabase::new constructs a concrete dependency"
+    );
 }
 
 #[test]
@@ -397,10 +409,13 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 1, "MyDatabase::query should be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps, 1,
+        "MyDatabase::query should be a hidden dep"
+    );
 }
 
 #[test]
@@ -416,10 +431,13 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 1, "StripeGateway::charge should be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps, 1,
+        "StripeGateway::charge should be a hidden dep"
+    );
 }
 
 #[test]
@@ -436,10 +454,13 @@ impl Factory {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 0, "Self::new should not be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "Self::new should not be a hidden dep"
+    );
 }
 
 #[test]
@@ -455,7 +476,7 @@ impl Logger {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 1, "println! should be a hidden dep");
@@ -478,10 +499,13 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 3, "should detect all 3 concrete type calls");
+    assert_eq!(
+        fns[0].hidden_deps, 3,
+        "should detect all 3 concrete type calls"
+    );
 }
 
 #[test]
@@ -497,10 +521,13 @@ impl Calc {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 0, "pure function should have 0 hidden deps");
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "pure function should have 0 hidden deps"
+    );
 }
 
 #[test]
@@ -518,10 +545,13 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 0, "self.db on trait object should not be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "self.db on trait object should not be a hidden dep"
+    );
 }
 
 #[test]
@@ -546,11 +576,17 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[1].hidden_deps, 1, "self.db on concrete DataStore should be flagged");
-    assert_eq!(fns[0].hidden_deps, 0, "DataStore::query is a free impl method");
+    assert_eq!(
+        fns[1].hidden_deps, 1,
+        "self.db on concrete DataStore should be flagged"
+    );
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "DataStore::query is a free impl method"
+    );
 }
 
 #[test]
@@ -568,10 +604,13 @@ impl Service<'_> {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 0, "self.handler on &dyn Handler should not be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "self.handler on &dyn Handler should not be a hidden dep"
+    );
 }
 
 #[test]
@@ -582,10 +621,13 @@ fn hidden_dep_free_function_is_detected() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 1, "free function with concrete call should be flagged");
+    assert_eq!(
+        fns[0].hidden_deps, 1,
+        "free function with concrete call should be flagged"
+    );
 }
 
 #[test]
@@ -596,10 +638,13 @@ fn hidden_dep_free_function_clean_not_flagged() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 0, "pure free function should have 0 hidden deps");
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "pure free function should have 0 hidden deps"
+    );
 }
 
 #[test]
@@ -615,7 +660,7 @@ impl Logger {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 1, "eprintln! should be a hidden dep");
@@ -636,10 +681,13 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 0, "self.db on Arc<dyn Database> should not be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "self.db on Arc<dyn Database> should not be a hidden dep"
+    );
 }
 
 #[test]
@@ -650,10 +698,13 @@ fn hidden_dep_input_argument_not_counted() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 0, "db.query on input argument should not be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "db.query on input argument should not be a hidden dep"
+    );
 }
 
 #[test]
@@ -664,7 +715,7 @@ fn hidden_dep_print_macro_is_detected() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 1, "print! should be a hidden dep");
@@ -678,10 +729,13 @@ fn hidden_dep_thread_sleep_is_detected() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 1, "thread::sleep should be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps, 1,
+        "thread::sleep should be a hidden dep"
+    );
 }
 
 #[test]
@@ -693,13 +747,27 @@ fn heavy() { Database::new(\"prod\"); StripeGateway::charge(100.0); }\n";
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    let light_contr = grip::contribution_schedule::contribution(fns[0].is_pure, fns[0].has_trait_seam, fns[0].dep_weight);
-    let heavy_contr = grip::contribution_schedule::contribution(fns[1].is_pure, fns[1].has_trait_seam, fns[1].dep_weight);
-    assert!(light_contr > 0.0, "light deps should have positive contribution, got {light_contr}");
-    assert_eq!(heavy_contr, 0.0, "heavy deps should have zero contribution, got {heavy_contr}");
+    let light_contr = grip::contribution_schedule::contribution(
+        fns[0].is_pure,
+        fns[0].has_trait_seam,
+        fns[0].dep_weight,
+    );
+    let heavy_contr = grip::contribution_schedule::contribution(
+        fns[1].is_pure,
+        fns[1].has_trait_seam,
+        fns[1].dep_weight,
+    );
+    assert!(
+        light_contr > 0.0,
+        "light deps should have positive contribution, got {light_contr}"
+    );
+    assert_eq!(
+        heavy_contr, 0.0,
+        "heavy deps should have zero contribution, got {heavy_contr}"
+    );
 }
 
 #[test]
@@ -710,9 +778,17 @@ fn hidden_dep_labels_are_recorded() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file);
+    let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    assert!(fns[0].hidden_dep_labels.contains(&"Database::new".to_string()), "should contain Database::new label");
-    assert!(fns[0].hidden_dep_labels.contains(&"println".to_string()), "should contain println label");
+    assert!(
+        fns[0]
+            .hidden_dep_labels
+            .contains(&"Database::new".to_string()),
+        "should contain Database::new label"
+    );
+    assert!(
+        fns[0].hidden_dep_labels.contains(&"println".to_string()),
+        "should contain println label"
+    );
 }

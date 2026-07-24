@@ -83,8 +83,16 @@ fn injected_outperforms_monolith() {
     ]);
 
     // Assert
-    assert_eq!(clean.unwrap(), ExitCode::SUCCESS, "injected should score >= 70");
-    assert_ne!(mono.unwrap(), ExitCode::SUCCESS, "monolith should score < 50");
+    assert_eq!(
+        clean.unwrap(),
+        ExitCode::SUCCESS,
+        "injected should score >= 70"
+    );
+    assert_ne!(
+        mono.unwrap(),
+        ExitCode::SUCCESS,
+        "monolith should score < 50"
+    );
 }
 
 #[test]

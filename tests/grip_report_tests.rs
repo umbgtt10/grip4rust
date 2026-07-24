@@ -10,7 +10,7 @@ fn sample() -> GripReport {
         version: "0.1.0".to_string(),
         target: "test".to_string(),
         overall: OverallStats {
-            grip_score: 50,
+            grip_score: Some(50),
             public_items: 1,
             total_functions: 2,
             pure_functions: 1,
@@ -53,5 +53,5 @@ fn report_deserializes_from_json() {
 
     // Assert
     assert_eq!(parsed.version, "0.1.0");
-    assert_eq!(parsed.overall.grip_score, 50);
+    assert_eq!(parsed.overall.grip_score, Some(50));
 }

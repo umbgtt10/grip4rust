@@ -55,10 +55,11 @@ impl StdoutReporter {
         ));
 
         let overall = &report.overall;
-        lines.push(format!(
-            "Overall grip score:    {} / 100",
-            overall.grip_score
-        ));
+        let overall_grip_display = match overall.grip_score {
+            Some(score) => format!("{score} / 100"),
+            None => "N/A    (no functions)".to_string(),
+        };
+        lines.push(format!("Overall grip score:    {overall_grip_display}"));
         lines.push(format!(
             "Public surface:        {} items",
             overall.public_items
@@ -93,7 +94,8 @@ impl StdoutReporter {
 
         lines.push(format!(
             "Hidden deps:           avg {:.2}  — {:.1}% clean  ({:.1}% avg contribution)",
-            overall.total_functions as f64 - overall.avg_contribution * overall.total_functions as f64,
+            overall.total_functions as f64
+                - overall.avg_contribution * overall.total_functions as f64,
             overall.clean_fn_ratio * 100.0,
             overall.avg_contribution * 100.0,
         ));
@@ -127,7 +129,11 @@ impl StdoutReporter {
                     lines.push(format!("\n  {}:", current_file));
                 }
                 let marker = contribution_marker(f.hidden_deps);
-                let contr = crate::contribution_schedule::contribution(f.is_pure, f.has_trait_seam, f.dep_weight);
+                let contr = crate::contribution_schedule::contribution(
+                    f.is_pure,
+                    f.has_trait_seam,
+                    f.dep_weight,
+                );
                 let labels = f.hidden_dep_labels.join(", ");
                 lines.push(format!(
                     "    {:<35}  pure: {:>5}  seam: {:>5}  hidden: {:>2}  contr: {:>5.0}%  [{}]  {}",
@@ -153,10 +159,14 @@ impl StdoutReporter {
         } else {
             format!("{:>5.1}%", module.trait_ratio * 100.0)
         };
+        let grip_display = match module.grip_score {
+            Some(score) => format!("{score:>3}"),
+            None => "N/A".to_string(),
+        };
         format!(
-            "  {:<30}  grip: {:>3}   pure: {:>5.1}%   pub: {:>3}   traits: {}   clean: {:>5.1}%  {}",
+            "  {:<30}  grip: {}   pure: {:>5.1}%   pub: {:>3}   traits: {}   clean: {:>5.1}%  {}",
             module.path,
-            module.grip_score,
+            grip_display,
             module.pure_ratio * 100.0,
             module.public_items,
             traits_display,
@@ -165,13 +175,11 @@ impl StdoutReporter {
         )
     }
 
-    fn module_marker(&self, score: u32) -> &'static str {
-        if score < 40 {
-            "❌"
-        } else if score < 70 {
-            "⚠️"
-        } else {
-            ""
+    fn module_marker(&self, score: Option<u32>) -> &'static str {
+        match score {
+            Some(score) if score < 40 => "❌",
+            Some(score) if score < 70 => "⚠️",
+            _ => "",
         }
     }
 }

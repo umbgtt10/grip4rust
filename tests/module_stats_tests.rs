@@ -9,7 +9,7 @@ fn module_stats_serializes_to_json() {
     // Arrange
     let stats = ModuleStats {
         path: "test".to_string(),
-        grip_score: 42,
+        grip_score: Some(42),
         pure_ratio: 0.5,
         public_items: 3,
         total_functions: 10,
@@ -40,5 +40,5 @@ fn module_stats_deserializes_from_json() {
 
     // Assert
     assert_eq!(stats.path, "mod");
-    assert_eq!(stats.grip_score, 75);
+    assert_eq!(stats.grip_score, Some(75));
 }

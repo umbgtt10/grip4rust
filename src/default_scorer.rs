@@ -19,7 +19,7 @@ impl DefaultScorer {
 }
 
 impl Scorer for DefaultScorer {
-    fn score_counts(&self, counts: &ItemCounts) -> (u32, f64, f64, f64, f64, f64) {
+    fn score_counts(&self, counts: &ItemCounts) -> (Option<u32>, f64, f64, f64, f64, f64) {
         let pure_ratio = if counts.total_functions > 0 {
             counts.pure_functions as f64 / counts.total_functions as f64
         } else {
@@ -46,9 +46,26 @@ impl Scorer for DefaultScorer {
         } else {
             0.0
         };
-        let grip = ((pure_ratio * 0.30 + public_ratio * 0.20 + trait_ratio * 0.25 + avg_contribution * 0.25) * 100.0)
-            .round() as u32;
-        (grip, pure_ratio, public_ratio, trait_ratio, avg_contribution, clean_fn_ratio)
+        let grip_score = if counts.total_functions > 0 {
+            Some(
+                ((pure_ratio * 0.30
+                    + public_ratio * 0.20
+                    + trait_ratio * 0.25
+                    + avg_contribution * 0.25)
+                    * 100.0)
+                    .round() as u32,
+            )
+        } else {
+            None
+        };
+        (
+            grip_score,
+            pure_ratio,
+            public_ratio,
+            trait_ratio,
+            avg_contribution,
+            clean_fn_ratio,
+        )
     }
 
     fn agg_modules(
@@ -71,8 +88,14 @@ impl Scorer for DefaultScorer {
         modules
             .into_iter()
             .map(|(path, counts)| {
-                let (grip_score, pure_ratio, public_ratio, trait_ratio, avg_contribution, clean_fn_ratio) =
-                    self.score_counts(&counts);
+                let (
+                    grip_score,
+                    pure_ratio,
+                    public_ratio,
+                    trait_ratio,
+                    avg_contribution,
+                    clean_fn_ratio,
+                ) = self.score_counts(&counts);
                 ModuleStats {
                     path,
                     grip_score,

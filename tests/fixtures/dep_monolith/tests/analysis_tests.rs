@@ -64,7 +64,10 @@ fn monolith_has_low_score() {
     let score = report["overall"]["grip_score"].as_u64().unwrap();
 
     // Assert
-    assert!(score <= 35, "monolith should have low score <= 35, got {score}");
+    assert!(
+        score <= 35,
+        "monolith should have low score <= 35, got {score}"
+    );
 }
 
 #[test]
@@ -76,7 +79,11 @@ fn monolith_all_functions_have_hidden_deps() {
     // Assert
     for f in functions {
         let deps = f["hidden_deps"].as_u64().unwrap();
-        assert!(deps >= 1, "function {} should have >=1 hidden dep", f["name"]);
+        assert!(
+            deps >= 1,
+            "function {} should have >=1 hidden dep",
+            f["name"]
+        );
     }
 }
 
