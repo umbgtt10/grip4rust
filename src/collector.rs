@@ -239,71 +239,85 @@ impl Collector {
     }
 
     fn visit_impl(&mut self, item_impl: &syn::ItemImpl) {
-        if item_impl
-            .trait_
-            .as_ref()
-            .is_some_and(|(_, p, _)| self.is_foreign_trait(p))
-        {
+        if self.is_foreign_trait_impl(item_impl) {
             return;
         }
         let is_trait_impl = item_impl.trait_.is_some();
+        let self_ty_name = self::self_ty_name(&item_impl.self_ty);
 
         for item in &item_impl.items {
             if let syn::ImplItem::Fn(method) = item {
                 if self.has_test_attr(&method.attrs) {
                     continue;
                 }
-                let is_pure = !self.is_impl_method_impure(method);
-                let self_ty_name = self::self_ty_name(&item_impl.self_ty);
-                let concrete_fields = self
-                    .struct_concrete_fields
-                    .get(&self_ty_name)
-                    .cloned()
-                    .unwrap_or_default();
-                let finder = self.count_hidden_deps_in_impl_method(method, concrete_fields);
-                let has_trait_seam = is_trait_impl;
-                let contr =
-                    self.contribution_schedule
-                        .contribution(is_pure, has_trait_seam, finder.weight);
+                self.visit_impl_method(method, &self_ty_name, is_trait_impl);
+            }
+        }
+    }
 
-                self.counts.total_functions += 1;
-                self.counts.total_contribution += contr;
-                if contr == 1.0 {
-                    self.counts.clean_functions += 1;
-                }
-                if is_pure {
-                    self.counts.pure_functions += 1;
-                }
+    fn is_foreign_trait_impl(&self, item_impl: &syn::ItemImpl) -> bool {
+        item_impl
+            .trait_
+            .as_ref()
+            .is_some_and(|(_, p, _)| self.is_foreign_trait(p))
+    }
 
-                let is_pub = matches!(
-                    self.classify_visibility(&method.vis),
-                    VisibilityLevel::Pub | VisibilityLevel::PubCrate
-                );
+    fn visit_impl_method(
+        &mut self,
+        method: &syn::ImplItemFn,
+        self_ty_name: &str,
+        is_trait_impl: bool,
+    ) {
+        let is_pure = !self.is_impl_method_impure(method);
+        let concrete_fields = self
+            .struct_concrete_fields
+            .get(self_ty_name)
+            .cloned()
+            .unwrap_or_default();
+        let finder = self.count_hidden_deps_in_impl_method(method, concrete_fields);
+        let contr = self
+            .contribution_schedule
+            .contribution(is_pure, is_trait_impl, finder.weight);
 
-                if is_trait_impl {
-                    self.counts.local_trait_methods += 1;
-                    if !is_pure {
-                        self.counts.local_trait_impure += 1;
-                    }
-                } else {
-                    self.counts.inherent_methods += 1;
-                    if !is_pure {
-                        self.counts.inherent_impure += 1;
-                    }
-                }
+        self.counts.total_functions += 1;
+        self.counts.total_contribution += contr;
+        if contr == 1.0 {
+            self.counts.clean_functions += 1;
+        }
+        if is_pure {
+            self.counts.pure_functions += 1;
+        }
+        self.record_impl_method_kind(is_trait_impl, is_pure);
 
-                self.functions.push(FunctionInfo {
-                    name: method.sig.ident.to_string(),
-                    file: self.current_file.clone(),
-                    is_pure,
-                    is_public: is_pub,
-                    hidden_deps: finder.count,
-                    has_trait_seam,
-                    dep_weight: finder.weight,
-                    hidden_dep_labels: finder.labels,
-                    grip_absolute: contr,
-                    grip_normalized: (contr * 100.0).round() as u32,
-                });
+        let is_pub = matches!(
+            self.classify_visibility(&method.vis),
+            VisibilityLevel::Pub | VisibilityLevel::PubCrate
+        );
+
+        self.functions.push(FunctionInfo {
+            name: method.sig.ident.to_string(),
+            file: self.current_file.clone(),
+            is_pure,
+            is_public: is_pub,
+            hidden_deps: finder.count,
+            has_trait_seam: is_trait_impl,
+            dep_weight: finder.weight,
+            hidden_dep_labels: finder.labels,
+            grip_absolute: contr,
+            grip_normalized: (contr * 100.0).round() as u32,
+        });
+    }
+
+    fn record_impl_method_kind(&mut self, is_trait_impl: bool, is_pure: bool) {
+        if is_trait_impl {
+            self.counts.local_trait_methods += 1;
+            if !is_pure {
+                self.counts.local_trait_impure += 1;
+            }
+        } else {
+            self.counts.inherent_methods += 1;
+            if !is_pure {
+                self.counts.inherent_impure += 1;
             }
         }
     }
