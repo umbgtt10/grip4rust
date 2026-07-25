@@ -6,10 +6,12 @@ use std::io::{self, Write};
 
 use anyhow::Result;
 
-use crate::contribution_schedule::ContributionSchedule;
 use crate::grip_report::GripReport;
 use crate::module_stats::ModuleStats;
+use crate::offenders_renderer::OffendersRenderer;
+use crate::overall_summary_renderer::OverallSummaryRenderer;
 use crate::traits::reporter::Reporter;
+use crate::verbose_functions_renderer::VerboseFunctionsRenderer;
 
 #[derive(Debug, Clone)]
 pub struct StdoutReporter {
@@ -43,7 +45,22 @@ impl Reporter for StdoutReporter {
 
 impl StdoutReporter {
     fn render_human(&self, report: &GripReport) -> String {
-        let mut lines = Vec::new();
+        let mut lines = vec![self.render_header(report)];
+
+        lines.extend(OverallSummaryRenderer::new().render(&report.overall));
+
+        lines.push("\nPer module:".to_string());
+        for module in &report.modules {
+            lines.push(self.render_module_line(module));
+        }
+
+        lines.extend(OffendersRenderer::new().render(&report.offenders, report.offender_threshold));
+        lines.extend(VerboseFunctionsRenderer::new(self.verbose).render(&report.functions));
+
+        lines.join("\n")
+    }
+
+    fn render_header(&self, report: &GripReport) -> String {
         let target = &report.target;
         let version = &report.version;
         let header = if self.verbose {
@@ -51,109 +68,7 @@ impl StdoutReporter {
         } else {
             format!("cargo-grip4rust {version} -- {target}")
         };
-        lines.push(format!(
-            "{header}\n══════════════════════════════════════════════════════\n"
-        ));
-
-        let overall = &report.overall;
-        let overall_grip_display = match overall.grip_score {
-            Some(score) => format!("{score} / 100"),
-            None => "N/A    (no functions)".to_string(),
-        };
-        lines.push(format!("Overall grip score:    {overall_grip_display}"));
-        lines.push(format!(
-            "Absolute grip total:   {:.2}",
-            overall.grip_absolute_total
-        ));
-        lines.push(format!(
-            "Public surface:        {} items",
-            overall.public_items
-        ));
-        lines.push(format!(
-            "Total functions:       {}",
-            overall.total_functions
-        ));
-        lines.push(format!(
-            "Probably pure:         {} / {}  ({:.1}%)",
-            overall.pure_functions,
-            overall.total_functions,
-            overall.pure_ratio * 100.0
-        ));
-
-        let total_impl = overall.inherent_methods + overall.local_trait_methods;
-        if total_impl > 0 && overall.trait_ratio == 0.0 {
-            lines.push(format!(
-                "Trait methods:         {} / {} impl methods are trait-bound  (0.0%)",
-                overall.local_trait_methods, total_impl,
-            ));
-        } else if total_impl == 0 {
-            lines.push("Trait methods:         N/A    (no impl methods)".to_string());
-        } else {
-            lines.push(format!(
-                "Trait methods:         {} / {} impl methods are trait-bound  ({:.1}%)",
-                overall.local_trait_methods,
-                total_impl,
-                overall.trait_ratio * 100.0
-            ));
-        }
-
-        lines.push(format!(
-            "Hidden deps:           avg {:.2}  — {:.1}% clean  ({:.1}% avg contribution)",
-            overall.total_functions as f64
-                - overall.avg_contribution * overall.total_functions as f64,
-            overall.clean_fn_ratio * 100.0,
-            overall.avg_contribution * 100.0,
-        ));
-
-        lines.push("\nPer module:".to_string());
-        for module in &report.modules {
-            lines.push(self.render_module_line(module));
-        }
-
-        if !report.offenders.is_empty() {
-            lines.push(format!(
-                "\nOffenders (score < {}):",
-                report.offender_threshold
-            ));
-            for offender in &report.offenders {
-                lines.push(format!(
-                    "  {:<30}  grip: {:>3}  ❌",
-                    offender.path, offender.grip_score,
-                ));
-            }
-        }
-
-        if self.verbose && !report.functions.is_empty() {
-            lines.push("\nPer-function detail:".to_string());
-            let mut sorted = report.functions.clone();
-            sorted.sort_by(|a, b| a.file.cmp(&b.file).then(a.name.cmp(&b.name)));
-            let mut current_file = String::new();
-            for f in &sorted {
-                if f.file != current_file {
-                    current_file = f.file.clone();
-                    lines.push(format!("\n  {}:", current_file));
-                }
-                let marker = contribution_marker(f.hidden_deps);
-                let contr = ContributionSchedule::new().contribution(
-                    f.is_pure,
-                    f.has_trait_seam,
-                    f.dep_weight,
-                );
-                let labels = f.hidden_dep_labels.join(", ");
-                lines.push(format!(
-                    "    {:<35}  pure: {:>5}  seam: {:>5}  hidden: {:>2}  contr: {:>5.0}%  [{}]  {}",
-                    f.name,
-                    if f.is_pure { "yes" } else { "no" },
-                    if f.has_trait_seam { "yes" } else { "no " },
-                    f.hidden_deps,
-                    contr * 100.0,
-                    if labels.is_empty() { "-" } else { &labels },
-                    marker,
-                ));
-            }
-        }
-
-        lines.join("\n")
+        format!("{header}\n══════════════════════════════════════════════════════\n")
     }
 
     fn render_module_line(&self, module: &ModuleStats) -> String {
@@ -186,15 +101,5 @@ impl StdoutReporter {
             Some(score) if score < 70 => "⚠️",
             _ => "",
         }
-    }
-}
-
-fn contribution_marker(hidden_deps: usize) -> &'static str {
-    if hidden_deps == 0 {
-        "✅"
-    } else if hidden_deps == 1 {
-        "⚠️"
-    } else {
-        "❌"
     }
 }

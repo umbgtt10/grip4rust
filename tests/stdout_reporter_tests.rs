@@ -125,6 +125,61 @@ fn json_output_has_version() {
 }
 
 #[test]
+fn human_output_verbose_shows_per_function_detail() {
+    // Arrange
+    let report = GripReport {
+        functions: vec![grip::function_info::FunctionInfo {
+            name: "compute".to_string(),
+            file: "src/lib.rs".to_string(),
+            is_pure: true,
+            is_public: true,
+            hidden_deps: 0,
+            has_trait_seam: false,
+            dep_weight: 0.0,
+            hidden_dep_labels: vec![],
+            grip_absolute: 0.95,
+            grip_normalized: 95,
+        }],
+        ..dummy_report()
+    };
+    let reporter = StdoutReporter::new(false, true);
+
+    // Act
+    let out = reporter.render(&report).unwrap();
+
+    // Assert
+    assert!(out.contains("Per-function detail"));
+    assert!(out.contains("compute"));
+}
+
+#[test]
+fn human_output_non_verbose_hides_per_function_detail() {
+    // Arrange
+    let report = GripReport {
+        functions: vec![grip::function_info::FunctionInfo {
+            name: "compute".to_string(),
+            file: "src/lib.rs".to_string(),
+            is_pure: true,
+            is_public: true,
+            hidden_deps: 0,
+            has_trait_seam: false,
+            dep_weight: 0.0,
+            hidden_dep_labels: vec![],
+            grip_absolute: 0.95,
+            grip_normalized: 95,
+        }],
+        ..dummy_report()
+    };
+    let reporter = reporter(false);
+
+    // Act
+    let out = reporter.render(&report).unwrap();
+
+    // Assert
+    assert!(!out.contains("Per-function detail"));
+}
+
+#[test]
 fn human_output_shows_offenders_section() {
     // Arrange
     let report = GripReport {

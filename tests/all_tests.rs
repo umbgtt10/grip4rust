@@ -17,5 +17,8 @@ mod lib_tests;
 mod main_tests;
 mod module_stats_tests;
 mod offender_tests;
+mod offenders_renderer_tests;
 mod overall_stats_tests;
+mod overall_summary_renderer_tests;
 mod stdout_reporter_tests;
+mod verbose_functions_renderer_tests;
