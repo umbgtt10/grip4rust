@@ -146,48 +146,74 @@ impl<'ast> Visit<'ast> for HiddenDepFinder {
     }
 
     fn visit_expr(&mut self, expr: &'ast syn::Expr) {
+        if self.handle_expr(expr) {
+            syn::visit::visit_expr(self, expr);
+        }
+    }
+
+    fn visit_expr_unsafe(&mut self, _expr: &'ast syn::ExprUnsafe) {
+        self.add_dep("unsafe { ... }");
+    }
+}
+
+impl HiddenDepFinder {
+    /// Returns whether the visitor should still recurse into `expr`'s children.
+    fn handle_expr(&mut self, expr: &syn::Expr) -> bool {
         match expr {
             syn::Expr::Call(expr_call) => {
                 if let syn::Expr::Path(expr_path) = &*expr_call.func {
                     self.check_path(&expr_path.path);
                 }
+                true
             }
-            syn::Expr::MethodCall(expr_method) => {
-                if let syn::Expr::Path(expr_path) = &*expr_method.receiver {
-                    if expr_path.path.segments.len() == 1
-                        && expr_path.path.segments[0].ident == "self"
-                    {
-                        return;
-                    }
-                }
-                if let syn::Expr::Field(expr_field) = &*expr_method.receiver {
-                    if let syn::Expr::Path(expr_path) = &*expr_field.base {
-                        if expr_path.path.segments.len() == 1
-                            && expr_path.path.segments[0].ident == "self"
-                        {
-                            if let syn::Member::Named(ident) = &expr_field.member {
-                                let name = ident.to_string();
-                                if self.concrete_fields.contains(&name) {
-                                    let label = format!("self.{name}.{}", expr_method.method);
-                                    self.add_dep(&label);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            syn::Expr::Macro(expr_macro) => {
-                if is_print_macro(&expr_macro.mac.path) {
-                    self.add_dep(&path_label(&expr_macro.mac.path));
-                    return;
-                }
-            }
-            _ => {}
+            syn::Expr::MethodCall(expr_method) => self.handle_method_call_expr(expr_method),
+            syn::Expr::Macro(expr_macro) => self.handle_macro_expr(expr_macro),
+            _ => true,
         }
-        syn::visit::visit_expr(self, expr);
     }
 
-    fn visit_expr_unsafe(&mut self, _expr: &'ast syn::ExprUnsafe) {
-        self.add_dep("unsafe { ... }");
+    fn handle_method_call_expr(&mut self, expr_method: &syn::ExprMethodCall) -> bool {
+        if Self::is_bare_self(&expr_method.receiver) {
+            return false;
+        }
+        if let Some(name) = Self::concrete_field_name(&expr_method.receiver) {
+            if self.concrete_fields.contains(&name) {
+                let label = format!("self.{name}.{}", expr_method.method);
+                self.add_dep(&label);
+            }
+        }
+        true
+    }
+
+    fn handle_macro_expr(&mut self, expr_macro: &syn::ExprMacro) -> bool {
+        if is_print_macro(&expr_macro.mac.path) {
+            self.add_dep(&path_label(&expr_macro.mac.path));
+            return false;
+        }
+        true
+    }
+
+    fn is_bare_self(receiver: &syn::Expr) -> bool {
+        matches!(
+            receiver,
+            syn::Expr::Path(expr_path)
+                if expr_path.path.segments.len() == 1 && expr_path.path.segments[0].ident == "self"
+        )
+    }
+
+    fn concrete_field_name(receiver: &syn::Expr) -> Option<String> {
+        let syn::Expr::Field(expr_field) = receiver else {
+            return None;
+        };
+        let syn::Expr::Path(expr_path) = &*expr_field.base else {
+            return None;
+        };
+        if expr_path.path.segments.len() != 1 || expr_path.path.segments[0].ident != "self" {
+            return None;
+        }
+        let syn::Member::Named(ident) = &expr_field.member else {
+            return None;
+        };
+        Some(ident.to_string())
     }
 }
