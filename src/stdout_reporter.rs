@@ -6,6 +6,7 @@ use std::io::{self, Write};
 
 use anyhow::Result;
 
+use crate::contribution_schedule::ContributionSchedule;
 use crate::grip_report::GripReport;
 use crate::module_stats::ModuleStats;
 use crate::traits::reporter::Reporter;
@@ -129,7 +130,7 @@ impl StdoutReporter {
                     lines.push(format!("\n  {}:", current_file));
                 }
                 let marker = contribution_marker(f.hidden_deps);
-                let contr = crate::contribution_schedule::ContributionSchedule::new().contribution(
+                let contr = ContributionSchedule::new().contribution(
                     f.is_pure,
                     f.has_trait_seam,
                     f.dep_weight,

@@ -9,7 +9,10 @@ use quote::ToTokens;
 use syn::visit::Visit;
 use syn::{Attribute, Item, ItemFn, Visibility};
 
+use crate::contribution_schedule::ContributionSchedule;
 use crate::function_info::FunctionInfo;
+use crate::hidden_dep_finder::HiddenDepFinder;
+use crate::io_call_finder::IoCallFinder;
 use crate::item_counts::ItemCounts;
 use crate::unsafe_finder::UnsafeFinder;
 
@@ -96,7 +99,7 @@ pub struct Collector {
     functions: Vec<FunctionInfo>,
     current_file: String,
     struct_concrete_fields: HashMap<String, Vec<String>>,
-    contribution_schedule: crate::contribution_schedule::ContributionSchedule,
+    contribution_schedule: ContributionSchedule,
 }
 
 impl Collector {
@@ -106,7 +109,7 @@ impl Collector {
             functions: Vec::new(),
             current_file: file,
             struct_concrete_fields: HashMap::new(),
-            contribution_schedule: crate::contribution_schedule::ContributionSchedule::new(),
+            contribution_schedule: ContributionSchedule::new(),
         }
     }
 
@@ -398,16 +401,13 @@ impl Collector {
     }
 
     fn has_io_call(&self, block: &syn::Block) -> bool {
-        let mut finder = crate::io_call_finder::IoCallFinder::new();
+        let mut finder = IoCallFinder::new();
         finder.visit_block(block);
         finder.found
     }
 
-    fn count_hidden_deps_in_block(
-        &self,
-        block: &syn::Block,
-    ) -> crate::hidden_dep_finder::HiddenDepFinder {
-        let mut finder = crate::hidden_dep_finder::HiddenDepFinder::new();
+    fn count_hidden_deps_in_block(&self, block: &syn::Block) -> HiddenDepFinder {
+        let mut finder = HiddenDepFinder::new();
         finder.visit_block(block);
         finder
     }
@@ -416,8 +416,8 @@ impl Collector {
         &self,
         method: &syn::ImplItemFn,
         concrete_fields: Vec<String>,
-    ) -> crate::hidden_dep_finder::HiddenDepFinder {
-        let mut finder = crate::hidden_dep_finder::HiddenDepFinder::new();
+    ) -> HiddenDepFinder {
+        let mut finder = HiddenDepFinder::new();
         finder.set_concrete_fields(concrete_fields);
         finder.visit_block(&method.block);
         finder
