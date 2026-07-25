@@ -96,19 +96,29 @@ deterministic `20` before `grip_score` became optional).
 
 `OverallStats`/`ModuleStats` also expose **`grip_absolute_total: f64`** —
 the sum (not average) of every in-scope function's `grip_absolute`. This
-is the field designed to pair with `braintax`'s equivalent per-repo sum
-for a `grip / braintax` testability-index ratio: summed absolute values
-can only be exactly zero when there are zero functions — a case both
-tools already special-case — unlike a ratio of two independently-weighted
-0–100 scores, which can saturate to zero on merely bad code.
+is the field designed to pair with `braintax`'s equivalent per-repo sum,
+`total_braintax`, for a `grip / braintax` testability-index ratio:
 
-**Open question, not yet resolved:** it has not been settled whether the
-intended ratio is `grip_absolute_total / total_braintax` (both raw sums)
-or `grip_score / braintax_normalized` (both already-normalized 0–100
-values) — these are different ratios in general, and no released code
-computes either one yet. See `../OPEN_POINTS.md` and `braintax`'s own
-`FORMULA.md` before building anything that depends on a specific choice
-here.
+```
+TI = grip_absolute_total / total_braintax
+```
+
+**Decided in favor of the raw sums**, not `grip_score /
+braintax_normalized`. Raw sums are the ground truth — a direct total of
+real per-function measurements, with no re-weighting or clamping layered
+on top. `grip_score` and `braintax_normalized` are each already a lossy
+0–100 projection shaped by decisions specific to each tool's own
+reporting needs: `grip_score` blends four independently-weighted ratios
+(above), and `braintax_normalized` clamps `avg_braintax` — not
+`total_braintax` — against a fixed ceiling, discarding total codebase
+size in the process. Dividing two independently-shaped normalizations
+would compound their distortions into `TI`; dividing the two raw sums
+does not. Raw sums also only reach exactly zero when there are zero
+functions — a case both tools already special-case — unlike a ratio of
+two 0–100 scores, which can saturate to zero on merely bad code.
+
+Not yet implemented — no released code computes `TI` today. The same
+decision is recorded in `braintax`'s own `FORMULA.md`.
 
 ---
 
@@ -141,9 +151,8 @@ blind spots recorded in `docs/ADRs/ADR-AstOnlyNoTypeResolution.md`.
 
 - `docs/ADRs/ADR-AstOnlyNoTypeResolution.md` — why classification is
   name/structure-based rather than type-resolved.
-- `../OPEN_POINTS.md` — the foreign-trait allowlist gap, configurable
-  `grip_score` weights, and the unresolved `grip / braintax` ratio
-  question above.
+- `../OPEN_POINTS.md` — the foreign-trait allowlist gap and configurable
+  `grip_score` weights.
 - `fixture/` — every fixture crate is a worked example of one dimension
   in isolation; `tests/fixtures/data_only` specifically demonstrates the
   zero-function `None` case.
