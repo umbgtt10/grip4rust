@@ -9,12 +9,17 @@ use std::process::ExitCode;
 use anyhow::Result;
 
 use crate::args::Args;
+use crate::cache::Cache;
 use crate::collector::Collector;
 use crate::config::Config;
+use crate::default_scorer::DefaultScorer;
+use crate::fs_walk::FsWalk;
 use crate::function_info::FunctionInfo;
 use crate::grip_report::GripReport;
 use crate::item_counts::ItemCounts;
+use crate::offender::Offender;
 use crate::overall_stats::OverallStats;
+use crate::stdout_reporter::StdoutReporter;
 use crate::traits::cache_store::CacheStore;
 use crate::traits::reporter::Reporter;
 use crate::traits::scorer::Scorer;
@@ -22,38 +27,34 @@ use crate::traits::walk::Walk;
 
 type CollectedFiles = (Vec<(String, ItemCounts)>, Vec<FunctionInfo>);
 
-#[derive(Debug)]
-pub struct App<W: Walk, S: Scorer, R: Reporter, C: CacheStore> {
-    walker: W,
-    scorer: S,
-    reporter: R,
-    cache: C,
+pub struct App {
+    walker: Box<dyn Walk>,
+    scorer: Box<dyn Scorer>,
+    reporter: Box<dyn Reporter>,
+    cache: Box<dyn CacheStore>,
     config: Config,
 }
 
-impl
-    App<
-        crate::fs_walk::FsWalk,
-        crate::default_scorer::DefaultScorer,
-        crate::stdout_reporter::StdoutReporter,
-        crate::cache::Cache,
-    >
-{
+impl App {
     #[must_use]
     pub fn new(config: Config) -> Self {
         Self {
-            walker: crate::fs_walk::FsWalk::new(&config.path),
-            scorer: crate::default_scorer::DefaultScorer::new(),
-            reporter: crate::stdout_reporter::StdoutReporter::new(config.json, config.verbose),
-            cache: crate::cache::Cache::new(&config.path),
+            walker: Box::new(FsWalk::new(&config.path)),
+            scorer: Box::new(DefaultScorer::new()),
+            reporter: Box::new(StdoutReporter::new(config.json, config.verbose)),
+            cache: Box::new(Cache::new(&config.path)),
             config,
         }
     }
-}
 
-impl<W: Walk, S: Scorer, R: Reporter, C: CacheStore> App<W, S, R, C> {
     #[must_use]
-    pub fn with_deps(walker: W, scorer: S, reporter: R, cache: C, config: Config) -> Self {
+    pub fn with_deps(
+        walker: Box<dyn Walk>,
+        scorer: Box<dyn Scorer>,
+        reporter: Box<dyn Reporter>,
+        cache: Box<dyn CacheStore>,
+        config: Config,
+    ) -> Self {
         Self {
             walker,
             scorer,
@@ -61,11 +62,6 @@ impl<W: Walk, S: Scorer, R: Reporter, C: CacheStore> App<W, S, R, C> {
             cache,
             config,
         }
-    }
-
-    #[must_use]
-    pub fn reporter(&self) -> &R {
-        &self.reporter
     }
 
     pub fn run(&self) -> Result<ExitCode> {
@@ -133,7 +129,7 @@ impl<W: Walk, S: Scorer, R: Reporter, C: CacheStore> App<W, S, R, C> {
             .iter()
             .filter_map(|m| {
                 let score = m.grip_score?;
-                (score < offender_threshold).then(|| crate::offender::Offender {
+                (score < offender_threshold).then(|| Offender {
                     path: m.path.clone(),
                     grip_score: score,
                 })

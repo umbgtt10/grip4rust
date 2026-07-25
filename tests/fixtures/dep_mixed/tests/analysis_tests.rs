@@ -4,6 +4,7 @@
 
 use std::cell::RefCell;
 use std::path::PathBuf;
+use std::rc::Rc;
 
 use anyhow::Result;
 
@@ -16,7 +17,7 @@ use grip::no_op_cache_store::NoOpCacheStore;
 use grip::traits::reporter::Reporter;
 
 struct CaptureReporter {
-    captured: RefCell<String>,
+    captured: Rc<RefCell<String>>,
 }
 
 impl Reporter for CaptureReporter {
@@ -44,18 +45,19 @@ fn analyze() -> serde_json::Value {
         threshold: None,
         verbose: false,
     };
+    let captured = Rc::new(RefCell::new(String::new()));
     let reporter = CaptureReporter {
-        captured: RefCell::new(String::new()),
+        captured: Rc::clone(&captured),
     };
-    let app: App<FsWalk, DefaultScorer, CaptureReporter, NoOpCacheStore> = App::with_deps(
-        FsWalk::new(&config.path),
-        DefaultScorer::new(),
-        reporter,
-        NoOpCacheStore::new(),
+    let app = App::with_deps(
+        Box::new(FsWalk::new(&config.path)),
+        Box::new(DefaultScorer::new()),
+        Box::new(reporter),
+        Box::new(NoOpCacheStore::new()),
         config,
     );
     app.run().expect("app run failed");
-    let captured = app.reporter().captured.borrow();
+    let captured = captured.borrow();
     serde_json::from_str(&captured).expect("valid JSON")
 }
 
