@@ -2,7 +2,7 @@
 
 **How much can tests grab onto your Rust codebase?**
 
-`cargo-grip4rust` is a static analysis tool that measures **testability** — how many pure functions, public entry points, trait seams, and injected dependencies a codebase exposes for testing. It produces a single grip score (0–100) with a per-module breakdown and per-function detail.
+`cargo-grip4rust` is a static analysis tool that measures **testability** — how many pure functions, public entry points, trait seams, and injected dependencies a codebase exposes for testing. It produces a single grip score (0–100) with a per-module and per-function breakdown.
 
 ---
 
@@ -20,52 +20,32 @@ Coverage tells you *what* code was exercised, not *how hard* it was to write the
 
 ---
 
-## The formula
+## The formula, briefly
 
 ```
-contr(i) = base(pureᵢ, seamᵢ) × max(0, 1 − dep_weightᵢ)
-
-grip = 100 × (
-    0.30 × (pure_fn / total_fn) +
-    0.20 × (public_items / total_items) +
-    0.25 × (trait_impure / total_impure) +
-    0.25 × (Σ contr(i) / total_fn)
-)
+grip = 100 × (0.30 × pure_ratio + 0.20 × public_ratio + 0.25 × trait_ratio + 0.25 × avg_contribution)
 ```
 
-### base(pure, seam)
+Every function also gets its own absolute contribution in `[0.0, 1.0]`
+(`grip_absolute`/`grip_normalized` in JSON output), and every module/repo
+gets `grip_absolute_total` — the sum across every function in scope.
 
-| Function type | base | Meaning |
-|---|---|---|
-| Pure + trait seam | 1.00 | Ideal — substitutable AND side-effect-free |
-| Pure + inherent | 0.95 | Pure but concretely coupled — minor penalty |
-| Impure + trait seam | 0.85 | Has side effects but substitutable |
-| Impure + inherent | 0.15 | Both impure AND concretely coupled — heavy penalty |
+Full derivation of every term, every weight, and the structural rules
+`grip` uses to detect hidden dependencies without a denylist:
+**[`docs/FORMULA.md`](docs/FORMULA.md)**.
 
-### dep_weight(i)
+---
 
-Each hidden dependency adds weight:
+## Documentation
 
-| Source | Weight |
+| Doc | What's in it |
 |---|---|
-| `println!`, `eprintln!`, `print!`, `eprint!` | 0.2 |
-| `Instant::now()`, `SystemTime::now()`, `.elapsed()` | 0.3 |
-| `env::var()`, `env::args()`, `process::exit()` | 0.4 |
-| `unsafe { ... }` | 0.5 |
-| `Database::new(...)`, `StripeGateway::charge(...)`, `self.db.query(...)` | 0.6 |
-
-Any `Type::method(...)` where `Type` starts with uppercase and is not a std allocator (`Box`, `Arc`, `String`, `Vec`, `HashMap`, etc.) is a hidden dependency. `self.concrete_field.method(...)` where the field is a concrete type (not `Box<dyn T>`, `&dyn T`, `Arc<dyn T>`) is also flagged.
-
-Total weight ≥ 1.0 → contribution = 0.
-
-### Ratios
-
-| Ratio | Definition |
-|---|---|
-| `pure_fn / total_fn` | Functions passing purity heuristic (no `&mut`, non-`()` return, no `unsafe`) |
-| `public_items / total_items` | `pub` and `pub(crate)` items |
-| `trait_impure / total_impure` | Impure methods behind a local trait seam (excludes `Display`, `Clone`, `Debug`, etc.) |
-| `Σ contr(i) / total_fn` | Average per-function contribution |
+| [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How a `grip` invocation flows through the code, module by module. |
+| [`docs/FORMULA.md`](docs/FORMULA.md) | Every scoring term, in full, kept in sync with `src/`. |
+| [`docs/ADRs/`](docs/ADRs/) | Why the codebase is shaped the way it is. |
+| [`ROADMAP.md`](ROADMAP.md) | What's shipped, what's next. |
+| [`OPEN_POINTS.md`](OPEN_POINTS.md) | Known gaps, deliberately deferred. |
+| [`CHANGELOG.md`](CHANGELOG.md) | Release history. |
 
 ---
 
@@ -102,23 +82,25 @@ cargo grip4rust [OPTIONS] [PATH]
 ## Output
 
 ```
-cargo-grip4rust 0.5.0 -- my-crate
+cargo-grip4rust 0.5.0 -- .
 ══════════════════════════════════════════════════════
 
-Overall grip score:    74 / 100
-
-Public surface:        142 items
-Total functions:       201
-Probably pure:         127 / 201  (63.2%)
-Trait methods:         6 / 9 impl methods are trait-bound  (66.7%)
-Hidden deps:           avg 0.42  — 60.0% clean  (71.0% avg contribution)
+Overall grip score:    63 / 100
+Absolute grip total:   48.95
+Public surface:        25 items
+Total functions:       78
+Probably pure:         53 / 78  (67.9%)
+Trait methods:         18 / 68 impl methods are trait-bound  (52.0%)
+Hidden deps:           avg 29.05  — 5.1% clean  (62.8% avg contribution)
 
 Per module:
-  consensus                      grip:  81   pure: 71.4%   pub: 18   traits: 66.7%   clean: 80.0%
-  transport                      grip:  74   pure: 78.9%   pub: 22   traits: 18.2%   clean: 40.0%  ⚠️
-  timer                          grip:  44   pure: 31.2%   pub:  6   traits: 50.0%   clean: 20.0%  ❌
-  state                          grip:  91   pure: 88.3%   pub: 31   traits: 66.7%   clean: 90.0%
+  .                               grip:  63   pure:  67.9%   pub:  21   traits:  52.0%   clean:   5.1%  ⚠️
+  traits                          grip: N/A   pure:   0.0%   pub:   4   traits:    N/A   clean:   0.0%
 ```
+
+(`grip`'s own source, analyzed by itself — `N/A` on the `traits` module is
+the zero-function case: `grip_score` is `Option<u32>`, `None` rather than
+a misleading default when there's nothing to score.)
 
 ### Verbose output (`--verbose`)
 
@@ -145,33 +127,15 @@ grip 0.5.0 -- my-crate — verbose
 
 ---
 
-## Hidden dependency detection (structural)
+## Hidden dependency detection, without a denylist
 
-`grip` does NOT use a hardcoded denylist of known function names. Instead, it uses structural rules:
-
-| Rule | Example | Flagged? |
-|---|---|---|
-| `Type::method(...)` where Type starts uppercase, not std allocator | `StripeGateway::charge(...)`, `Database::query(...)` | ✅ |
-| `self.concrete_field.method(...)` where field is not `Box\|Arc\|& dyn` | `self.db.query(...)` where `db: Database` | ✅ |
-| `self.trait_field.method(...)` where field is `Box\|Arc\|& dyn T` | `self.db.query(...)` where `db: Box<dyn Database>` | ❌ injected |
-| `param.method(...)` where param is a function argument | `db.query(...)` where `db: &Database` | ❌ caller-provided |
-| `Self::method(...)` or `self.method(...)` | `Self::new()`, `self.process()` | ❌ own type |
-| `println!`, `eprintln!`, `print!`, `eprint!` | `println!("hello")` | ✅ |
-| `unsafe { ... }` | `unsafe { ... }` | ✅ |
-| `Box::new(...)`, `String::new()`, `Vec::new()` | — | ❌ std alloc-only |
-
-This catches any concrete dependency regardless of crate — `StripeGateway`, `TcpStream`, `redis::Client`, `MyDatabase` — without maintaining a denylist.
-
----
-
-## Roadmap
-
-| Phase | What it adds | Version | Status |
-|---|---|---|---|
-| **0** | Pure function ratio, public surface | v0.1.x | ✅ Complete |
-| **1** | Trait boundary ratio (seams), foreign trait exclusion | v0.2.0 | ✅ Complete |
-| **2** | Hidden dependency detection, contribution matrix, `--verbose` | v0.3.0 | ✅ Complete |
-| **3** | Git history tracking + Quality Index trend | v1.0.0 | 🔜 Planned |
+`grip` does not maintain a list of known third-party function/type names.
+Instead it uses structural rules — `Type::method(...)` where `Type` starts
+uppercase and isn't a std allocator, `self.concrete_field.method(...)`
+where the field isn't a trait object, and a handful of known std/core
+module calls. This catches `StripeGateway`, `TcpStream`, `redis::Client`,
+or any other concrete dependency regardless of crate. Full rule table in
+[`docs/FORMULA.md`](docs/FORMULA.md#structural-hidden-dependency-detection).
 
 ---
 
@@ -182,6 +146,9 @@ This catches any concrete dependency regardless of crate — `StripeGateway`, `T
 - **No inter-procedural tracking.** A function that receives a constructed dependency from its caller appears clean.
 - **No runtime or coverage data.** `grip` measures *testability*, not *testing*. Use a coverage tool alongside it.
 - **Single-segment trait ambiguity.** `impl Display for X` with `use std::fmt::Display` is correctly excluded. `impl Display for X` without the import relies on the known-foreign list.
+
+See [`docs/ADRs/ADR-AstOnlyNoTypeResolution.md`](docs/ADRs/ADR-AstOnlyNoTypeResolution.md)
+for why these are accepted rather than fixed outright.
 
 ---
 

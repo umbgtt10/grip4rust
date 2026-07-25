@@ -1,0 +1,149 @@
+# The grip formula
+
+Full reference for how `grip` computes its scores, at every level: per
+function, per module, and per repo. `README.md` keeps a short summary and
+points here for the complete picture — this is the document that stays in
+sync with `src/`, not the other way around.
+
+Every number here is read directly from the source that computes it
+(`contribution_schedule.rs`, `default_scorer.rs`, `hidden_dep_finder.rs`),
+not transcribed from memory — if this document and the source ever
+disagree, the source is right and this file is stale.
+
+---
+
+## Per-function: `contribution`
+
+Every function gets an absolute contribution in `[0.0, 1.0]`, computed by
+`ContributionSchedule::contribution(is_pure, has_trait_seam, dep_weight)`:
+
+```
+contribution(pure, seam, dep_weight) =
+    0.0                              if dep_weight >= 1.0
+    base(pure, seam) × (1.0 − dep_weight)   otherwise
+```
+
+### `base(pure, seam)`
+
+| Pure | Trait seam | `base` | Meaning |
+|---|---|---|---|
+| yes | yes | 1.00 | Ideal — substitutable *and* side-effect-free |
+| yes | no | 0.95 | Pure but concretely coupled — minor penalty |
+| no | yes | 0.85 | Has side effects but substitutable |
+| no | no | 0.15 | Both impure *and* concretely coupled — heavy penalty |
+
+### `dep_weight`
+
+Each hidden dependency found in the function body (via `HiddenDepFinder`)
+adds a weight; `dep_weight` is the sum across every hidden dependency in
+that function. Weight is looked up per call by `dep_weight(label)` in
+`hidden_dep_finder.rs`, keyed on the label's text prefix:
+
+| Label prefix | Weight | Examples |
+|---|---|---|
+| `println`, `eprintln`, `print!`, `eprint!` | 0.2 | `println!("...")` |
+| `Instant`, `SystemTime`, `Utc`, `Local`, or contains `elapsed` | 0.3 | `Instant::now()`, `.elapsed()` |
+| `env::`, `process::` | 0.4 | `env::var(...)`, `process::exit(...)` |
+| `unsafe` | 0.5 | `unsafe { ... }` |
+| anything else recognized as hidden | 0.6 | `Database::new(...)`, `self.db.query(...)` |
+
+`dep_weight >= 1.0` (roughly two or more non-trivial hidden dependencies)
+forces `contribution = 0.0` outright — a floor the code enforces directly,
+not a coincidence of the multiplication.
+
+This same `contribution` value is exposed per function in JSON output as
+two fields on `FunctionInfo`:
+
+- **`grip_absolute: f64`** — the raw `contribution(...)` value, `[0.0,
+  1.0]`.
+- **`grip_normalized: u32`** — `round(grip_absolute × 100)`, `[0, 100]`,
+  the same scale `grip_score` uses at the repo level.
+
+`FunctionInfo.hidden_dep_labels: Vec<String>` names which calls
+contributed to `dep_weight`, in the order they were found — this is what
+`--verbose` output shows in `[brackets]` after each function's
+contribution percentage.
+
+---
+
+## Per-module and per-repo: `grip_score`
+
+`OverallStats`/`ModuleStats` aggregate every function in scope into four
+ratios, then combine them:
+
+```
+grip_score = round(100 × (
+    0.30 × pure_ratio +
+    0.20 × public_ratio +
+    0.25 × trait_ratio +
+    0.25 × avg_contribution
+))
+```
+
+| Ratio | Definition | Zero-denominator fallback |
+|---|---|---|
+| `pure_ratio` | `pure_functions / total_functions` | `0.0` |
+| `public_ratio` | `public_items / total_items` | `0.0` |
+| `trait_ratio` | `local_trait_impure / (inherent_impure + local_trait_impure)` | `1.0` — vacuously satisfied, not failed |
+| `avg_contribution` | `total_contribution / total_functions` (mean of every function's `grip_absolute` in scope) | `0.0` |
+
+`grip_score` itself is `Option<u32>` — `None` when `total_functions == 0`
+for that scope, rather than a misleading deterministic value computed from
+an empty set (this was a real bug once: a zero-function module produced a
+deterministic `20` before `grip_score` became optional).
+
+### `grip_absolute_total`
+
+`OverallStats`/`ModuleStats` also expose **`grip_absolute_total: f64`** —
+the sum (not average) of every in-scope function's `grip_absolute`. This
+is the field designed to pair with `braintax`'s equivalent per-repo sum
+for a `grip / braintax` testability-index ratio: summed absolute values
+can only be exactly zero when there are zero functions — a case both
+tools already special-case — unlike a ratio of two independently-weighted
+0–100 scores, which can saturate to zero on merely bad code.
+
+**Open question, not yet resolved:** it has not been settled whether the
+intended ratio is `grip_absolute_total / total_braintax` (both raw sums)
+or `grip_score / braintax_normalized` (both already-normalized 0–100
+values) — these are different ratios in general, and no released code
+computes either one yet. See `../OPEN_POINTS.md` and `braintax`'s own
+`FORMULA.md` before building anything that depends on a specific choice
+here.
+
+---
+
+## Structural hidden-dependency detection
+
+`HiddenDepFinder` does not use a hardcoded denylist of known function
+names. Instead, it uses structural rules over the parsed call expression:
+
+| Rule | Example | Flagged? |
+|---|---|---|
+| `Type::method(...)` where `Type` starts uppercase, not a std allocator | `StripeGateway::charge(...)`, `Database::query(...)` | ✅ |
+| `self.concrete_field.method(...)` where field is not `Box\|Arc\|&dyn` | `self.db.query(...)` where `db: Database` | ✅ |
+| `self.trait_field.method(...)` where field is `Box\|Arc\|&dyn T` | `self.db.query(...)` where `db: Box<dyn Database>` | ❌ injected |
+| `param.method(...)` where param is a function argument | `db.query(...)` where `db: &Database` | ❌ caller-provided |
+| `Self::method(...)` or `self.method(...)` | `Self::new()`, `self.process()` | ❌ own type |
+| `println!`, `eprintln!`, `print!`, `eprint!` | `println!("hello")` | ✅ |
+| `unsafe { ... }` | `unsafe { ... }` | ✅ |
+| `Box::new(...)`, `String::new()`, `Vec::new()` | — | ❌ std alloc-only (`STD_CONSTRUCTORS`) |
+| known std module call, `module::fn` tail, `std`/`core`-prefixed or unqualified | `fs::read(...)`, `std::fs::read(...)` | ✅ |
+| known std module call, third-party-qualified | `mycrate::fs::read(...)` | ❌ — tail matches but the crate prefix doesn't |
+
+This catches any concrete dependency regardless of crate —
+`StripeGateway`, `TcpStream`, `redis::Client`, `MyDatabase` — without
+maintaining a denylist of third-party type names, at the cost of the
+blind spots recorded in `docs/ADRs/ADR-AstOnlyNoTypeResolution.md`.
+
+---
+
+## Related
+
+- `docs/ADRs/ADR-AstOnlyNoTypeResolution.md` — why classification is
+  name/structure-based rather than type-resolved.
+- `../OPEN_POINTS.md` — the foreign-trait allowlist gap, configurable
+  `grip_score` weights, and the unresolved `grip / braintax` ratio
+  question above.
+- `fixture/` — every fixture crate is a worked example of one dimension
+  in isolation; `tests/fixtures/data_only` specifically demonstrates the
+  zero-function `None` case.
