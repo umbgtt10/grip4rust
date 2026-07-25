@@ -59,3 +59,4 @@ Specifically:
 - use `// Act & Assert` if there is no separate `Act`
 - add the repository copyright and license header to every Rust source file
 - tests should be named as follows `<method under test>_<test description>_<result>`
+- do not use fully qualified paths; use `use` imports instead

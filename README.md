@@ -102,7 +102,7 @@ cargo grip4rust [OPTIONS] [PATH]
 ## Output
 
 ```
-cargo-grip4rust 0.4.0 -- my-crate
+cargo-grip4rust 0.5.0 -- my-crate
 ══════════════════════════════════════════════════════
 
 Overall grip score:    74 / 100
@@ -123,7 +123,7 @@ Per module:
 ### Verbose output (`--verbose`)
 
 ```
-grip 0.4.0 -- my-crate — verbose
+grip 0.5.0 -- my-crate — verbose
 ══════════════════════════════════════════════════════
 
   timer.rs:

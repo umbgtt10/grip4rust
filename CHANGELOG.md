@@ -7,6 +7,59 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] — 2026-07-25
+
+### Added
+- Per-function `grip_absolute: f64` and `grip_normalized: u32` on `FunctionInfo` —
+  every function reports its own contribution as both a raw value and a 0–100
+  normalized score, not just the repo-level `grip_score`.
+- `grip_absolute_total: f64` on `OverallStats` and `ModuleStats` — summed
+  absolute contribution across all functions, so a repo's grip index can
+  always be computed even where `grip_score` alone would need a non-empty
+  function set.
+- `CacheStore` trait (`traits/cache_store.rs`) — `Cache`'s `get`/`set`/`flush`
+  is now a swappable seam; `NoOpCacheStore` is a real always-miss fake used
+  by fixture tests.
+- `data_only` fixture — zero-function module regression coverage.
+- `contribution_schedule_tests.rs`, `offender_tests.rs`, `function_info_tests.rs`
+  — closed three source files that had no dedicated test file.
+- "Absolute grip total" line in human-readable stdout output.
+
+### Changed
+- **Breaking:** `App<W: Walk, S: Scorer, R: Reporter, C: CacheStore>` is now
+  a non-generic `App` holding `Box<dyn Walk>` / `Box<dyn Scorer>` /
+  `Box<dyn Reporter>` / `Box<dyn CacheStore>` fields. `with_deps()` takes
+  those boxes directly instead of `impl Trait`. `App::reporter()` and
+  `#[derive(Debug)]` removed — both were only reachable through the now-erased
+  generics.
+- `Cache` rewritten with interior mutability (`RefCell`/`Cell`) so every
+  `CacheStore` method takes `&self`, matching how `Reporter::write` already
+  does stateful I/O.
+- `contribution_schedule::contribution()` is now a `ContributionSchedule`
+  struct method instead of a free function.
+- `grip_score` is `Option<u32>` — `None` for zero-function modules instead
+  of a misleading deterministic 20.
+- `trait_ratio`'s zero-impure guard now returns `1.0` (vacuously satisfied)
+  instead of `0.0`.
+- Internal `crate::` fully-qualified paths replaced with `use` imports
+  throughout.
+- Removed dead `ItemCounts` fields (`public_functions`, `pubcrate_functions`,
+  `public_structs`, `public_traits`, `public_enums`) — collected but never
+  consumed downstream.
+- Removed unreachable `.max(0.0)` in `contribution_schedule.rs`.
+
+### Fixed
+- CLI `--version` was hardcoded instead of reading `CARGO_PKG_VERSION`.
+- `#[cfg(test)]` structs/traits/enums/impls outside a `mod tests {}` block
+  were counted as production code.
+- `fs_walk.rs` excluded `/target/`, `tests/`, `examples/`, `benches/` via
+  unanchored substring match, false-positiving on paths like
+  `src/target/mod.rs`; now anchored to path components.
+- 6 fixture crates (`trait_check`, `dep_clean`, `dep_mixed`, `dep_monolith`,
+  `dep_injected`, `data_only`) carried a stray `Cargo.toml` that made
+  `cargo package` treat them as nested packages and silently drop their
+  `[[test]]` targets from the published crate's verification build.
+
 ## [0.4.0] — 2026-05-17
 
 ### Added
@@ -154,10 +207,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hello-world binary with cargo subcommand support
 - `Cargo.toml` metadata, MIT license, README placeholder
 
+[0.5.0]: https://github.com/umbgtt10/grip4rust/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/umbgtt10/grip4rust/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/umbgtt10/grip4rust/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/umbgtt10/grip4rust/compare/v0.1.4...v0.2.0
-[Unreleased]: https://github.com/umbgtt10/grip4rust/compare/v0.2.0...HEAD
 [0.1.3]: https://github.com/umbgtt10/grip4rust/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/umbgtt10/grip4rust/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/umbgtt10/grip4rust/compare/v0.1.0...v0.1.1
