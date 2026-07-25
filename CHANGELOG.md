@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0] — 2026-07-25
+
+### Added
+- `docs/ADRs/` (index, `ADR-AstOnlyNoTypeResolution.md`,
+  `ADR-DynDispatchAppOverGenerics.md`), `docs/ARCHITECTURE.md`, and
+  `docs/FORMULA.md` — the authoritative formula and architecture
+  reference, verified line-by-line against `src/` rather than
+  transcribed from memory.
+- `OverallSummaryRenderer`, `OffendersRenderer`, `VerboseFunctionsRenderer`
+  — three structs extracted from `StdoutReporter::render_human`, each
+  owning one report section and independently testable.
+- Direct test coverage for the `--verbose` output path, previously
+  reachable only end-to-end through `StdoutReporter` and never actually
+  exercised by any test.
+- `Invoke-Crap4RustGate` in `scripts/run_stage_2.ps1` — stage 2 now
+  actually enforces CRAP score 0, matching the hard rule already stated
+  in `CLAUDE.md`/`ROADMAP.md`. Previously it only ran the binary once
+  and discarded the output, so the rule was asserted but never checked.
+
+### Changed
+- `README.md`: formula section trimmed to the headline equation plus a
+  link to `docs/FORMULA.md`; the duplicate "Roadmap" section (already
+  diverged from `ROADMAP.md`) removed in favor of a Documentation nav
+  table; the stale "Output" example (missing the `Absolute grip total`
+  line) replaced with real captured output.
+- `ROADMAP.md` reconciled with shipped reality: removed the unbuilt
+  "Testability Index" (old Phase 3) and "git history / QI trend / cost
+  projection" (old Phase 4) phases, neither of which this repo has any
+  current plan to build. The two versions that actually shipped in
+  their place — v0.4.0 (weighted hidden dependencies) and v0.5.0
+  (per-function absolute scores, the `CacheStore` seam, dyn dispatch) —
+  were never recorded as roadmap phases before now.
+- `docs/FORMULA.md`: the `grip / braintax` testability-index ratio,
+  previously flagged as an open question, is now decided —
+  `TI = grip_absolute_total / total_braintax` (raw sums, not the
+  normalized `grip_score`/`braintax_normalized`). Still not implemented
+  by any released code.
+- `StdoutReporter::render_human`, `HiddenDepFinder::visit_expr`,
+  `Collector::visit_impl`, and `IoCallFinder::visit_expr` decomposed
+  into smaller, single-purpose methods — all four were CRAP violations
+  (up to 42.9 against a threshold of 15) invisible until the stage 2
+  gate above was fixed to actually check. All behavior-preserving,
+  verified by the full pre-existing test suite passing unchanged
+  throughout.
+- The overall-summary trait-methods line's three-branch conditional
+  collapsed to two: the `total_impl > 0 && trait_ratio == 0.0` branch
+  produced output byte-identical to the general case, so it was
+  incidental complexity rather than a real distinction.
+
 ## [0.5.0] — 2026-07-25
 
 ### Added
@@ -207,6 +256,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hello-world binary with cargo subcommand support
 - `Cargo.toml` metadata, MIT license, README placeholder
 
+[0.6.0]: https://github.com/umbgtt10/grip4rust/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/umbgtt10/grip4rust/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/umbgtt10/grip4rust/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/umbgtt10/grip4rust/compare/v0.2.0...v0.3.0

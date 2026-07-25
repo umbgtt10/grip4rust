@@ -3,7 +3,7 @@
 **Crate:** `cargo-grip`  
 **License:** MIT  
 **Last updated:** 2026-07-25  
-**Current status:** Phase 4 — ✅ Complete (v0.5.0 published)
+**Current status:** Phase 4 — ✅ Complete (latest feature phase; shipped in v0.5.0) · **Latest release:** v0.6.0 (quality/documentation, no new phase)
 
 ---
 
