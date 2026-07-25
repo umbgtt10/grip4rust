@@ -1,4 +1,4 @@
-# Crap4Rust Code of Conduct
+# Grip4Rust Code of Conduct
 
 ## Purpose
 
