@@ -109,6 +109,7 @@ impl Scorer for DefaultScorer {
                     trait_ratio,
                     avg_contribution,
                     clean_fn_ratio,
+                    grip_absolute_total: counts.total_contribution,
                 }
             })
             .collect()

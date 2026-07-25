@@ -14,4 +14,6 @@ pub struct FunctionInfo {
     pub has_trait_seam: bool,
     pub dep_weight: f64,
     pub hidden_dep_labels: Vec<String>,
+    pub grip_absolute: f64,
+    pub grip_normalized: u32,
 }

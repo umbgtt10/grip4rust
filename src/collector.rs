@@ -186,6 +186,8 @@ impl Collector {
             has_trait_seam,
             dep_weight: finder.weight,
             hidden_dep_labels: finder.labels,
+            grip_absolute: contr,
+            grip_normalized: (contr * 100.0).round() as u32,
         });
     }
 
@@ -299,6 +301,8 @@ impl Collector {
                     has_trait_seam,
                     dep_weight: finder.weight,
                     hidden_dep_labels: finder.labels,
+                    grip_absolute: contr,
+                    grip_normalized: (contr * 100.0).round() as u32,
                 });
             }
         }

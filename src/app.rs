@@ -115,6 +115,7 @@ impl App {
             trait_ratio,
             avg_contribution,
             clean_fn_ratio,
+            grip_absolute_total: overall_counts.total_contribution,
         };
         let target = self
             .config

@@ -14,6 +14,8 @@ fn sample() -> FunctionInfo {
         has_trait_seam: false,
         dep_weight: 0.2,
         hidden_dep_labels: vec!["println".to_string()],
+        grip_absolute: 0.8,
+        grip_normalized: 80,
     }
 }
 
@@ -33,7 +35,7 @@ fn function_info_serializes_to_json() {
 #[test]
 fn function_info_deserializes_from_json() {
     // Arrange
-    let json = r#"{"name":"compute","file":"src/main.rs","is_pure":false,"is_public":false,"hidden_deps":0,"has_trait_seam":true,"dep_weight":0.0,"hidden_dep_labels":[]}"#;
+    let json = r#"{"name":"compute","file":"src/main.rs","is_pure":false,"is_public":false,"hidden_deps":0,"has_trait_seam":true,"dep_weight":0.0,"hidden_dep_labels":[],"grip_absolute":0.85,"grip_normalized":85}"#;
 
     // Act
     let info: FunctionInfo = serde_json::from_str(json).unwrap();

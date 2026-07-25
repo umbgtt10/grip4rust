@@ -24,6 +24,7 @@ fn dummy_report() -> GripReport {
             trait_ratio: 0.0,
             avg_contribution: 0.0,
             clean_fn_ratio: 0.0,
+            grip_absolute_total: 12.0,
         },
         modules: vec![
             ModuleStats {
@@ -39,6 +40,7 @@ fn dummy_report() -> GripReport {
                 trait_ratio: 0.0,
                 avg_contribution: 0.0,
                 clean_fn_ratio: 0.0,
+                grip_absolute_total: 7.0,
             },
             ModuleStats {
                 path: "beta".to_string(),
@@ -53,6 +55,7 @@ fn dummy_report() -> GripReport {
                 trait_ratio: 0.0,
                 avg_contribution: 0.0,
                 clean_fn_ratio: 0.0,
+                grip_absolute_total: 5.0,
             },
         ],
         offenders: vec![],
@@ -138,6 +141,7 @@ fn human_output_shows_offenders_section() {
             trait_ratio: 0.0,
             avg_contribution: 0.0,
             clean_fn_ratio: 0.0,
+            grip_absolute_total: 2.0,
         }],
         offenders: vec![grip::offender::Offender {
             path: "bad_mod".to_string(),

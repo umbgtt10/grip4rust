@@ -21,6 +21,7 @@ fn sample() -> GripReport {
             trait_ratio: 0.0,
             avg_contribution: 0.0,
             clean_fn_ratio: 0.0,
+            grip_absolute_total: 1.5,
         },
         modules: vec![],
         offenders: vec![],

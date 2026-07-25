@@ -62,6 +62,10 @@ impl StdoutReporter {
         };
         lines.push(format!("Overall grip score:    {overall_grip_display}"));
         lines.push(format!(
+            "Absolute grip total:   {:.2}",
+            overall.grip_absolute_total
+        ));
+        lines.push(format!(
             "Public surface:        {} items",
             overall.public_items
         ));
