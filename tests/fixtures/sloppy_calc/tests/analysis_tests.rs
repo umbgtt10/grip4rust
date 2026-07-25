@@ -12,6 +12,7 @@ use grip::config::Config;
 use grip::default_scorer::DefaultScorer;
 use grip::fs_walk::FsWalk;
 use grip::grip_report::GripReport;
+use grip::no_op_cache_store::NoOpCacheStore;
 use grip::traits::reporter::Reporter;
 
 struct CaptureReporter {
@@ -46,10 +47,11 @@ fn analyze() -> serde_json::Value {
     let reporter = CaptureReporter {
         captured: RefCell::new(String::new()),
     };
-    let app: App<FsWalk, DefaultScorer, CaptureReporter> = App::with_deps(
+    let app: App<FsWalk, DefaultScorer, CaptureReporter, NoOpCacheStore> = App::with_deps(
         FsWalk::new(&config.path),
         DefaultScorer::new(),
         reporter,
+        NoOpCacheStore::new(),
         config,
     );
     let _ = app.run().unwrap();

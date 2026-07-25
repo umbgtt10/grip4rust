@@ -18,8 +18,6 @@ fn perfect_grip() {
     let counts = ItemCounts {
         total_functions: 2,
         pure_functions: 2,
-        public_functions: 2,
-        public_structs: 1,
         total_items: 3,
         public_items: 3,
         inherent_methods: 1,

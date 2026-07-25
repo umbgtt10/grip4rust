@@ -129,7 +129,7 @@ impl StdoutReporter {
                     lines.push(format!("\n  {}:", current_file));
                 }
                 let marker = contribution_marker(f.hidden_deps);
-                let contr = crate::contribution_schedule::contribution(
+                let contr = crate::contribution_schedule::ContributionSchedule::new().contribution(
                     f.is_pure,
                     f.has_trait_seam,
                     f.dep_weight,

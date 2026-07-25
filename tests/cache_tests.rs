@@ -5,6 +5,7 @@
 use std::fs;
 
 use grip::cache::Cache;
+use grip::traits::cache_store::CacheStore;
 use tempfile::TempDir;
 
 #[test]
@@ -16,7 +17,7 @@ fn cache_hit_returns_same_counts() {
     let file = src.join("lib.rs");
     fs::write(&file, "pub fn greet() -> i32 { 42 }").unwrap();
 
-    let mut cache = Cache::new(dir.path());
+    let cache = Cache::new(dir.path());
 
     let source = fs::read_to_string(&file).unwrap();
     let (initial, _fns) = grip::collector::Collector::collect(&source, &file);
@@ -39,7 +40,7 @@ fn cache_miss_after_change() {
     let file = src.join("lib.rs");
     fs::write(&file, "pub fn greet() -> i32 { 42 }").unwrap();
 
-    let mut cache = Cache::new(dir.path());
+    let cache = Cache::new(dir.path());
     let source = fs::read_to_string(&file).unwrap();
     let (initial, _fns) = grip::collector::Collector::collect(&source, &file);
     cache.set(&file, &source, &initial);

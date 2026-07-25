@@ -96,6 +96,7 @@ pub struct Collector {
     functions: Vec<FunctionInfo>,
     current_file: String,
     struct_concrete_fields: HashMap<String, Vec<String>>,
+    contribution_schedule: crate::contribution_schedule::ContributionSchedule,
 }
 
 impl Collector {
@@ -105,6 +106,7 @@ impl Collector {
             functions: Vec::new(),
             current_file: file,
             struct_concrete_fields: HashMap::new(),
+            contribution_schedule: crate::contribution_schedule::ContributionSchedule::new(),
         }
     }
 
@@ -155,8 +157,9 @@ impl Collector {
         let is_pure = self.is_probably_pure(item_fn);
         let finder = self.count_hidden_deps_in_block(&item_fn.block);
         let has_trait_seam = false;
-        let contr =
-            crate::contribution_schedule::contribution(is_pure, has_trait_seam, finder.weight);
+        let contr = self
+            .contribution_schedule
+            .contribution(is_pure, has_trait_seam, finder.weight);
 
         self.counts.total_functions += 1;
         self.counts.total_items += 1;
@@ -164,16 +167,8 @@ impl Collector {
         if contr == 1.0 {
             self.counts.clean_functions += 1;
         }
-        match self.classify_visibility(&item_fn.vis) {
-            VisibilityLevel::Pub => {
-                self.counts.public_functions += 1;
-                self.counts.public_items += 1;
-            }
-            VisibilityLevel::PubCrate => {
-                self.counts.pubcrate_functions += 1;
-                self.counts.public_items += 1;
-            }
-            _ => {}
+        if is_pub {
+            self.counts.public_items += 1;
         }
         if is_pure {
             self.counts.pure_functions += 1;
@@ -197,7 +192,6 @@ impl Collector {
             self.classify_visibility(&item_struct.vis),
             VisibilityLevel::Pub | VisibilityLevel::PubCrate
         ) {
-            self.counts.public_structs += 1;
             self.counts.public_items += 1;
         }
         let name = item_struct.ident.to_string();
@@ -217,7 +211,6 @@ impl Collector {
             self.classify_visibility(&item_trait.vis),
             VisibilityLevel::Pub | VisibilityLevel::PubCrate
         ) {
-            self.counts.public_traits += 1;
             self.counts.public_items += 1;
         }
     }
@@ -228,7 +221,6 @@ impl Collector {
             self.classify_visibility(&item_enum.vis),
             VisibilityLevel::Pub | VisibilityLevel::PubCrate
         ) {
-            self.counts.public_enums += 1;
             self.counts.public_items += 1;
         }
     }
@@ -265,11 +257,9 @@ impl Collector {
                     .unwrap_or_default();
                 let finder = self.count_hidden_deps_in_impl_method(method, concrete_fields);
                 let has_trait_seam = is_trait_impl;
-                let contr = crate::contribution_schedule::contribution(
-                    is_pure,
-                    has_trait_seam,
-                    finder.weight,
-                );
+                let contr =
+                    self.contribution_schedule
+                        .contribution(is_pure, has_trait_seam, finder.weight);
 
                 self.counts.total_functions += 1;
                 self.counts.total_contribution += contr;

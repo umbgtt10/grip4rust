@@ -9,13 +9,13 @@ use std::process::ExitCode;
 use anyhow::Result;
 
 use crate::args::Args;
-use crate::cache::Cache;
 use crate::collector::Collector;
 use crate::config::Config;
 use crate::function_info::FunctionInfo;
 use crate::grip_report::GripReport;
 use crate::item_counts::ItemCounts;
 use crate::overall_stats::OverallStats;
+use crate::traits::cache_store::CacheStore;
 use crate::traits::reporter::Reporter;
 use crate::traits::scorer::Scorer;
 use crate::traits::walk::Walk;
@@ -23,10 +23,11 @@ use crate::traits::walk::Walk;
 type CollectedFiles = (Vec<(String, ItemCounts)>, Vec<FunctionInfo>);
 
 #[derive(Debug)]
-pub struct App<W: Walk, S: Scorer, R: Reporter> {
+pub struct App<W: Walk, S: Scorer, R: Reporter, C: CacheStore> {
     walker: W,
     scorer: S,
     reporter: R,
+    cache: C,
     config: Config,
 }
 
@@ -35,6 +36,7 @@ impl
         crate::fs_walk::FsWalk,
         crate::default_scorer::DefaultScorer,
         crate::stdout_reporter::StdoutReporter,
+        crate::cache::Cache,
     >
 {
     #[must_use]
@@ -43,18 +45,20 @@ impl
             walker: crate::fs_walk::FsWalk::new(&config.path),
             scorer: crate::default_scorer::DefaultScorer::new(),
             reporter: crate::stdout_reporter::StdoutReporter::new(config.json, config.verbose),
+            cache: crate::cache::Cache::new(&config.path),
             config,
         }
     }
 }
 
-impl<W: Walk, S: Scorer, R: Reporter> App<W, S, R> {
+impl<W: Walk, S: Scorer, R: Reporter, C: CacheStore> App<W, S, R, C> {
     #[must_use]
-    pub fn with_deps(walker: W, scorer: S, reporter: R, config: Config) -> Self {
+    pub fn with_deps(walker: W, scorer: S, reporter: R, cache: C, config: Config) -> Self {
         Self {
             walker,
             scorer,
             reporter,
+            cache,
             config,
         }
     }
@@ -65,9 +69,8 @@ impl<W: Walk, S: Scorer, R: Reporter> App<W, S, R> {
     }
 
     pub fn run(&self) -> Result<ExitCode> {
-        let mut cache = Cache::new(&self.config.path);
-        let (indexed, functions) = self.collect_files(&mut cache)?;
-        cache.flush();
+        let (indexed, functions) = self.collect_files()?;
+        self.cache.flush();
 
         if indexed.is_empty() {
             return Err(anyhow::anyhow!(
@@ -80,7 +83,7 @@ impl<W: Walk, S: Scorer, R: Reporter> App<W, S, R> {
         self.handle_output(&report)
     }
 
-    fn collect_files(&self, cache: &mut Cache) -> Result<CollectedFiles> {
+    fn collect_files(&self) -> Result<CollectedFiles> {
         let files = self.walker.rust_files()?;
         let mut indexed = Vec::with_capacity(files.len());
         let mut all_functions = Vec::new();
@@ -88,8 +91,8 @@ impl<W: Walk, S: Scorer, R: Reporter> App<W, S, R> {
             let module = self.module_from_path(&path);
             let (counts, functions) = Collector::collect(&source, &path);
             all_functions.extend(functions);
-            if cache.get(&path).is_none() {
-                cache.set(&path, &source, &counts);
+            if self.cache.get(&path).is_none() {
+                self.cache.set(&path, &source, &counts);
             }
             indexed.push((module, counts));
         }

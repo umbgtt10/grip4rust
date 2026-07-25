@@ -28,7 +28,6 @@ fn pure_function_is_counted() {
     // Assert
     assert_eq!(counts.total_functions, 1);
     assert_eq!(counts.pure_functions, 1);
-    assert_eq!(counts.public_functions, 1);
     assert_eq!(counts.total_items, 1);
     assert_eq!(counts.public_items, 1);
 }
@@ -90,7 +89,6 @@ fn private_function_is_not_public() {
 
     // Assert
     assert_eq!(counts.total_functions, 1);
-    assert_eq!(counts.public_functions, 0);
     assert_eq!(counts.public_items, 0);
 }
 
@@ -113,11 +111,7 @@ pub trait T {}
 
     // Assert
     assert_eq!(counts.total_functions, 3);
-    assert_eq!(counts.public_functions, 2);
     assert_eq!(counts.pure_functions, 2);
-    assert_eq!(counts.public_structs, 1);
-    assert_eq!(counts.public_enums, 1);
-    assert_eq!(counts.public_traits, 1);
     assert_eq!(counts.total_items, 6);
     assert_eq!(counts.public_items, 5);
 }
@@ -154,7 +148,6 @@ fn pubcrate_is_public_item() {
 
     // Assert
     assert_eq!(counts.total_functions, 1);
-    assert_eq!(counts.pubcrate_functions, 1);
     assert_eq!(counts.public_items, 1);
 }
 
@@ -750,16 +743,11 @@ fn heavy() { Database::new(\"prod\"); StripeGateway::charge(100.0); }\n";
     let (_counts, fns) = Collector::collect(source, &_file);
 
     // Assert
-    let light_contr = grip::contribution_schedule::contribution(
-        fns[0].is_pure,
-        fns[0].has_trait_seam,
-        fns[0].dep_weight,
-    );
-    let heavy_contr = grip::contribution_schedule::contribution(
-        fns[1].is_pure,
-        fns[1].has_trait_seam,
-        fns[1].dep_weight,
-    );
+    let schedule = grip::contribution_schedule::ContributionSchedule::new();
+    let light_contr =
+        schedule.contribution(fns[0].is_pure, fns[0].has_trait_seam, fns[0].dep_weight);
+    let heavy_contr =
+        schedule.contribution(fns[1].is_pure, fns[1].has_trait_seam, fns[1].dep_weight);
     assert!(
         light_contr > 0.0,
         "light deps should have positive contribution, got {light_contr}"

@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -11,12 +12,13 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
 use crate::item_counts::ItemCounts;
+use crate::traits::cache_store::CacheStore;
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Cache {
     cache_dir: PathBuf,
-    store: HashMap<PathBuf, CachedEntry>,
-    dirty: bool,
+    store: RefCell<HashMap<PathBuf, CachedEntry>>,
+    dirty: Cell<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,6 +29,7 @@ struct CachedEntry {
 }
 
 impl Cache {
+    #[must_use]
     pub fn new(root: &Path) -> Self {
         let cache_dir = root.join(".grip_cache");
         let store = if cache_dir.exists() {
@@ -36,37 +39,42 @@ impl Cache {
         };
         Self {
             cache_dir,
-            store,
-            dirty: false,
+            store: RefCell::new(store),
+            dirty: Cell::new(false),
         }
     }
 
-    pub fn get(&self, path: &Path) -> Option<ItemCounts> {
-        let entry = self.store.get(path)?;
+    fn mtime_secs(path: &Path) -> Option<u128> {
         let metadata = fs::metadata(path).ok()?;
         let mtime = metadata.modified().ok()?;
-        let mtime_secs = mtime.duration_since(SystemTime::UNIX_EPOCH).ok()?.as_secs() as u128;
-        if entry.mtime_secs == mtime_secs && entry.len == metadata.len() {
+        Some(mtime.duration_since(SystemTime::UNIX_EPOCH).ok()?.as_secs() as u128)
+    }
+
+    fn load(cache_dir: &Path) -> Result<HashMap<PathBuf, CachedEntry>> {
+        let path = cache_dir.join("cache.json");
+        let json = fs::read_to_string(&path)?;
+        Ok(serde_json::from_str(&json)?)
+    }
+}
+
+impl CacheStore for Cache {
+    fn get(&self, path: &Path) -> Option<ItemCounts> {
+        let mtime_secs = Self::mtime_secs(path)?;
+        let len = fs::metadata(path).ok()?.len();
+        let store = self.store.borrow();
+        let entry = store.get(path)?;
+        if entry.mtime_secs == mtime_secs && entry.len == len {
             Some(entry.counts.clone())
         } else {
             None
         }
     }
 
-    pub fn set(&mut self, path: &Path, source: &str, counts: &ItemCounts) {
-        let metadata = match fs::metadata(path) {
-            Ok(m) => m,
-            Err(_) => return,
+    fn set(&self, path: &Path, source: &str, counts: &ItemCounts) {
+        let Some(mtime_secs) = Self::mtime_secs(path) else {
+            return;
         };
-        let mtime = match metadata.modified() {
-            Ok(t) => t,
-            Err(_) => return,
-        };
-        let mtime_secs = match mtime.duration_since(SystemTime::UNIX_EPOCH) {
-            Ok(d) => d.as_secs() as u128,
-            Err(_) => return,
-        };
-        self.store.insert(
+        self.store.borrow_mut().insert(
             path.to_path_buf(),
             CachedEntry {
                 mtime_secs,
@@ -74,22 +82,16 @@ impl Cache {
                 counts: counts.clone(),
             },
         );
-        self.dirty = true;
+        self.dirty.set(true);
     }
 
-    pub fn flush(&self) {
-        if !self.dirty {
+    fn flush(&self) {
+        if !self.dirty.get() {
             return;
         }
         let _ = fs::create_dir_all(&self.cache_dir);
-        if let Ok(json) = serde_json::to_string(&self.store) {
+        if let Ok(json) = serde_json::to_string(&*self.store.borrow()) {
             let _ = fs::write(self.cache_dir.join("cache.json"), json);
         }
-    }
-
-    fn load(cache_dir: &Path) -> Result<HashMap<PathBuf, CachedEntry>> {
-        let path = cache_dir.join("cache.json");
-        let json = fs::read_to_string(&path)?;
-        Ok(serde_json::from_str(&json)?)
     }
 }

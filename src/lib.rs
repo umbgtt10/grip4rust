@@ -16,6 +16,7 @@ pub mod hidden_dep_finder;
 pub mod io_call_finder;
 pub mod item_counts;
 pub mod module_stats;
+pub mod no_op_cache_store;
 pub mod offender;
 pub mod overall_stats;
 pub mod stdout_reporter;
