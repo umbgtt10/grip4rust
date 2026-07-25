@@ -3,7 +3,7 @@
 **Crate:** `cargo-grip`  
 **License:** MIT  
 **Last updated:** 2026-07-25  
-**Current status:** Phase 2 — ✅ Complete (v0.5.0 published)
+**Current status:** Phase 4 — ✅ Complete (v0.5.0 published)
 
 ---
 
@@ -18,9 +18,8 @@ many clean entry points exist, how many pure functions are available, how many t
 boundaries provide seams for test doubles, how many hidden dependencies are buried
 in production logic making it impossible to test a function in isolation.
 
-`grip` measures all of this. It produces a single score, a per-module breakdown,
-and — across phases — a trend line across git history that turns testability from an
-intuition into a measurement.
+`grip` measures all of this. It produces a single score and a per-module,
+per-function breakdown that turns testability from an intuition into a measurement.
 
 **The core question `grip` answers:**
 
@@ -43,13 +42,9 @@ A production-grade Rust static analysis tool that:
 
 - Measures testability across four dimensions: public surface, pure function density,
   trait boundary ratio, and hidden dependency density
-- Produces a single grip score (0–100) with a per-module breakdown
-- Computes the Testability Index when combined with `braintax` output:
-  `TI = grip / braintax`
-- Tracks grip score across git history, producing a trend line that shows whether
-  testability is improving, stable, or degrading as the codebase grows
-- Emits structured output (JSON, SARIF, human-readable) suitable for CI integration,
-  editor tooling, and downstream dashboards
+- Produces a single grip score (0–100) with a per-module and per-function breakdown
+- Emits structured output (JSON, human-readable) suitable for CI integration and
+  editor tooling
 - Runs in under 5 seconds on a 100K LOC codebase
 
 ---
@@ -343,162 +338,62 @@ grip = (pure * 0.30 + public * 0.20 + trait * 0.25 + avg_contribution * 0.25) * 
 
 ---
 
-## Phase 3 — Testability Index: `grip / braintax`
+## Phase 3 — Weighted hidden dependencies
 
-**Status:** Planned  
-**Target:** 4–6 hours  
-**Depends on:** Phase 2 complete, `braintax` v0.x JSON output stable  
-**Deliverable:** `grip` v0.6.0 on crates.io  
+**Status:** ✅ Complete  
+**Delivered:** `grip` v0.4.0
 
 **The question Phase 3 answers:**
 
-*"How testable is this code per unit of cognitive complexity?"*
+*"Are all hidden dependencies equally bad, or does a `println!` cost less than an
+`unsafe` block?"*
 
-This is the Testability Index — the ratio that makes the metric actionable for
-engineers and legible to managers.
+**What it adds:**
 
-### Scope
+- Per-dependency severity weight (`dep_weight`, 0.2–0.6) replacing the binary
+  hidden-dep count: println-family lightest (0.2), time-related (0.3),
+  env/process (0.4), `unsafe` (0.5), everything else (0.6)
+- Continuous contribution formula: `contribution = base × (1.0 − dep_weight)`,
+  replacing Phase 2's 8-case matrix and its binary 0/1 dependency tiers with a
+  smooth gradient — `dep_weight >= 1.0` still floors contribution at `0.0`
+- Per-function `hidden_dep_labels` in `--verbose` output — names the actual
+  call site (`Database::new`, `println`, …), not just a count
+- `dep_injected` fixture (every dependency behind `Box<dyn Trait>`) plus a
+  cross-fixture test asserting injected scores dominate monolithic ones
 
-- Accept `braintax` JSON output as input via `--braintax PATH`
-- Join on function/module path
-- Compute per-function and per-module Testability Index:
-  `TI = grip_score / braintax_score`
-  where `braintax_score` is normalized to the same 0–100 range as grip
-- Classify each function into one of four quadrants:
-
-| Quadrant | Grip | Braintax | Meaning |
-|---|---|---|---|
-| ✅ Ideal | High | Low | Easy to understand, easy to test |
-| ⚠️ Acceptable | High | High | Complex but testable — worth the complexity |
-| ⚠️ Lazy | Low | Low | Simple but undertested — low-hanging fruit |
-| ❌ Danger zone | Low | High | Complex AND hard to test — immediate refactoring priority |
-
-- Produce a prioritized refactoring list: all danger-zone functions sorted by
-  TI ascending — the functions that most urgently need structural improvement
-
-### Output addition
-
-```
-grip v0.6.0 — etheram-ibft — Testability Index
-══════════════════════════════════════════════════════
-
-Overall TI:   1.34  ✅
-
-Danger zone (refactor immediately):
-  ibft/timer.rs::schedule_round_timeout    TI: 0.21   grip: 12   braintax: 58  ❌
-  ibft/recovery.rs::import_recovered       TI: 0.34   grip: 21   braintax: 62  ❌
-  ibft/consensus.rs::handle_view_change    TI: 0.51   grip: 38   braintax: 74  ⚠️
-
-Ideal (protect these):
-  ibft/state.rs::compute_quorum_threshold  TI: 4.20   grip: 84   braintax: 20  ✅
-  ibft/state.rs::is_member                 TI: 6.50   grip: 91   braintax: 14  ✅
-```
-
-### Gate
-
-- Phase 2 gate conditions still pass
-- `--braintax` flag accepts valid `braintax` JSON output without error
-- Danger zone list contains at least one function in `etheram-ibft` — known to exist
-- Ideal list contains at least one function in `etheram-ibft` — known to exist
-- TI values are stable across two consecutive runs on the same codebase
-- Published on crates.io as `grip` v0.6.0
+See `CHANGELOG.md` [0.4.0] for the complete list.
 
 ---
 
-## Phase 4 — Git history tracking and QI trend
+## Phase 4 — Per-function absolute scores, cache seam, dyn dispatch
 
-**Status:** Planned  
-**Target:** 8–12 hours  
-**Depends on:** Phase 3 complete  
-**Deliverable:** `grip` v1.0.0 on crates.io  
+**Status:** ✅ Complete  
+**Delivered:** `grip` v0.5.0
 
 **The question Phase 4 answers:**
 
-*"Is testability improving, stable, or degrading as this codebase grows — and what
-is the financial cost of the current trajectory?"*
+*"Can a function's own contribution be reported directly instead of only being
+folded into an aggregate — and is every dependency seam, including the cache,
+actually swappable?"*
 
-This is the Quality Index — the three-dimensional metric that makes death marches
-visible in currency before they become inevitable.
+**What it adds:**
 
-### Scope
+- `grip_absolute`/`grip_normalized` per function, `grip_absolute_total` on
+  `OverallStats`/`ModuleStats` — every function's own contribution is now
+  reportable, not just the aggregate `grip_score`
+- `CacheStore` trait — the incremental file cache (`.grip_cache/cache.json`)
+  became a swappable seam like the other three traits, with `NoOpCacheStore`
+  as an always-miss fake for tests
+- `App` converted from `App<W, S, R, C>` generics to `Box<dyn Trait>` fields
+  (see `docs/ADRs/ADR-DynDispatchAppOverGenerics.md`)
+- `grip_score` became `Option<u32>` — zero-function modules report `None`
+  instead of a misleading default
+- Packaging fix: 6 fixture crates carried a stray `Cargo.toml` that silently
+  dropped their tests from `cargo package`'s verification build
 
-**Git history walking:**
-- Accept `--history` flag to enable git history mode
-- Walk all commits on the current branch using `git2` crate
-- Compute grip score at each commit (or at configurable intervals — `--every N`)
-- Store results in a local `.grip-history.json` file (incremental — only recomputes
-  commits not already in the cache)
-
-**Code size tracking:**
-- Count productive LOC at each commit (excluding test files, blank lines, comments)
-- Store alongside grip score
-
-**QI computation:**
-- `QI = grip_score / (braintax_score × normalized_size)`
-- `normalized_size = LOC / 1000` (per KLOC normalization)
-- QI is meaningful only when `braintax` history is also available — gracefully
-  degrades to grip-only trend when `--braintax-history` is not provided
-
-**Trend analysis:**
-- Compute the QI derivative over the last N commits (configurable, default 10)
-- Classify trend: `Improving`, `Stable` (±5%), `Degrading`
-- Detect the inflection point — the commit where QI began declining
-- Report the commit hash, author, date, and message of the inflection point
-
-**Cost projection:**
-- Accept `--team-size N` and `--daily-rate R` flags
-- Compute estimated butchering duration from current QI deficit to asymptote:
-  `estimated_days = (asymptote_QI - current_QI) / recovery_rate_per_day`
-  where `recovery_rate_per_day` is estimated from the historical recovery rate
-  in previous positive-derivative periods
-- Compute cost: `butchering_cost = estimated_days × team_size × daily_rate`
-- Compute opportunity cost: `opportunity_cost = estimated_days × features_per_day × value_per_feature`
-  where `features_per_day` and `value_per_feature` are configurable inputs
-- Compute early intervention cost: cost if addressed in the current sprint
-  (assumes 2-week butchering at current team size)
-
-### Output addition
-
-```
-grip v1.0.0 — etheram-ibft — Quality Index trend
-══════════════════════════════════════════════════════
-
-QI today:          1.34  (↓ from 1.87 at peak — 28 Jan 2026)
-QI trend:          Degrading  (−0.12 / week over last 10 commits)
-Asymptote (est.):  2.10
-
-Inflection point:
-  Commit:  a4f3c21
-  Date:    2026-03-14
-  Author:  Umberto
-  Message: "feat: add recovery path for late-joining validators"
-
-Cost projection (team: 5, rate: CHF 1,200/day):
-  Estimated butchering duration:    9 weeks
-  Butchering cost:                  CHF 270,000
-  Opportunity cost (est.):          CHF 405,000
-  ─────────────────────────────────────────────
-  Total cost of current trajectory: CHF 675,000
-
-  If addressed this sprint (2 weeks): CHF 60,000
-  You are waiting:                    CHF 10,500 / day
-```
-
-**SARIF output (`--sarif` flag):**
-
-Produce a SARIF file for IDE and CI integration. Each degrading module is a
-diagnostic. Each danger-zone function is a warning. Each hidden dependency is
-an informational note. Compatible with GitHub Code Scanning, VS Code, and Zed.
-
-### Gate
-
-- Phase 3 gate conditions still pass
-- `--history` completes without error on `etheram-ibft` git history
-- Inflection point detection identifies the correct commit (manually verified)
-- Cost projection output is correct given known team size and rate inputs
-- SARIF output is valid per the SARIF 2.1.0 schema
-- Runs in under 30 seconds for a 500-commit history
-- Published on crates.io as `grip` v1.0.0
+See `CHANGELOG.md` [0.5.0] for the complete list, including the smaller
+correctness fixes (`#[cfg(test)]` scoping, path-exclusion anchoring,
+`trait_ratio`'s zero-guard).
 
 ---
 
@@ -509,22 +404,8 @@ an informational note. Compatible with GitHub Code Scanning, VS Code, and Zed.
 | 0 | v0.1.1 | Public surface + pure function ratio | 2 hours | ✅ Complete |
 | 1 | v0.2.0 | Trait boundary ratio | 4–6 hours | ✅ Complete |
 | 2 | v0.3.0 | Hidden dependency detection | 6–8 hours | ✅ Complete |
-| 3 | v0.6.0 | Testability Index (`grip / braintax`) | 4–6 hours | Planned |
-| 4 | v1.0.0 | Git history, QI trend, cost projection | 8–12 hours | Planned |
-
----
-
-## Publication readiness checklist (v1.0.0)
-
-- [ ] All four dimensions implemented and validated against `etheram-ibft`
-- [ ] JSON output stable and versioned
-- [ ] SARIF output valid per schema
-- [ ] `--history` completes on at least one real project with 100+ commits
-- [ ] Cost projection output verified against known team/rate inputs
-- [ ] README written for a non-Rust audience — managers must understand the output
-- [ ] CRAP score 0 across all `grip` source files (enforced by `crap4rust`)
-- [ ] `braintax` integration documented with example workflow
-- [ ] crates.io metadata complete
+| 3 | v0.4.0 | Weighted hidden dependencies | — | ✅ Complete |
+| 4 | v0.5.0 | Per-function absolute scores, cache seam, dyn dispatch | — | ✅ Complete |
 
 ---
 
