@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+### Fixed
+- `has_mut_param` treated `mut self` (by-value, locally-mutable, no observable
+  side effect — the standard consuming-builder idiom) identically to `&mut self`
+  (a real mutable reference), because `syn::Receiver::mutability` is set for
+  both. A method like `fn with_x(mut self, x: T) -> Self` was misclassified
+  impure purely from the `mut` keyword. Now checks `reference.is_some() &&
+  mutability.is_some()`, matching what `docs/FORMULA.md` already documented as
+  the intended rule. Found via empirical analysis of Faction's commit history —
+  verified against the actual flagged source before fixing, not assumed.
+
+### Added
+- `OPEN_POINTS.md`: documented that `HiddenDepFinder::check_path`'s structural
+  rule can't distinguish a plain value type (`self.vec.clone()`, `self.vec.get(i)`)
+  from a live collaborator (`self.db.query(...)`) — the single most common driver
+  of false-positive hidden-dep flags found in the same analysis. Not fixed yet.
+
 ## [0.6.0] — 2026-07-25
 
 ### Added

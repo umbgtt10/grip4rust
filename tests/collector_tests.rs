@@ -78,6 +78,39 @@ fn unsafe_function_is_not_pure() {
 }
 
 #[test]
+fn by_value_mut_self_builder_method_is_pure() {
+    // Arrange
+    let source = "pub struct Builder { x: i32 }\nimpl Builder {\n    pub fn with_x(mut self, x: i32) -> Self { self.x = x; self }\n}\n";
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(counts.pure_functions, 1);
+    assert!(
+        fns[0].is_pure,
+        "mut self (by value) has no observable side effect and must not be treated the same as &mut self"
+    );
+}
+
+#[test]
+fn mut_self_reference_method_is_not_pure() {
+    // Arrange
+    let source = "pub struct Builder { x: i32 }\nimpl Builder {\n    pub fn set_x(&mut self, x: i32) { self.x = x; }\n}\n";
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(counts.pure_functions, 0);
+    assert!(!fns[0].is_pure);
+}
+
+#[test]
 fn private_function_is_not_public() {
     // Arrange
     let source = "fn private() -> i32 { 42 }\n";

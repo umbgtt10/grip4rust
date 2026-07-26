@@ -32,3 +32,31 @@ given score should be recorded in JSON output, so any comparison stays
 honest about whether it's apples-to-apples.
 
 Not started.
+
+## Structural hidden-dep detection can't distinguish a value type from a live collaborator
+
+`HiddenDepFinder::check_path` (`src/hidden_dep_finder.rs`) flags
+`self.concrete_field.method(...)` as a hidden dependency whenever `concrete_field`
+isn't behind `Box`/`Arc`/`&dyn Trait` — correct for a live collaborator
+(`self.db.query(...)`), but the same rule fires identically for
+`self.plain_vec.clone()`, `self.plain_vec.get(i)`, `self.plain_vec.len()` — plain,
+deterministic, side-effect-free methods on owned value types (`Vec`, `HashSet`,
+`String`, a project's own data-only structs). Nothing about cloning or
+bounds-checked-indexing a value type has the non-determinism or hidden-I/O
+character this dimension exists to catch, yet it costs exactly the same as
+reaching into a database.
+
+Confirmed empirically, not just in theory: analyzing Faction's commit history
+(10 sampled ratio-drop pairs), this single mechanism was the most common driver
+of regressions. The clearest case: a commit that made indexing defensive
+(`self.flags.get(i)` instead of panicking `self.flags[i]`) scored *worse* for it,
+purely because `.get()` is structurally indistinguishable from a call to a live
+collaborator.
+
+Not started. Likely shape: an allowlist of known-pure value-type methods (`clone`,
+`len`, `get`, `is_empty`, `contains`, `iter`, ...) on known value-type constructors
+(`Vec`, `HashMap`, `HashSet`, `String`, `Option`, `Cell`, `RefCell`, ...), mirroring
+the existing `STD_CONSTRUCTORS` allowlist that already excludes `Vec::new()`/
+`Box::new()` from `check_path`. The harder open question is a project's *own*
+data-only structs (a `ConfirmedSet`-style wrapper) — nothing structural
+distinguishes those from a genuine collaborator without type resolution.

@@ -384,7 +384,7 @@ impl Collector {
 
     fn has_mut_param(&self, sig: &syn::Signature) -> bool {
         sig.inputs.iter().any(|arg| match arg {
-            syn::FnArg::Receiver(recv) => recv.mutability.is_some(),
+            syn::FnArg::Receiver(recv) => recv.reference.is_some() && recv.mutability.is_some(),
             syn::FnArg::Typed(pat_type) => self.has_mut_in_type(&pat_type.ty),
         })
     }
