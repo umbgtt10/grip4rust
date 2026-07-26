@@ -14,6 +14,7 @@ use crate::function_info::FunctionInfo;
 use crate::hidden_dep_finder::HiddenDepFinder;
 use crate::io_call_finder::IoCallFinder;
 use crate::item_counts::ItemCounts;
+use crate::struct_registry::{StructRegistry, field_type_head};
 use crate::unsafe_finder::UnsafeFinder;
 
 fn self_ty_name(ty: &syn::Type) -> String {
@@ -22,19 +23,6 @@ fn self_ty_name(ty: &syn::Type) -> String {
             .path
             .segments
             .first()
-            .map(|s| s.ident.to_string())
-            .unwrap_or_default()
-    } else {
-        String::new()
-    }
-}
-
-fn field_type_head(ty: &syn::Type) -> String {
-    if let syn::Type::Path(type_path) = ty {
-        type_path
-            .path
-            .segments
-            .last()
             .map(|s| s.ident.to_string())
             .unwrap_or_default()
     } else {
@@ -107,33 +95,39 @@ const KNOWN_FOREIGN_TRAITS: &[&str] = &[
 ];
 
 #[derive(Debug)]
-pub struct Collector {
+pub struct Collector<'a> {
     counts: ItemCounts,
     functions: Vec<FunctionInfo>,
     current_file: String,
     struct_concrete_fields: HashMap<String, HashMap<String, String>>,
     contribution_schedule: ContributionSchedule,
+    registry: &'a StructRegistry,
 }
 
-impl Collector {
-    fn new(file: String) -> Self {
+impl<'a> Collector<'a> {
+    fn new(file: String, registry: &'a StructRegistry) -> Self {
         Self {
             counts: ItemCounts::default(),
             functions: Vec::new(),
             current_file: file,
             struct_concrete_fields: HashMap::new(),
             contribution_schedule: ContributionSchedule::new(),
+            registry,
         }
     }
 
-    pub fn collect(source: &str, path: &Path) -> (ItemCounts, Vec<FunctionInfo>) {
+    pub fn collect(
+        source: &str,
+        path: &Path,
+        registry: &'a StructRegistry,
+    ) -> (ItemCounts, Vec<FunctionInfo>) {
         let file = path.to_string_lossy().replace('\\', "/");
         let syntax = match syn::parse_file(source) {
             Ok(s) => s,
             Err(_) => return (ItemCounts::default(), Vec::new()),
         };
 
-        let mut collector = Self::new(file);
+        let mut collector = Self::new(file, registry);
         for item in &syntax.items {
             collector.visit_item(item);
         }
@@ -141,7 +135,7 @@ impl Collector {
     }
 }
 
-impl<'ast> Visit<'ast> for Collector {
+impl<'ast, 'a> Visit<'ast> for Collector<'a> {
     fn visit_item(&mut self, item: &'ast Item) {
         match item {
             Item::Fn(item_fn) if !self.has_test_attr(&item_fn.attrs) => self.visit_fn(item_fn),
@@ -163,7 +157,7 @@ impl<'ast> Visit<'ast> for Collector {
     }
 }
 
-impl Collector {
+impl<'a> Collector<'a> {
     fn visit_fn(&mut self, item_fn: &ItemFn) {
         let name = item_fn.sig.ident.to_string();
         let is_pub = matches!(
@@ -439,8 +433,8 @@ impl Collector {
         finder.found
     }
 
-    fn count_hidden_deps_in_block(&self, block: &syn::Block) -> HiddenDepFinder {
-        let mut finder = HiddenDepFinder::new();
+    fn count_hidden_deps_in_block(&self, block: &syn::Block) -> HiddenDepFinder<'a> {
+        let mut finder = HiddenDepFinder::new(self.registry);
         finder.visit_block(block);
         finder
     }
@@ -449,8 +443,8 @@ impl Collector {
         &self,
         method: &syn::ImplItemFn,
         concrete_fields: HashMap<String, String>,
-    ) -> HiddenDepFinder {
-        let mut finder = HiddenDepFinder::new();
+    ) -> HiddenDepFinder<'a> {
+        let mut finder = HiddenDepFinder::new(self.registry);
         finder.set_concrete_fields(concrete_fields);
         finder.visit_block(&method.block);
         finder

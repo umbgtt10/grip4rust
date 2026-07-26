@@ -20,6 +20,7 @@ use crate::item_counts::ItemCounts;
 use crate::offender::Offender;
 use crate::overall_stats::OverallStats;
 use crate::stdout_reporter::StdoutReporter;
+use crate::struct_registry::StructRegistry;
 use crate::traits::cache_store::CacheStore;
 use crate::traits::reporter::Reporter;
 use crate::traits::scorer::Scorer;
@@ -81,11 +82,12 @@ impl App {
 
     fn collect_files(&self) -> Result<CollectedFiles> {
         let files = self.walker.rust_files()?;
+        let registry = StructRegistry::build(&files);
         let mut indexed = Vec::with_capacity(files.len());
         let mut all_functions = Vec::new();
         for (path, source) in files {
             let module = self.module_from_path(&path);
-            let (counts, functions) = Collector::collect(&source, &path);
+            let (counts, functions) = Collector::collect(&source, &path, &registry);
             all_functions.extend(functions);
             if self.cache.get(&path).is_none() {
                 self.cache.set(&path, &source, &counts);

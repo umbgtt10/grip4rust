@@ -20,7 +20,11 @@ fn cache_hit_returns_same_counts() {
     let cache = Cache::new(dir.path());
 
     let source = fs::read_to_string(&file).unwrap();
-    let (initial, _fns) = grip::collector::Collector::collect(&source, &file);
+    let (initial, _fns) = grip::collector::Collector::collect(
+        &source,
+        &file,
+        &grip::struct_registry::StructRegistry::default(),
+    );
     cache.set(&file, &source, &initial);
 
     // Act
@@ -42,7 +46,11 @@ fn cache_miss_after_change() {
 
     let cache = Cache::new(dir.path());
     let source = fs::read_to_string(&file).unwrap();
-    let (initial, _fns) = grip::collector::Collector::collect(&source, &file);
+    let (initial, _fns) = grip::collector::Collector::collect(
+        &source,
+        &file,
+        &grip::struct_registry::StructRegistry::default(),
+    );
     cache.set(&file, &source, &initial);
 
     fs::write(&file, "fn hidden() -> i32 { 0 }").unwrap();

@@ -30,17 +30,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   a known value-type constructor (`Vec`, `HashMap`, `HashSet`, `BTreeMap`,
   `BTreeSet`, `VecDeque`, `String`, `Option`, `Cell`, `RefCell`) *and* the method
   is a known-pure value-type method (`clone`, `len`, `get`, `is_empty`, `contains`,
-  `iter`). A project's own data-only wrapper structs are intentionally still
-  flagged — see `OPEN_POINTS.md`, that part needs real type resolution.
+  `iter`). A project's own data-only wrapper structs were intentionally still
+  flagged at this point — see the next entry.
+
+- A project's *own* data-only wrapper structs (a `Members`-style type wrapping
+  a `Vec` internally, possibly nested) are now also exempted, but only for
+  `.clone()`. New `StructRegistry` (`src/struct_registry.rs`) does a
+  project-wide, struct-only AST pass ahead of the normal per-file
+  `Collector::collect` pass — something the tool had never done before, since
+  every prior pass scored one file in isolation — and
+  `is_transitive_value_type` recursively proves a type is plain data: every
+  field must resolve down to a known std value type, with a cycle guard for
+  mutually-recursive structs. `Collector::collect` and `HiddenDepFinder::new`
+  now take the registry through their constructors. Deliberately scoped to
+  `clone` only: proving a type's *fields* are plain data does not prove its
+  *methods* are pure — a `DiskCache { path: String }` clears the field-shape
+  check but `DiskCache::get()` can still hit disk, so `get`/`len`/`is_empty`/
+  `contains`/`iter` stay std-types-only. See `OPEN_POINTS.md` for what's still
+  open.
 
 ### Added
-- Six tests added before the fix, verified red against the unfixed code with a
-  clean build: `Vec::get`/`Vec::clone` now correctly pure; a second collection
-  type (`HashMap::len`) confirmed to work, not just `Vec`; `Vec::push` (not on
-  the pure-methods list) still correctly flagged, proving the fix isn't a
-  blanket exemption; and a custom type's own `.get()` method — the riskiest
-  name to get wrong — still correctly flagged, since nothing distinguishes it
-  from `Vec::get()` without type resolution.
+- Six tests added before the previous fix, verified red against the unfixed
+  code with a clean build: `Vec::get`/`Vec::clone` now correctly pure; a
+  second collection type (`HashMap::len`) confirmed to work, not just `Vec`;
+  `Vec::push` (not on the pure-methods list) still correctly flagged, proving
+  the fix isn't a blanket exemption; and a custom type's own `.get()` method —
+  the riskiest name to get wrong — still correctly flagged, since nothing
+  distinguishes it from `Vec::get()` without type resolution.
+- `tests/struct_registry_tests.rs` (8 tests) for the new registry's recursive
+  resolution directly: known std types, an unknown type, a plain wrapper, a
+  wrapper of a wrapper, a struct with one non-value field (must poison the
+  whole struct), a mutual cycle (must terminate, not overflow the stack), and
+  cross-source resolution (the registry must see a struct defined in a
+  different source entry than the one being queried — the entire reason it
+  exists as a project-wide pass rather than living inside `Collector`).
+- Two new `collector_tests.rs` cases proving the registry is actually wired
+  in end to end: `self.members.clone()` clears when the registry resolves
+  `Members` as transitively a value type, and `self.cache.get(...)` stays
+  flagged even when the registry resolves `DiskCache` — the regression guard
+  for the clone-only scoping decision above.
 
 ## [0.6.0] — 2026-07-25
 

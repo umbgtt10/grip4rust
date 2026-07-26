@@ -22,6 +22,7 @@ pub mod offenders_renderer;
 pub mod overall_stats;
 pub mod overall_summary_renderer;
 pub mod stdout_reporter;
+pub mod struct_registry;
 pub mod traits;
 pub mod unsafe_finder;
 pub mod verbose_functions_renderer;

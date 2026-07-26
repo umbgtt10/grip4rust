@@ -6,12 +6,11 @@ use std::collections::HashMap;
 
 use syn::visit::Visit;
 
-const KNOWN_VALUE_TYPES: &[&str] = &[
-    "Vec", "HashMap", "HashSet", "BTreeMap", "BTreeSet", "VecDeque", "String", "Option", "Cell",
-    "RefCell",
-];
+use crate::struct_registry::{KNOWN_STD_VALUE_TYPES, StructRegistry};
 
 const PURE_VALUE_METHODS: &[&str] = &["clone", "len", "get", "is_empty", "contains", "iter"];
+
+const CUSTOM_TYPE_ELIGIBLE_METHODS: &[&str] = &["clone"];
 
 const STD_CONSTRUCTORS: &[&str] = &[
     "Box", "Arc", "Rc", "String", "Vec", "HashMap", "HashSet", "Option", "Result", "Ok", "Err",
@@ -79,24 +78,26 @@ fn path_label(path: &syn::Path) -> String {
         .join("::")
 }
 
-pub(crate) struct HiddenDepFinder {
-    pub(crate) count: usize,
-    pub(crate) weight: f64,
-    pub(crate) labels: Vec<String>,
+pub struct HiddenDepFinder<'a> {
+    pub count: usize,
+    pub weight: f64,
+    pub labels: Vec<String>,
     concrete_fields: HashMap<String, String>,
+    registry: &'a StructRegistry,
 }
 
-impl HiddenDepFinder {
-    pub(crate) fn new() -> Self {
+impl<'a> HiddenDepFinder<'a> {
+    pub fn new(registry: &'a StructRegistry) -> Self {
         Self {
             count: 0,
             weight: 0.0,
             labels: Vec::new(),
             concrete_fields: HashMap::new(),
+            registry,
         }
     }
 
-    pub(crate) fn set_concrete_fields(&mut self, fields: HashMap<String, String>) {
+    pub fn set_concrete_fields(&mut self, fields: HashMap<String, String>) {
         self.concrete_fields = fields;
     }
 
@@ -143,7 +144,7 @@ fn is_print_macro(path: &syn::Path) -> bool {
     false
 }
 
-impl<'ast> Visit<'ast> for HiddenDepFinder {
+impl<'ast, 'a> Visit<'ast> for HiddenDepFinder<'a> {
     fn visit_stmt(&mut self, stmt: &'ast syn::Stmt) {
         if let syn::Stmt::Macro(stmt_macro) = stmt {
             if is_print_macro(&stmt_macro.mac.path) {
@@ -165,7 +166,7 @@ impl<'ast> Visit<'ast> for HiddenDepFinder {
     }
 }
 
-impl HiddenDepFinder {
+impl<'a> HiddenDepFinder<'a> {
     /// Returns whether the visitor should still recurse into `expr`'s children.
     fn handle_expr(&mut self, expr: &syn::Expr) -> bool {
         match expr {
@@ -186,9 +187,9 @@ impl HiddenDepFinder {
             return false;
         }
         if let Some(name) = Self::concrete_field_name(&expr_method.receiver) {
-            if let Some(type_name) = self.concrete_fields.get(&name) {
+            if let Some(type_name) = self.concrete_fields.get(&name).cloned() {
                 let method = expr_method.method.to_string();
-                if !Self::is_pure_value_method(type_name, &method) {
+                if !self.is_pure_value_method(&type_name, &method) {
                     let label = format!("self.{name}.{method}");
                     self.add_dep(&label);
                 }
@@ -197,8 +198,15 @@ impl HiddenDepFinder {
         true
     }
 
-    fn is_pure_value_method(type_name: &str, method: &str) -> bool {
-        KNOWN_VALUE_TYPES.contains(&type_name) && PURE_VALUE_METHODS.contains(&method)
+    fn is_pure_value_method(&self, type_name: &str, method: &str) -> bool {
+        if !PURE_VALUE_METHODS.contains(&method) {
+            return false;
+        }
+        if CUSTOM_TYPE_ELIGIBLE_METHODS.contains(&method) {
+            self.registry.is_transitive_value_type(type_name)
+        } else {
+            KNOWN_STD_VALUE_TYPES.contains(&type_name)
+        }
     }
 
     fn handle_macro_expr(&mut self, expr_macro: &syn::ExprMacro) -> bool {
