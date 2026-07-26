@@ -33,31 +33,34 @@ honest about whether it's apples-to-apples.
 
 Not started.
 
-## Structural hidden-dep detection can't verify a custom type's methods, only its shape
+## Structural hidden-dep detection still can't resolve enums, generics, or cross-crate types
 
-`HiddenDepFinder` (`src/hidden_dep_finder.rs`) exempts `self.field.clone()` from being
-flagged as a hidden dependency when `StructRegistry::is_transitive_value_type`
-(`src/struct_registry.rs`) can prove `field`'s type is plain data — every field resolves
-down to a known std value type, recursively. This is deliberately narrower than it could
-be:
+`HiddenDepFinder` (`src/hidden_dep_finder.rs`) exempts `self.field.method(...)` from being
+flagged as a hidden dependency in two ways: `.clone()` clears when
+`StructRegistry::is_transitive_value_type` (`src/struct_registry.rs`) can prove the field's
+type is plain data (every field resolves down to a known std value type, recursively);
+`len`/`get`/`is_empty`/`contains`/`iter` clear when `MethodPurityRegistry`
+(`src/method_purity_registry.rs`) can prove the *specific method being called* is a pure,
+zero-hidden-dep inherent `&self` accessor — by re-running the same purity and hidden-dep
+analysis `Collector` already uses for scoring, just ahead of time and project-wide. This is
+still narrower than it could be:
 
-- **Non-`clone` methods on custom types** (`self.members.len()`, `self.members.is_empty()`,
-  etc.) always stay flagged, even when the wrapper is provably plain data. A type's
-  *fields* being plain data doesn't prove its *methods* are pure — `DiskCache { path: String }`
-  clears the field-shape check, but `DiskCache::get()` can still open a file at that path.
-  Closing this needs verifying the *specific method's own body* is a pure, trivial
-  delegation — recursively applying the same hidden-dep analysis to it — a materially
-  bigger check than a field-shape proof, and deliberately out of scope for now.
-  `tests/collector_tests.rs::hidden_dep_self_field_custom_wrapper_get_still_flagged_even_when_registry_resolves_it`
-  is the regression guard for this boundary.
+- **Trait-impl methods aren't registered**, only inherent ones — a `len()` reached through a
+  local trait impl stays flagged even if its body is genuinely pure. Foreign-trait impls (the
+  same list `is_foreign_trait` already skips) are invisible either way, so nothing changes
+  there.
+- **Nested custom-method trust doesn't recurse.** `MethodPurityRegistry` is built in a single
+  pass: while checking whether `Members::len()` is pure, any call inside its body to
+  *another* custom type's non-`clone` accessor is conservatively treated as unresolved, since
+  that other method's purity hasn't been established yet. A one-level accessor is proven; a
+  chain of them isn't. Avoiding a fixpoint/topological-sort build was a deliberate scope
+  call, not an oversight.
 - **Enums** aren't registered by `StructRegistry` (structs only) — an enum field always
   resolves as unknown, so it's conservatively still flagged.
 - **Generic fields** (`struct Wrapper<T> { inner: T }`) resolve the same way — `T` isn't a
   real type name, so the field never clears.
-- **Cross-crate types** — the registry only sees whatever's inside the scanned path. A
-  wrapper defined in a sibling crate stays unresolved.
+- **Cross-crate types** — both registries only see whatever's inside the scanned path. A
+  wrapper (or its impl) defined in a sibling crate stays unresolved.
 
-All four fail *safe* (conservatively still flagged). Closing any of them needs either a
-materially bigger check (method-body verification for the first) or real type resolution
-(the other three) — neither is a small step from here. See `CHANGELOG.md` for what's
-already fixed.
+All fail *safe* (conservatively still flagged). See `CHANGELOG.md` for what's already
+fixed.

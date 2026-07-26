@@ -7,6 +7,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use grip::collector::Collector;
+use grip::method_purity_registry::MethodPurityRegistry;
 use grip::struct_registry::StructRegistry;
 use tempfile::TempDir;
 
@@ -25,7 +26,12 @@ fn pure_function_is_counted() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.total_functions, 1);
@@ -42,7 +48,12 @@ fn impure_function_is_not_counted_as_pure() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.total_functions, 1);
@@ -57,7 +68,12 @@ fn unit_return_is_not_pure() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.total_functions, 1);
@@ -72,7 +88,12 @@ fn unsafe_function_is_not_pure() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.total_functions, 1);
@@ -87,7 +108,12 @@ fn by_value_mut_self_builder_method_is_pure() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.pure_functions, 1);
@@ -105,7 +131,12 @@ fn mut_self_reference_method_is_not_pure() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.pure_functions, 0);
@@ -120,7 +151,12 @@ fn private_function_is_not_public() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.total_functions, 1);
@@ -142,7 +178,12 @@ pub trait T {}
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.total_functions, 3);
@@ -164,7 +205,12 @@ mod tests {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.total_functions, 0);
@@ -179,7 +225,12 @@ fn pubcrate_is_public_item() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.total_functions, 1);
@@ -205,7 +256,12 @@ impl Client {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.inherent_methods, 1);
@@ -232,7 +288,12 @@ impl Logger {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.inherent_methods, 1);
@@ -259,7 +320,12 @@ impl inner::MyTrait for MyStruct {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.local_trait_methods, 1);
@@ -287,7 +353,12 @@ impl Helper for Impl {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -313,7 +384,12 @@ impl std::fmt::Display for MyStruct {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (counts, _fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (counts, _fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(counts.local_trait_methods, 0);
@@ -333,7 +409,12 @@ impl Handler {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -355,7 +436,12 @@ impl Builder {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -377,7 +463,12 @@ impl Collector {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 0, "Vec::new should not be a hidden dep");
@@ -396,7 +487,12 @@ impl Wrapper {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 0, "Box::new should not be a hidden dep");
@@ -415,7 +511,12 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -437,7 +538,12 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -459,7 +565,12 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -482,7 +593,12 @@ impl Factory {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -504,7 +620,12 @@ impl Logger {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 1, "println! should be a hidden dep");
@@ -527,7 +648,12 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -549,7 +675,12 @@ impl Calc {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -573,7 +704,12 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -604,7 +740,12 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -632,7 +773,12 @@ impl ConfirmedSet {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -656,7 +802,12 @@ impl Tracker {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -686,7 +837,12 @@ impl Bootstrapped {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     let snapshot_fn = fns.iter().find(|f| f.name == "snapshot").unwrap();
@@ -713,7 +869,12 @@ impl Registry {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -738,7 +899,12 @@ impl Log {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -772,7 +938,12 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     let lookup_fn = fns.iter().find(|f| f.name == "lookup").unwrap();
@@ -790,6 +961,7 @@ fn hidden_dep_self_field_custom_wrapper_clone_not_counted_when_registry_resolves
     let members_source = "struct Members { ids: Vec<i32> }";
     let registry =
         StructRegistry::build(&[(PathBuf::from("members.rs"), members_source.to_string())]);
+    let method_purity = MethodPurityRegistry::default();
 
     let source = r#"
 struct Members {
@@ -807,7 +979,7 @@ impl Bootstrapped {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &registry);
+    let (_counts, fns) = Collector::collect(source, &_file, &registry, &method_purity);
 
     // Assert
     let snapshot_fn = fns.iter().find(|f| f.name == "snapshot").unwrap();
@@ -818,21 +990,20 @@ impl Bootstrapped {
 }
 
 #[test]
-fn hidden_dep_self_field_custom_wrapper_get_still_flagged_even_when_registry_resolves_it() {
+fn hidden_dep_self_field_custom_wrapper_get_still_flagged_when_method_body_is_impure() {
     // Arrange: DiskCache's own field is transitively value-typed (just a
     // String), so a naive field-type check alone would wrongly clear .get()
-    // too - only clone is trusted for custom types, since get's *meaning* on
-    // an arbitrary type can't be verified without inspecting its method body.
-    let cache_source = "struct DiskCache { path: String }";
-    let registry =
-        StructRegistry::build(&[(PathBuf::from("disk_cache.rs"), cache_source.to_string())]);
-
+    // too. get()'s body genuinely performs I/O here - the method-purity
+    // registry must catch that and refuse to trust it, regardless of name.
     let source = r#"
 struct DiskCache {
     path: String,
 }
 impl DiskCache {
-    pub fn get(&self, key: &str) -> String { key.to_string() }
+    pub fn get(&self, key: &str) -> String {
+        let contents = std::fs::read_to_string(&self.path).unwrap_or_default();
+        format!("{key}:{contents}")
+    }
 }
 
 struct Service {
@@ -842,17 +1013,97 @@ impl Service {
     pub fn lookup(&self, key: &str) -> String { self.cache.get(key) }
 }
 "#;
+    let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
+    let struct_registry = StructRegistry::build(&files);
+    let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
     let dir = tempfile::tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &registry);
+    let (_counts, fns) = Collector::collect(source, &_file, &struct_registry, &method_purity);
 
     // Assert
     let lookup_fn = fns.iter().find(|f| f.name == "lookup").unwrap();
     assert_eq!(
         lookup_fn.hidden_deps, 1,
-        "get is not a custom-type-eligible method, even when the registry resolves the receiver"
+        "get() genuinely performs I/O - it must stay flagged regardless of its name"
+    );
+}
+
+#[test]
+fn hidden_dep_self_field_custom_wrapper_len_not_counted_when_body_is_provably_pure() {
+    // Arrange: Members::len delegates purely to a std Vec field - the
+    // method-purity registry should prove this and clear the call site,
+    // even though `len` is not the clone-only structural exemption.
+    let source = r#"
+struct Members {
+    ids: Vec<i32>,
+}
+impl Members {
+    pub fn len(&self) -> usize { self.ids.len() }
+}
+
+struct Bootstrapped {
+    members: Members,
+}
+impl Bootstrapped {
+    pub fn member_count(&self) -> usize { self.members.len() }
+}
+"#;
+    let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
+    let struct_registry = StructRegistry::build(&files);
+    let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (_counts, fns) = Collector::collect(source, &_file, &struct_registry, &method_purity);
+
+    // Assert
+    let member_count_fn = fns.iter().find(|f| f.name == "member_count").unwrap();
+    assert_eq!(
+        member_count_fn.hidden_deps, 0,
+        "Members::len is a provably pure delegation - the call site must clear"
+    );
+}
+
+#[test]
+fn hidden_dep_self_field_custom_wrapper_len_still_flagged_when_body_is_impure() {
+    // Arrange: same shape as the positive case above, but Members::len
+    // itself performs real I/O - the call site must stay flagged, proving
+    // this is genuine body verification and not just name-based trust.
+    let source = r#"
+struct Members {
+    ids: Vec<i32>,
+}
+impl Members {
+    pub fn len(&self) -> usize {
+        std::fs::read_to_string("audit.log").unwrap_or_default();
+        self.ids.len()
+    }
+}
+
+struct Bootstrapped {
+    members: Members,
+}
+impl Bootstrapped {
+    pub fn member_count(&self) -> usize { self.members.len() }
+}
+"#;
+    let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
+    let struct_registry = StructRegistry::build(&files);
+    let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (_counts, fns) = Collector::collect(source, &_file, &struct_registry, &method_purity);
+
+    // Assert
+    let member_count_fn = fns.iter().find(|f| f.name == "member_count").unwrap();
+    assert_eq!(
+        member_count_fn.hidden_deps, 1,
+        "Members::len performs real I/O - the call site must stay flagged"
     );
 }
 
@@ -871,7 +1122,12 @@ impl Service<'_> {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -888,7 +1144,12 @@ fn hidden_dep_free_function_is_detected() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -905,7 +1166,12 @@ fn hidden_dep_free_function_clean_not_flagged() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -927,7 +1193,12 @@ impl Logger {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 1, "eprintln! should be a hidden dep");
@@ -948,7 +1219,12 @@ impl Service {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -965,7 +1241,12 @@ fn hidden_dep_input_argument_not_counted() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -982,7 +1263,12 @@ fn hidden_dep_print_macro_is_detected() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(fns[0].hidden_deps, 1, "print! should be a hidden dep");
@@ -996,7 +1282,12 @@ fn hidden_dep_thread_sleep_is_detected() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert_eq!(
@@ -1014,7 +1305,12 @@ fn heavy() { Database::new(\"prod\"); StripeGateway::charge(100.0); }\n";
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     let schedule = grip::contribution_schedule::ContributionSchedule::new();
@@ -1040,7 +1336,12 @@ fn hidden_dep_labels_are_recorded() {
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &StructRegistry::default());
+    let (_counts, fns) = Collector::collect(
+        source,
+        &_file,
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
 
     // Assert
     assert!(

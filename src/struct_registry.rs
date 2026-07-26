@@ -25,9 +25,38 @@ pub fn field_type_head(ty: &syn::Type) -> String {
     }
 }
 
+pub(crate) fn self_ty_name(ty: &syn::Type) -> String {
+    if let syn::Type::Path(type_path) = ty {
+        type_path
+            .path
+            .segments
+            .first()
+            .map(|s| s.ident.to_string())
+            .unwrap_or_default()
+    } else {
+        String::new()
+    }
+}
+
+pub(crate) fn is_trait_object_type(ty: &syn::Type) -> bool {
+    match ty {
+        syn::Type::TraitObject(_) => true,
+        syn::Type::Reference(r) => is_trait_object_type(&r.elem),
+        syn::Type::Path(p) => p.path.segments.iter().any(|seg| match &seg.arguments {
+            syn::PathArguments::AngleBracketed(args) => args.args.iter().any(|arg| match arg {
+                syn::GenericArgument::Type(t) => is_trait_object_type(t),
+                _ => false,
+            }),
+            _ => false,
+        }),
+        _ => false,
+    }
+}
+
 #[derive(Debug, Default)]
 pub struct StructRegistry {
     fields_by_struct: HashMap<String, Vec<String>>,
+    concrete_fields_by_struct: HashMap<String, HashMap<String, String>>,
 }
 
 impl StructRegistry {
@@ -47,6 +76,14 @@ impl StructRegistry {
     #[must_use]
     pub fn is_transitive_value_type(&self, type_name: &str) -> bool {
         self.resolve(type_name, &mut HashSet::new())
+    }
+
+    #[must_use]
+    pub fn concrete_fields_of(&self, type_name: &str) -> HashMap<String, String> {
+        self.concrete_fields_by_struct
+            .get(type_name)
+            .cloned()
+            .unwrap_or_default()
     }
 
     fn resolve(&self, type_name: &str, visiting: &mut HashSet<String>) -> bool {
@@ -78,12 +115,19 @@ impl<'ast> Visit<'ast> for StructRegistry {
 impl StructRegistry {
     fn record_struct(&mut self, item_struct: &syn::ItemStruct) {
         let name = item_struct.ident.to_string();
-        let fields = item_struct
-            .fields
-            .iter()
-            .map(|f| field_type_head(&f.ty))
-            .collect();
-        self.fields_by_struct.insert(name, fields);
+        let mut all_field_types = Vec::new();
+        let mut concrete_fields = HashMap::new();
+        for f in &item_struct.fields {
+            let type_head = field_type_head(&f.ty);
+            all_field_types.push(type_head.clone());
+            if !is_trait_object_type(&f.ty) {
+                if let Some(field_name) = f.ident.as_ref().map(ToString::to_string) {
+                    concrete_fields.insert(field_name, type_head);
+                }
+            }
+        }
+        self.fields_by_struct.insert(name.clone(), all_field_types);
+        self.concrete_fields_by_struct.insert(name, concrete_fields);
     }
 
     fn visit_inline_mod(&mut self, item_mod: &syn::ItemMod) {

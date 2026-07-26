@@ -2,10 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub const PURE_VALUE_METHODS: &[&str] =
-    &["clone", "len", "get", "is_empty", "contains", "iter"];
-
-pub const CUSTOM_TYPE_ELIGIBLE_METHODS: &[&str] = &["clone"];
+pub const PURE_VALUE_METHODS: &[&str] = &["clone", "len", "get", "is_empty", "contains", "iter"];
 
 pub const STD_CONSTRUCTORS: &[&str] = &[
     "Box", "Arc", "Rc", "String", "Vec", "HashMap", "HashSet", "Option", "Result", "Ok", "Err",

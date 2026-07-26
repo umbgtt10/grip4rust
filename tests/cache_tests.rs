@@ -24,6 +24,7 @@ fn cache_hit_returns_same_counts() {
         &source,
         &file,
         &grip::struct_registry::StructRegistry::default(),
+        &grip::method_purity_registry::MethodPurityRegistry::default(),
     );
     cache.set(&file, &source, &initial);
 
@@ -50,6 +51,7 @@ fn cache_miss_after_change() {
         &source,
         &file,
         &grip::struct_registry::StructRegistry::default(),
+        &grip::method_purity_registry::MethodPurityRegistry::default(),
     );
     cache.set(&file, &source, &initial);
 

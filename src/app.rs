@@ -17,6 +17,7 @@ use crate::fs_walk::FsWalk;
 use crate::function_info::FunctionInfo;
 use crate::grip_report::GripReport;
 use crate::item_counts::ItemCounts;
+use crate::method_purity_registry::MethodPurityRegistry;
 use crate::offender::Offender;
 use crate::overall_stats::OverallStats;
 use crate::stdout_reporter::StdoutReporter;
@@ -83,11 +84,12 @@ impl App {
     fn collect_files(&self) -> Result<CollectedFiles> {
         let files = self.walker.rust_files()?;
         let registry = StructRegistry::build(&files);
+        let method_purity = MethodPurityRegistry::build(&files, &registry);
         let mut indexed = Vec::with_capacity(files.len());
         let mut all_functions = Vec::new();
         for (path, source) in files {
             let module = self.module_from_path(&path);
-            let (counts, functions) = Collector::collect(&source, &path, &registry);
+            let (counts, functions) = Collector::collect(&source, &path, &registry, &method_purity);
             all_functions.extend(functions);
             if self.cache.get(&path).is_none() {
                 self.cache.set(&path, &source, &counts);

@@ -15,6 +15,7 @@ mod grip_report_tests;
 mod item_counts_tests;
 mod lib_tests;
 mod main_tests;
+mod method_purity_registry_tests;
 mod module_stats_tests;
 mod offender_tests;
 mod offenders_renderer_tests;

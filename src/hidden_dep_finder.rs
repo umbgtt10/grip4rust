@@ -6,9 +6,8 @@ use std::collections::HashMap;
 
 use syn::visit::Visit;
 
-use crate::known_hidden_dep_names::{
-    CUSTOM_TYPE_ELIGIBLE_METHODS, PURE_VALUE_METHODS, STD_CONSTRUCTORS, STD_MODULE_CALLS,
-};
+use crate::known_hidden_dep_names::{PURE_VALUE_METHODS, STD_CONSTRUCTORS, STD_MODULE_CALLS};
+use crate::method_purity_registry::MethodPurityRegistry;
 use crate::struct_registry::{KNOWN_STD_VALUE_TYPES, StructRegistry};
 
 fn dep_weight(label: &str) -> f64 {
@@ -48,16 +47,18 @@ pub struct HiddenDepFinder<'a> {
     pub labels: Vec<String>,
     concrete_fields: HashMap<String, String>,
     registry: &'a StructRegistry,
+    method_purity: &'a MethodPurityRegistry,
 }
 
 impl<'a> HiddenDepFinder<'a> {
-    pub fn new(registry: &'a StructRegistry) -> Self {
+    pub fn new(registry: &'a StructRegistry, method_purity: &'a MethodPurityRegistry) -> Self {
         Self {
             count: 0,
             weight: 0.0,
             labels: Vec::new(),
             concrete_fields: HashMap::new(),
             registry,
+            method_purity,
         }
     }
 
@@ -166,11 +167,11 @@ impl<'a> HiddenDepFinder<'a> {
         if !PURE_VALUE_METHODS.contains(&method) {
             return false;
         }
-        if CUSTOM_TYPE_ELIGIBLE_METHODS.contains(&method) {
-            self.registry.is_transitive_value_type(type_name)
-        } else {
-            KNOWN_STD_VALUE_TYPES.contains(&type_name)
+        if method == "clone" {
+            return self.registry.is_transitive_value_type(type_name);
         }
+        KNOWN_STD_VALUE_TYPES.contains(&type_name)
+            || self.method_purity.is_known_pure_method(type_name, method)
     }
 
     fn handle_macro_expr(&mut self, expr_macro: &syn::ExprMacro) -> bool {

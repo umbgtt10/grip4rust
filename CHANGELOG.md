@@ -49,6 +49,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `contains`/`iter` stay std-types-only. See `OPEN_POINTS.md` for what's still
   open.
 
+- `len`/`get`/`is_empty`/`contains`/`iter` on a project's own custom types are
+  now also exempted, when provably safe. New `MethodPurityRegistry`
+  (`src/method_purity_registry.rs`) does a project-wide pass over every
+  inherent (non-trait) `&self` method, re-running the same signature-purity
+  and hidden-dep checks `Collector` already uses for scoring, and records
+  which `(type, method)` pairs come back pure with zero hidden deps.
+  `HiddenDepFinder` now consults it for any non-`clone` value method on a
+  type that isn't a known std type. This is deliberately narrower than full
+  resolution: only inherent methods are considered (a method reached through
+  a local trait impl is still flagged), and the registry build is a single
+  non-recursive pass, so a custom accessor whose own body calls *another*
+  custom accessor won't have that inner call trusted yet. Both are documented
+  scope calls, not oversights — see `OPEN_POINTS.md`.
+  Extracted `FunctionPurity` (`src/function_purity.rs`) out of `Collector` so
+  the signature/unsafe/io-call purity checks aren't duplicated between
+  `Collector` and the new registry; `Collector`'s own behavior is unchanged.
+
 ### Added
 - Six tests added before the previous fix, verified red against the unfixed
   code with a clean build: `Vec::get`/`Vec::clone` now correctly pure; a
@@ -69,6 +86,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Members` as transitively a value type, and `self.cache.get(...)` stays
   flagged even when the registry resolves `DiskCache` — the regression guard
   for the clone-only scoping decision above.
+- `tests/method_purity_registry_tests.rs` (7 tests) for the new registry
+  directly: a genuinely pure delegating accessor registers; a body that
+  actually performs I/O does not, regardless of name; a `&mut self` method
+  does not; a method reached only through a local trait impl does not
+  (inherent-only scope); an unknown type/method pair does not; a struct
+  declared in one source with its impl in another still resolves (the reason
+  this is a project-wide pass and not something `Collector` could do alone);
+  and a pure-signature method whose body calls an unresolved third-party
+  constructor does not register, proving the zero-hidden-deps check is real
+  and not just a signature check in disguise.
+- Rewrote the existing `collector_tests.rs` DiskCache regression case so its
+  `get()` body actually performs I/O — previously it was pure by accident
+  (`key.to_string()`, never touching `self.path`), so under the new
+  body-verifying logic it would have wrongly cleared. Same assertion value
+  (`hidden_deps == 1`), now testing the real remaining boundary (a method
+  that's actually impure) instead of a coincidence of the old fixture.
+  Added a matching positive/negative pair for the new logic itself: a custom
+  wrapper's genuinely pure `len()` clears when called from another struct;
+  the same shape with an impure `len()` body stays flagged.
 
 ## [0.6.0] — 2026-07-25
 

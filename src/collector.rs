@@ -11,40 +11,12 @@ use syn::{Attribute, Item, ItemFn, Visibility};
 
 use crate::contribution_schedule::ContributionSchedule;
 use crate::function_info::FunctionInfo;
+use crate::function_purity::FunctionPurity;
 use crate::hidden_dep_finder::HiddenDepFinder;
-use crate::io_call_finder::IoCallFinder;
 use crate::item_counts::ItemCounts;
 use crate::known_foreign_traits::KNOWN_FOREIGN_TRAITS;
-use crate::struct_registry::{StructRegistry, field_type_head};
-use crate::unsafe_finder::UnsafeFinder;
-
-fn self_ty_name(ty: &syn::Type) -> String {
-    if let syn::Type::Path(type_path) = ty {
-        type_path
-            .path
-            .segments
-            .first()
-            .map(|s| s.ident.to_string())
-            .unwrap_or_default()
-    } else {
-        String::new()
-    }
-}
-
-fn is_trait_object_type(ty: &syn::Type) -> bool {
-    match ty {
-        syn::Type::TraitObject(_) => true,
-        syn::Type::Reference(r) => is_trait_object_type(&r.elem),
-        syn::Type::Path(p) => p.path.segments.iter().any(|seg| match &seg.arguments {
-            syn::PathArguments::AngleBracketed(args) => args.args.iter().any(|arg| match arg {
-                syn::GenericArgument::Type(t) => is_trait_object_type(t),
-                _ => false,
-            }),
-            _ => false,
-        }),
-        _ => false,
-    }
-}
+use crate::method_purity_registry::MethodPurityRegistry;
+use crate::struct_registry::{StructRegistry, field_type_head, is_trait_object_type, self_ty_name};
 
 #[derive(Debug)]
 pub struct Collector<'a> {
@@ -54,10 +26,15 @@ pub struct Collector<'a> {
     struct_concrete_fields: HashMap<String, HashMap<String, String>>,
     contribution_schedule: ContributionSchedule,
     registry: &'a StructRegistry,
+    method_purity: &'a MethodPurityRegistry,
 }
 
 impl<'a> Collector<'a> {
-    fn new(file: String, registry: &'a StructRegistry) -> Self {
+    fn new(
+        file: String,
+        registry: &'a StructRegistry,
+        method_purity: &'a MethodPurityRegistry,
+    ) -> Self {
         Self {
             counts: ItemCounts::default(),
             functions: Vec::new(),
@@ -65,6 +42,7 @@ impl<'a> Collector<'a> {
             struct_concrete_fields: HashMap::new(),
             contribution_schedule: ContributionSchedule::new(),
             registry,
+            method_purity,
         }
     }
 
@@ -72,6 +50,7 @@ impl<'a> Collector<'a> {
         source: &str,
         path: &Path,
         registry: &'a StructRegistry,
+        method_purity: &'a MethodPurityRegistry,
     ) -> (ItemCounts, Vec<FunctionInfo>) {
         let file = path.to_string_lossy().replace('\\', "/");
         let syntax = match syn::parse_file(source) {
@@ -79,7 +58,7 @@ impl<'a> Collector<'a> {
             Err(_) => return (ItemCounts::default(), Vec::new()),
         };
 
-        let mut collector = Self::new(file, registry);
+        let mut collector = Self::new(file, registry, method_purity);
         for item in &syntax.items {
             collector.visit_item(item);
         }
@@ -284,16 +263,17 @@ impl<'a> Collector<'a> {
     }
 
     fn is_impl_method_impure(&self, method: &syn::ImplItemFn) -> bool {
-        if self.has_mut_param(&method.sig) {
+        if FunctionPurity::has_mut_param(&method.sig) {
             return true;
         }
-        if self.is_unit_return(&method.sig) {
+        if FunctionPurity::is_unit_return(&method.sig) {
             return true;
         }
         if method.sig.unsafety.is_some() {
             return true;
         }
-        self.has_unsafe_block(&method.block) || self.has_io_call(&method.block)
+        FunctionPurity::has_unsafe_block(&method.block)
+            || FunctionPurity::has_io_call(&method.block)
     }
 
     fn is_foreign_trait(&self, path: &syn::Path) -> bool {
@@ -331,62 +311,20 @@ impl<'a> Collector<'a> {
     }
 
     fn is_probably_pure(&self, item_fn: &ItemFn) -> bool {
-        if self.has_mut_param(&item_fn.sig) {
+        if FunctionPurity::has_mut_param(&item_fn.sig) {
             return false;
         }
-        if self.is_unit_return(&item_fn.sig) {
+        if FunctionPurity::is_unit_return(&item_fn.sig) {
             return false;
         }
         if item_fn.sig.unsafety.is_some() {
             return false;
         }
-        !self.has_unsafe_block(&item_fn.block)
-    }
-
-    fn has_mut_param(&self, sig: &syn::Signature) -> bool {
-        sig.inputs.iter().any(|arg| match arg {
-            syn::FnArg::Receiver(recv) => recv.reference.is_some() && recv.mutability.is_some(),
-            syn::FnArg::Typed(pat_type) => self.has_mut_in_type(&pat_type.ty),
-        })
-    }
-
-    #[allow(clippy::only_used_in_recursion)]
-    fn has_mut_in_type(&self, ty: &syn::Type) -> bool {
-        use syn::Type;
-        match ty {
-            Type::Reference(reference) => reference.mutability.is_some(),
-            Type::Paren(inner) => self.has_mut_in_type(&inner.elem),
-            _ => false,
-        }
-    }
-
-    fn is_unit_return(&self, sig: &syn::Signature) -> bool {
-        match &sig.output {
-            syn::ReturnType::Default => true,
-            syn::ReturnType::Type(_, ty) => {
-                if let syn::Type::Tuple(tuple) = ty.as_ref() {
-                    tuple.elems.is_empty()
-                } else {
-                    false
-                }
-            }
-        }
-    }
-
-    fn has_unsafe_block(&self, block: &syn::Block) -> bool {
-        let mut finder = UnsafeFinder::new();
-        finder.visit_block(block);
-        finder.found
-    }
-
-    fn has_io_call(&self, block: &syn::Block) -> bool {
-        let mut finder = IoCallFinder::new();
-        finder.visit_block(block);
-        finder.found
+        !FunctionPurity::has_unsafe_block(&item_fn.block)
     }
 
     fn count_hidden_deps_in_block(&self, block: &syn::Block) -> HiddenDepFinder<'a> {
-        let mut finder = HiddenDepFinder::new(self.registry);
+        let mut finder = HiddenDepFinder::new(self.registry, self.method_purity);
         finder.visit_block(block);
         finder
     }
@@ -396,7 +334,7 @@ impl<'a> Collector<'a> {
         method: &syn::ImplItemFn,
         concrete_fields: HashMap<String, String>,
     ) -> HiddenDepFinder<'a> {
-        let mut finder = HiddenDepFinder::new(self.registry);
+        let mut finder = HiddenDepFinder::new(self.registry, self.method_purity);
         finder.set_concrete_fields(concrete_fields);
         finder.visit_block(&method.block);
         finder
