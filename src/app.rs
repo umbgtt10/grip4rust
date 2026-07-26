@@ -6,7 +6,7 @@ use std::ffi::OsString;
 use std::path::Path;
 use std::process::ExitCode;
 
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 
 use crate::args::Args;
 use crate::cache::Cache;
@@ -71,7 +71,7 @@ impl App {
         self.cache.flush();
 
         if indexed.is_empty() {
-            return Err(anyhow::anyhow!(
+            return Err(anyhow!(
                 "no Rust source files found in {}",
                 self.config.path.display()
             ));

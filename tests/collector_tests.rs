@@ -10,7 +10,7 @@ use grip::collector::Collector;
 use grip::contribution_schedule::ContributionSchedule;
 use grip::method_purity_registry::MethodPurityRegistry;
 use grip::struct_registry::StructRegistry;
-use tempfile::TempDir;
+use tempfile::{TempDir, tempdir};
 
 fn write_file(dir: &TempDir, name: &str, contents: &str) -> std::path::PathBuf {
     let path = dir.path().join(name);
@@ -23,7 +23,7 @@ fn write_file(dir: &TempDir, name: &str, contents: &str) -> std::path::PathBuf {
 fn pure_function_is_counted() {
     // Arrange
     let source = "pub fn add(a: i32, b: i32) -> i32 { a + b }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -45,7 +45,7 @@ fn pure_function_is_counted() {
 fn impure_function_is_not_counted_as_pure() {
     // Arrange
     let source = "pub fn impure(x: &mut i32) { *x += 1; }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -65,7 +65,7 @@ fn impure_function_is_not_counted_as_pure() {
 fn unit_return_is_not_pure() {
     // Arrange
     let source = "pub fn side_effect() { println!(\"hello\"); }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -85,7 +85,7 @@ fn unit_return_is_not_pure() {
 fn unsafe_function_is_not_pure() {
     // Arrange
     let source = "pub fn raw() -> i32 { unsafe { 42 } }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -105,7 +105,7 @@ fn unsafe_function_is_not_pure() {
 fn by_value_mut_self_builder_method_is_pure() {
     // Arrange
     let source = "pub struct Builder { x: i32 }\nimpl Builder {\n    pub fn with_x(mut self, x: i32) -> Self { self.x = x; self }\n}\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -128,7 +128,7 @@ fn by_value_mut_self_builder_method_is_pure() {
 fn mut_self_reference_method_is_not_pure() {
     // Arrange
     let source = "pub struct Builder { x: i32 }\nimpl Builder {\n    pub fn set_x(&mut self, x: i32) { self.x = x; }\n}\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -148,7 +148,7 @@ fn mut_self_reference_method_is_not_pure() {
 fn private_function_is_not_public() {
     // Arrange
     let source = "fn private() -> i32 { 42 }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -175,7 +175,7 @@ pub struct S;
 pub enum E {}
 pub trait T {}
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -202,7 +202,7 @@ mod tests {
     pub fn test_helper() -> i32 { 42 }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -222,7 +222,7 @@ mod tests {
 fn pubcrate_is_public_item() {
     // Arrange
     let source = "pub(crate) fn internal() -> i32 { 42 }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -253,7 +253,7 @@ impl Client {
     }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -285,7 +285,7 @@ impl Logger {
     }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -317,7 +317,7 @@ impl inner::MyTrait for MyStruct {
     fn do_thing(&self) -> i32 { 42 }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -350,7 +350,7 @@ impl Helper for Impl {
     fn test_helper(&self) -> i32 { 99 }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -381,7 +381,7 @@ impl std::fmt::Display for MyStruct {
     }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -406,7 +406,7 @@ impl Handler {
     pub fn handle() { TcpStream::connect("127.0.0.1:8080").unwrap(); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -433,7 +433,7 @@ impl Builder {
     pub fn build() -> String { String::new() }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -460,7 +460,7 @@ impl Collector {
     pub fn collect() -> Vec<i32> { Vec::new() }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -484,7 +484,7 @@ impl Wrapper {
     pub fn wrap(x: i32) -> Box<i32> { Box::new(x) }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -508,7 +508,7 @@ impl Service {
     pub fn process() { MyDatabase::new("prod:5432"); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -535,7 +535,7 @@ impl Service {
     pub fn process() { MyDatabase::query("SELECT 1"); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -562,7 +562,7 @@ impl Service {
     pub fn charge() { StripeGateway::charge(100); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -590,7 +590,7 @@ impl Factory {
     pub fn new() -> Self { Self }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -617,7 +617,7 @@ impl Logger {
     pub fn log() { println!("hello"); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -645,7 +645,7 @@ impl Service {
     }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -672,7 +672,7 @@ impl Calc {
     pub fn add(a: i32, b: i32) -> i32 { a + b }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -701,7 +701,7 @@ impl Service {
     pub fn query(&self, sql: &str) { self.db.query(sql); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -737,7 +737,7 @@ impl Service {
     pub fn run(&self) { self.db.query("SELECT 1"); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -770,7 +770,7 @@ impl ConfirmedSet {
     pub fn is_confirmed(&self, i: usize) -> bool { self.flags.get(i).copied().unwrap_or(false) }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -799,7 +799,7 @@ impl Tracker {
     pub fn snapshot(&self) -> Vec<i32> { self.peers.clone() }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -834,7 +834,7 @@ impl Bootstrapped {
     pub fn snapshot(&self) -> Members { self.members.clone() }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -866,7 +866,7 @@ impl Registry {
     pub fn count(&self) -> usize { self.entries.len() }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -896,7 +896,7 @@ impl Log {
     pub fn record(&mut self, entry: i32) { self.entries.push(entry); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -935,7 +935,7 @@ impl Service {
     pub fn lookup(&self, key: &str) -> String { self.cache.get(key) }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -976,7 +976,7 @@ impl Bootstrapped {
     pub fn snapshot(&self) -> Members { self.members.clone() }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1017,7 +1017,7 @@ impl Service {
     let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1054,7 +1054,7 @@ impl Bootstrapped {
     let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1094,7 +1094,7 @@ impl Bootstrapped {
     let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1119,7 +1119,7 @@ impl Service<'_> {
     pub fn handle(&self) { self.handler.process(); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1141,7 +1141,7 @@ impl Service<'_> {
 fn hidden_dep_free_function_is_detected() {
     // Arrange
     let source = "fn query_db() { Database::query(\"SELECT 1\"); }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1163,7 +1163,7 @@ fn hidden_dep_free_function_is_detected() {
 fn hidden_dep_free_function_clean_not_flagged() {
     // Arrange
     let source = "fn add(a: i32, b: i32) -> i32 { a + b }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1190,7 +1190,7 @@ impl Logger {
     pub fn log() { eprintln!("error"); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1216,7 +1216,7 @@ impl Service {
     pub fn query(&self, sql: &str) { self.db.query(sql); }
 }
 "#;
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1238,7 +1238,7 @@ impl Service {
 fn hidden_dep_input_argument_not_counted() {
     // Arrange
     let source = "struct Service;\nimpl Service {\n    pub fn run(&self, db: &Database) { db.query(\"SELECT 1\"); }\n}\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1260,7 +1260,7 @@ fn hidden_dep_input_argument_not_counted() {
 fn hidden_dep_print_macro_is_detected() {
     // Arrange
     let source = "struct Logger;\nimpl Logger {\n    pub fn log() { print!(\"hello\"); }\n}\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1279,7 +1279,7 @@ fn hidden_dep_print_macro_is_detected() {
 fn hidden_dep_thread_sleep_is_detected() {
     // Arrange
     let source = "fn pause() { std::thread::sleep(std::time::Duration::from_secs(1)); }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1302,7 +1302,7 @@ fn hidden_dep_light_weight_vs_heavy() {
     // Arrange
     let source = "fn light() { println!(\"start\"); Instant::now(); }\n\
 fn heavy() { Database::new(\"prod\"); StripeGateway::charge(100.0); }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
@@ -1333,7 +1333,7 @@ fn heavy() { Database::new(\"prod\"); StripeGateway::charge(100.0); }\n";
 fn hidden_dep_labels_are_recorded() {
     // Arrange
     let source = "fn run() { Database::new(\"prod\"); println!(\"done\"); }\n";
-    let dir = tempfile::tempdir().unwrap();
+    let dir = tempdir().unwrap();
     let _file = write_file(&dir, "lib.rs", source);
 
     // Act
