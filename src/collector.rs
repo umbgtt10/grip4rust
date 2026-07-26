@@ -14,6 +14,7 @@ use crate::function_info::FunctionInfo;
 use crate::hidden_dep_finder::HiddenDepFinder;
 use crate::io_call_finder::IoCallFinder;
 use crate::item_counts::ItemCounts;
+use crate::known_foreign_traits::KNOWN_FOREIGN_TRAITS;
 use crate::struct_registry::{StructRegistry, field_type_head};
 use crate::unsafe_finder::UnsafeFinder;
 
@@ -44,55 +45,6 @@ fn is_trait_object_type(ty: &syn::Type) -> bool {
         _ => false,
     }
 }
-
-const KNOWN_FOREIGN_TRAITS: &[&str] = &[
-    "Display",
-    "Debug",
-    "Clone",
-    "Default",
-    "PartialEq",
-    "Eq",
-    "PartialOrd",
-    "Ord",
-    "Hash",
-    "Into",
-    "From",
-    "TryFrom",
-    "Drop",
-    "Deref",
-    "DerefMut",
-    "Index",
-    "IndexMut",
-    "Add",
-    "Sub",
-    "Mul",
-    "Div",
-    "Rem",
-    "Neg",
-    "Not",
-    "Fn",
-    "FnMut",
-    "FnOnce",
-    "Send",
-    "Sync",
-    "Sized",
-    "ToString",
-    "AsRef",
-    "AsMut",
-    "Borrow",
-    "BorrowMut",
-    "Error",
-    "Read",
-    "Write",
-    "Seek",
-    "BufRead",
-    "Iterator",
-    "IntoIterator",
-    "Future",
-    "IntoFuture",
-    "Serialize",
-    "Deserialize",
-];
 
 #[derive(Debug)]
 pub struct Collector<'a> {
