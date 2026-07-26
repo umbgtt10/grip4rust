@@ -16,6 +16,7 @@ pub mod hidden_dep_finder;
 pub mod io_call_finder;
 pub mod item_counts;
 pub mod known_foreign_traits;
+pub mod known_hidden_dep_names;
 pub mod module_stats;
 pub mod no_op_cache_store;
 pub mod offender;

@@ -6,46 +6,10 @@ use std::collections::HashMap;
 
 use syn::visit::Visit;
 
+use crate::known_hidden_dep_names::{
+    CUSTOM_TYPE_ELIGIBLE_METHODS, PURE_VALUE_METHODS, STD_CONSTRUCTORS, STD_MODULE_CALLS,
+};
 use crate::struct_registry::{KNOWN_STD_VALUE_TYPES, StructRegistry};
-
-const PURE_VALUE_METHODS: &[&str] = &["clone", "len", "get", "is_empty", "contains", "iter"];
-
-const CUSTOM_TYPE_ELIGIBLE_METHODS: &[&str] = &["clone"];
-
-const STD_CONSTRUCTORS: &[&str] = &[
-    "Box", "Arc", "Rc", "String", "Vec", "HashMap", "HashSet", "Option", "Result", "Ok", "Err",
-    "Some", "None", "Ordering", "Duration", "Path", "PathBuf", "CString", "CStr", "OsString",
-    "OsStr", "Default", "Clone",
-];
-
-const STD_MODULE_CALLS: &[&str] = &[
-    "fs::read",
-    "fs::write",
-    "fs::read_to_string",
-    "fs::read_dir",
-    "fs::create_dir",
-    "fs::create_dir_all",
-    "fs::remove_file",
-    "fs::remove_dir",
-    "fs::remove_dir_all",
-    "fs::copy",
-    "fs::rename",
-    "fs::metadata",
-    "env::var",
-    "env::args",
-    "env::temp_dir",
-    "env::current_dir",
-    "env::current_exe",
-    "env::set_var",
-    "process::exit",
-    "process::abort",
-    "process::id",
-    "thread::sleep",
-    "thread::spawn",
-    "net::TcpStream",
-    "net::TcpListener",
-    "net::UdpSocket",
-];
 
 fn dep_weight(label: &str) -> f64 {
     if label.starts_with("println")
