@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-07-26
+
 ### Fixed
 - `has_mut_param` treated `mut self` (by-value, locally-mutable, no observable
   side effect — the standard consuming-builder idiom) identically to `&mut self`
@@ -105,6 +107,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Added a matching positive/negative pair for the new logic itself: a custom
   wrapper's genuinely pure `len()` clears when called from another struct;
   the same shape with an impure `len()` body stays flagged.
+- `tests/function_purity_tests.rs` (14 tests) — `FunctionPurity` had no
+  dedicated test file despite carrying real recursive logic, an
+  inconsistency with `struct_registry_tests.rs`/`method_purity_registry_tests.rs`
+  from the same round of work. All pass unchanged against the existing,
+  already-shipped logic; this is a coverage backfill, not a behavior change.
+
+### Changed
+- **Breaking (library surface only, not the CLI):** `Collector::collect`
+  and `HiddenDepFinder::new` each gained two new required parameters,
+  `&StructRegistry` and `&MethodPurityRegistry`. Both types implement
+  `Default`, so `&StructRegistry::default()`/`&MethodPurityRegistry::default()`
+  reproduce the exact pre-0.7.0 behavior for any caller that doesn't want
+  project-wide resolution. CLI flags, human/JSON output shape, and
+  `grip_score`/`grip_absolute_total` semantics are all unchanged.
+- All of `src/` and `tests/` swept for inline fully-qualified paths
+  (`grip::`, `crate::`, `syn::`, plus `tempfile::`/`anyhow::` call sites)
+  in favor of `use` imports, per this repo's own "no fully qualified
+  paths" coding standard. Deliberately left `serde_json::to_string`/
+  `from_str`/`Value` qualified everywhere — importing those bare would
+  shadow `ToString::to_string`/`FromStr::from_str`, a real collision
+  hazard, not a style nit. Zero behavior change; verified by identical
+  test counts and gate results at every step.
 
 ## [0.6.0] — 2026-07-25
 

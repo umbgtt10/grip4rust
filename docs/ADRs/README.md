@@ -15,6 +15,7 @@ not one still being weighed.
 |---|---|
 | [ADR-AstOnlyNoTypeResolution](ADR-AstOnlyNoTypeResolution.md) | `grip` analyzes via `syn` AST parsing only, never type resolution — trait/call classification is name-based, with known, accepted blind spots for anything off the hardcoded known-lists. |
 | [ADR-DynDispatchAppOverGenerics](ADR-DynDispatchAppOverGenerics.md) | `App` holds `Box<dyn Trait>` fields rather than generic type parameters — one nameable type instead of `App<W, S, R, C>` noise at every call site. |
+| [ADR-TwoPassProjectWideRegistries](ADR-TwoPassProjectWideRegistries.md) | Two project-wide AST passes (`StructRegistry`, `MethodPurityRegistry`) run before per-file scoring, so `self.field.clone()`/`.method()` on a project's own plain-data type resolves across files — still zero type resolution, just a wider structural net. |
 
 ## Template
 

@@ -82,19 +82,19 @@ cargo grip4rust [OPTIONS] [PATH]
 ## Output
 
 ```
-cargo-grip4rust 0.6.0 -- .
+cargo-grip4rust 0.7.0 -- .
 ══════════════════════════════════════════════════════
 
-Overall grip score:    60 / 100
-Absolute grip total:   63.07
-Public surface:        28 items
-Total functions:       101
-Probably pure:         67 / 101  (66.3%)
-Trait methods:         18 / 92 impl methods are trait-bound  (38.2%)
-Hidden deps:           avg 37.93  — 4.0% clean  (62.4% avg contribution)
+Overall grip score:    59 / 100
+Absolute grip total:   68.03
+Public surface:        34 items
+Total functions:       116
+Probably pure:         75 / 116  (64.7%)
+Trait methods:         19 / 106 impl methods are trait-bound  (34.1%)
+Hidden deps:           avg 47.97  — 3.4% clean  (58.6% avg contribution)
 
 Per module:
-  .                               grip:  60   pure:  66.3%   pub:  24   traits:  38.2%   clean:   4.0%  ⚠️
+  .                               grip:  59   pure:  64.7%   pub:  30   traits:  34.1%   clean:   3.4%  ⚠️
   traits                          grip: N/A   pure:   0.0%   pub:   4   traits:    N/A   clean:   0.0%
 ```
 
@@ -105,7 +105,7 @@ a misleading default when there's nothing to score.)
 ### Verbose output (`--verbose`)
 
 ```
-grip 0.6.0 -- my-crate — verbose
+grip 0.7.0 -- my-crate — verbose
 ══════════════════════════════════════════════════════
 
   timer.rs:
@@ -134,7 +134,15 @@ Instead it uses structural rules — `Type::method(...)` where `Type` starts
 uppercase and isn't a std allocator, `self.concrete_field.method(...)`
 where the field isn't a trait object, and a handful of known std/core
 module calls. This catches `StripeGateway`, `TcpStream`, `redis::Client`,
-or any other concrete dependency regardless of crate. Full rule table in
+or any other concrete dependency regardless of crate.
+
+Two project-wide passes narrow the false positives this produces for a
+project's own plain-data types: `StructRegistry` proves `self.field.clone()`
+is safe when `field`'s type resolves — recursively, across every file in
+scope — down to known std value types, and `MethodPurityRegistry` proves
+`self.field.len()`/`.get()`/`.is_empty()`/`.contains()`/`.iter()` are safe
+by re-checking the *specific method's own body* for hidden dependencies,
+not just its receiver's shape. Full rule table in
 [`docs/FORMULA.md`](docs/FORMULA.md#structural-hidden-dependency-detection).
 
 ---
@@ -142,7 +150,8 @@ or any other concrete dependency regardless of crate. Full rule table in
 ## Limitations
 
 - **Purity is a heuristic.** `grip` classifies functions by signature and body patterns, not by type inference. It makes mistakes at the margin.
-- **No cross-crate analysis.** Struct fields from external crates are not resolved — `self.field.method()` detection works only when both struct and impl are in the same file.
+- **No cross-crate analysis.** `StructRegistry`/`MethodPurityRegistry` resolve `self.field.clone()`/`.method()` project-wide — across files, as long as both the struct and its impl are inside the scanned path. A struct or impl defined outside it (a dependency, a sibling workspace member not included in the scan) is not resolved.
+- **Method-purity resolution is inherent-only and non-recursive.** A pure accessor reached through a trait impl isn't trusted, and a custom accessor whose own body calls *another* custom type's accessor won't have that inner call trusted either — see `OPEN_POINTS.md`.
 - **No inter-procedural tracking.** A function that receives a constructed dependency from its caller appears clean.
 - **No runtime or coverage data.** `grip` measures *testability*, not *testing*. Use a coverage tool alongside it.
 - **Single-segment trait ambiguity.** `impl Display for X` with `use std::fmt::Display` is correctly excluded. `impl Display for X` without the import relies on the known-foreign list.

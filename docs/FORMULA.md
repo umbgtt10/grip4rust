@@ -130,7 +130,7 @@ names. Instead, it uses structural rules over the parsed call expression:
 | Rule | Example | Flagged? |
 |---|---|---|
 | `Type::method(...)` where `Type` starts uppercase, not a std allocator | `StripeGateway::charge(...)`, `Database::query(...)` | ✅ |
-| `self.concrete_field.method(...)` where field is not `Box\|Arc\|&dyn` | `self.db.query(...)` where `db: Database` | ✅ |
+| `self.concrete_field.method(...)` where field is not `Box\|Arc\|&dyn` | see "Value-type and method-purity exemptions" below | conditional |
 | `self.trait_field.method(...)` where field is `Box\|Arc\|&dyn T` | `self.db.query(...)` where `db: Box<dyn Database>` | ❌ injected |
 | `param.method(...)` where param is a function argument | `db.query(...)` where `db: &Database` | ❌ caller-provided |
 | `Self::method(...)` or `self.method(...)` | `Self::new()`, `self.process()` | ❌ own type |
@@ -144,6 +144,44 @@ This catches any concrete dependency regardless of crate —
 `StripeGateway`, `TcpStream`, `redis::Client`, `MyDatabase` — without
 maintaining a denylist of third-party type names, at the cost of the
 blind spots recorded in `docs/ADRs/ADR-AstOnlyNoTypeResolution.md`.
+
+### Value-type and method-purity exemptions
+
+`self.concrete_field.method(...)` is not a flat yes/no — `HiddenDepFinder`
+consults `KNOWN_STD_VALUE_TYPES`/`PURE_VALUE_METHODS`
+(`known_hidden_dep_names.rs`) plus the two project-wide registries built in
+`App::collect_files` before deciding:
+
+| `method` | Field's type is a known std value type (`Vec`, `HashMap`, `String`, …) | Field's type is a project-local type | Flagged? |
+|---|---|---|---|
+| `clone` | any of `PURE_VALUE_METHODS` | `StructRegistry::is_transitive_value_type` proves every field, recursively, resolves to a known std value type | ❌ — trusted either way |
+| `clone` | — | not provable plain data (has a live-collaborator field, a cycle, or resolution fails) | ✅ |
+| `len`, `get`, `is_empty`, `contains`, `iter` | trusted unconditionally | `MethodPurityRegistry::is_known_pure_method` proves *that exact method's own body* is pure and zero-hidden-dep | ❌ — trusted only if proven |
+| `len`, `get`, `is_empty`, `contains`, `iter` | — | not proven (trait-impl method, body has a real hidden dep, or unresolved) | ✅ |
+| anything else | — | — | ✅ — not in `PURE_VALUE_METHODS` at all |
+
+The two rows for `clone` and for the other five methods use genuinely
+different proofs, not the same one applied twice:
+
+- **`clone` trusts the receiver's *shape*.** `StructRegistry` proves a
+  type is plain data by recursion over field types alone — it never looks
+  at a `Clone` impl's body (grip can't: `Clone` is in `KNOWN_FOREIGN_TRAITS`,
+  so `impl Clone for X` blocks are never visited at all). Cloning a value
+  made only of plain data is, by construction, just copying that data.
+- **The other five trust the *specific method's body*.** Field shape alone
+  isn't enough here: `DiskCache { path: String }` has an entirely
+  value-typed field, so it would clear the same shape-only proof `clone`
+  uses — but `DiskCache::get()` can still open a file at that path.
+  `MethodPurityRegistry` closes this by re-running `FunctionPurity` and
+  `HiddenDepFinder` on the method's actual body, ahead of time,
+  project-wide, and only trusting it if that comes back clean.
+
+Both registries fail *safe*: anything they can't prove — an enum, a
+generic field, a type or impl outside the scanned path, a trait-impl
+method, a custom accessor whose body itself calls another unproven custom
+accessor — stays flagged exactly as if neither registry existed. See
+`OPEN_POINTS.md` for the current boundary and
+`docs/ADRs/ADR-TwoPassProjectWideRegistries.md` for why it's drawn there.
 
 ---
 

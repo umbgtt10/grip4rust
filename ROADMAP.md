@@ -2,8 +2,8 @@
 
 **Crate:** `cargo-grip`  
 **License:** MIT  
-**Last updated:** 2026-07-25  
-**Current status:** Phase 4 — ✅ Complete (latest feature phase; shipped in v0.5.0) · **Latest release:** v0.6.0 (quality/documentation, no new phase)
+**Last updated:** 2026-07-26  
+**Current status:** Phase 4 — ✅ Complete (latest feature phase; shipped in v0.5.0) · **Latest release:** v0.7.0 (cross-file hidden-dependency resolution, no new phase)
 
 ---
 
@@ -394,6 +394,45 @@ actually swappable?"*
 See `CHANGELOG.md` [0.5.0] for the complete list, including the smaller
 correctness fixes (`#[cfg(test)]` scoping, path-exclusion anchoring,
 `trait_ratio`'s zero-guard).
+
+---
+
+## v0.6.0 → v0.7.0 — Cross-file hidden-dependency resolution
+
+**Delivered:** `grip` v0.7.0 (no new phase — precision and architecture
+work on Phase 2's existing hidden-dependency dimension, not a new one)
+
+**The question this answers:**
+
+*"`self.field.clone()`/`.get()`/`.len()` on a project's own plain-data
+wrapper type was flagged identically to `self.db.query(...)` — can that be
+resolved without giving up AST-only analysis?"*
+
+**What it adds:**
+
+- Two project-wide pre-scoring passes, `StructRegistry` and
+  `MethodPurityRegistry` — `self.field.clone()` now clears when the
+  field's type is provably plain data (every field resolves, recursively,
+  to a known std value type), and `self.field.len()`/`.get()`/`.is_empty()`/
+  `.contains()`/`.iter()` now clear when that *specific method's own body*
+  is provably pure and hidden-dep-free, re-using the same checks `Collector`
+  already runs for scoring. Both fail safe — trait-impl methods, enums,
+  generic fields, cross-crate types, and nested unproven custom accessors
+  all stay flagged exactly as before. See
+  `docs/ADRs/ADR-TwoPassProjectWideRegistries.md`.
+- `has_mut_param` no longer misclassifies `mut self` (by-value, the
+  standard consuming-builder idiom) the same as `&mut self`.
+- `FunctionPurity` extracted from `Collector` — the signature/unsafe/io
+  purity checks are shared with `MethodPurityRegistry` instead of
+  duplicated.
+- All of `src/` and `tests/` swept for fully-qualified inline paths
+  (`grip::`, `crate::`, `syn::`, and other external-crate calls where safe)
+  in favor of `use` imports, per this repo's own coding standard.
+
+Found and fixed by running `grip`/`braintax` against `faction`'s real
+commit history and tracing every large ratio drop back to an actual
+cause — not by inspection. See `CHANGELOG.md` [0.7.0] for the complete
+list.
 
 ---
 
