@@ -5,6 +5,9 @@
 use std::fs;
 
 use grip::cache::Cache;
+use grip::collector::Collector;
+use grip::method_purity_registry::MethodPurityRegistry;
+use grip::struct_registry::StructRegistry;
 use grip::traits::cache_store::CacheStore;
 use tempfile::TempDir;
 
@@ -20,11 +23,11 @@ fn cache_hit_returns_same_counts() {
     let cache = Cache::new(dir.path());
 
     let source = fs::read_to_string(&file).unwrap();
-    let (initial, _fns) = grip::collector::Collector::collect(
+    let (initial, _fns) = Collector::collect(
         &source,
         &file,
-        &grip::struct_registry::StructRegistry::default(),
-        &grip::method_purity_registry::MethodPurityRegistry::default(),
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
     );
     cache.set(&file, &source, &initial);
 
@@ -47,11 +50,11 @@ fn cache_miss_after_change() {
 
     let cache = Cache::new(dir.path());
     let source = fs::read_to_string(&file).unwrap();
-    let (initial, _fns) = grip::collector::Collector::collect(
+    let (initial, _fns) = Collector::collect(
         &source,
         &file,
-        &grip::struct_registry::StructRegistry::default(),
-        &grip::method_purity_registry::MethodPurityRegistry::default(),
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
     );
     cache.set(&file, &source, &initial);
 

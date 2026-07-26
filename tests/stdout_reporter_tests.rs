@@ -2,8 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use grip::function_info::FunctionInfo;
 use grip::grip_report::GripReport;
 use grip::module_stats::ModuleStats;
+use grip::offender::Offender;
 use grip::overall_stats::OverallStats;
 use grip::stdout_reporter::StdoutReporter;
 use grip::traits::reporter::Reporter;
@@ -128,7 +130,7 @@ fn json_output_has_version() {
 fn human_output_verbose_shows_per_function_detail() {
     // Arrange
     let report = GripReport {
-        functions: vec![grip::function_info::FunctionInfo {
+        functions: vec![FunctionInfo {
             name: "compute".to_string(),
             file: "src/lib.rs".to_string(),
             is_pure: true,
@@ -156,7 +158,7 @@ fn human_output_verbose_shows_per_function_detail() {
 fn human_output_non_verbose_hides_per_function_detail() {
     // Arrange
     let report = GripReport {
-        functions: vec![grip::function_info::FunctionInfo {
+        functions: vec![FunctionInfo {
             name: "compute".to_string(),
             file: "src/lib.rs".to_string(),
             is_pure: true,
@@ -198,7 +200,7 @@ fn human_output_shows_offenders_section() {
             clean_fn_ratio: 0.0,
             grip_absolute_total: 2.0,
         }],
-        offenders: vec![grip::offender::Offender {
+        offenders: vec![Offender {
             path: "bad_mod".to_string(),
             grip_score: 30,
         }],

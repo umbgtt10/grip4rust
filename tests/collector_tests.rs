@@ -7,6 +7,7 @@ use std::io::Write;
 use std::path::PathBuf;
 
 use grip::collector::Collector;
+use grip::contribution_schedule::ContributionSchedule;
 use grip::method_purity_registry::MethodPurityRegistry;
 use grip::struct_registry::StructRegistry;
 use tempfile::TempDir;
@@ -1313,7 +1314,7 @@ fn heavy() { Database::new(\"prod\"); StripeGateway::charge(100.0); }\n";
     );
 
     // Assert
-    let schedule = grip::contribution_schedule::ContributionSchedule::new();
+    let schedule = ContributionSchedule::new();
     let light_contr =
         schedule.contribution(fns[0].is_pure, fns[0].has_trait_seam, fns[0].dep_weight);
     let heavy_contr =
