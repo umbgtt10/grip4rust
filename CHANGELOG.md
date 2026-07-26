@@ -19,11 +19,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the intended rule. Found via empirical analysis of Faction's commit history —
   verified against the actual flagged source before fixing, not assumed.
 
+- `handle_method_call_expr` flagged `self.concrete_field.method(...)` as a hidden
+  dependency whenever `concrete_field` wasn't behind `Box`/`Arc`/`&dyn Trait`,
+  regardless of what `method` actually was — so `self.plain_vec.clone()`/`.get(i)`/
+  `.len()` cost exactly as much as `self.db.query(...)`. This was the single most
+  common driver of false-positive hidden-dep flags found in the same analysis
+  (roughly half of the persisting ratio drops after the two fixes above).
+  `Collector::visit_struct` now records each concrete field's type head alongside
+  its name, and `handle_method_call_expr` exempts calls where the field's type is
+  a known value-type constructor (`Vec`, `HashMap`, `HashSet`, `BTreeMap`,
+  `BTreeSet`, `VecDeque`, `String`, `Option`, `Cell`, `RefCell`) *and* the method
+  is a known-pure value-type method (`clone`, `len`, `get`, `is_empty`, `contains`,
+  `iter`). A project's own data-only wrapper structs are intentionally still
+  flagged — see `OPEN_POINTS.md`, that part needs real type resolution.
+
 ### Added
-- `OPEN_POINTS.md`: documented that `HiddenDepFinder::check_path`'s structural
-  rule can't distinguish a plain value type (`self.vec.clone()`, `self.vec.get(i)`)
-  from a live collaborator (`self.db.query(...)`) — the single most common driver
-  of false-positive hidden-dep flags found in the same analysis. Not fixed yet.
+- Six tests added before the fix, verified red against the unfixed code with a
+  clean build: `Vec::get`/`Vec::clone` now correctly pure; a second collection
+  type (`HashMap::len`) confirmed to work, not just `Vec`; `Vec::push` (not on
+  the pure-methods list) still correctly flagged, proving the fix isn't a
+  blanket exemption; and a custom type's own `.get()` method — the riskiest
+  name to get wrong — still correctly flagged, since nothing distinguishes it
+  from `Vec::get()` without type resolution.
 
 ## [0.6.0] — 2026-07-25
 

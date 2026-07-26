@@ -29,6 +29,19 @@ fn self_ty_name(ty: &syn::Type) -> String {
     }
 }
 
+fn field_type_head(ty: &syn::Type) -> String {
+    if let syn::Type::Path(type_path) = ty {
+        type_path
+            .path
+            .segments
+            .last()
+            .map(|s| s.ident.to_string())
+            .unwrap_or_default()
+    } else {
+        String::new()
+    }
+}
+
 fn is_trait_object_type(ty: &syn::Type) -> bool {
     match ty {
         syn::Type::TraitObject(_) => true,
@@ -98,7 +111,7 @@ pub struct Collector {
     counts: ItemCounts,
     functions: Vec<FunctionInfo>,
     current_file: String,
-    struct_concrete_fields: HashMap<String, Vec<String>>,
+    struct_concrete_fields: HashMap<String, HashMap<String, String>>,
     contribution_schedule: ContributionSchedule,
 }
 
@@ -200,12 +213,14 @@ impl Collector {
             self.counts.public_items += 1;
         }
         let name = item_struct.ident.to_string();
-        let concrete: Vec<String> = item_struct
+        let concrete: HashMap<String, String> = item_struct
             .fields
             .iter()
             .filter(|f| !is_trait_object_type(&f.ty))
-            .map(|f| f.ident.as_ref().map(|i| i.to_string()).unwrap_or_default())
-            .filter(|n| !n.is_empty())
+            .filter_map(|f| {
+                let field_name = f.ident.as_ref()?.to_string();
+                Some((field_name, field_type_head(&f.ty)))
+            })
             .collect();
         self.struct_concrete_fields.insert(name, concrete);
     }
@@ -433,7 +448,7 @@ impl Collector {
     fn count_hidden_deps_in_impl_method(
         &self,
         method: &syn::ImplItemFn,
-        concrete_fields: Vec<String>,
+        concrete_fields: HashMap<String, String>,
     ) -> HiddenDepFinder {
         let mut finder = HiddenDepFinder::new();
         finder.set_concrete_fields(concrete_fields);

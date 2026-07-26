@@ -616,6 +616,171 @@ impl Service {
 }
 
 #[test]
+fn hidden_dep_self_field_vec_get_not_counted() {
+    // Arrange
+    let source = r#"
+struct ConfirmedSet {
+    flags: Vec<bool>,
+}
+impl ConfirmedSet {
+    pub fn is_confirmed(&self, i: usize) -> bool { self.flags.get(i).copied().unwrap_or(false) }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (_counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "Vec::get is a pure, bounds-checked read - not a hidden dependency"
+    );
+}
+
+#[test]
+fn hidden_dep_self_field_vec_clone_not_counted() {
+    // Arrange
+    let source = r#"
+struct Tracker {
+    peers: Vec<i32>,
+}
+impl Tracker {
+    pub fn snapshot(&self) -> Vec<i32> { self.peers.clone() }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (_counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "Vec::clone is deterministic and side-effect-free - not a hidden dependency"
+    );
+}
+
+#[test]
+fn hidden_dep_self_field_custom_struct_clone_is_still_flagged() {
+    // Arrange: Members is a project's own type, not a known std value type -
+    // nothing structural distinguishes cloning it from cloning a live
+    // collaborator, so it must still be flagged.
+    let source = r#"
+struct Members {
+    ids: Vec<i32>,
+}
+
+struct Bootstrapped {
+    members: Members,
+}
+impl Bootstrapped {
+    pub fn snapshot(&self) -> Members { self.members.clone() }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (_counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    let snapshot_fn = fns.iter().find(|f| f.name == "snapshot").unwrap();
+    assert_eq!(
+        snapshot_fn.hidden_deps, 1,
+        "Members is not a known value type - still flagged, as designed"
+    );
+}
+
+#[test]
+fn hidden_dep_self_field_hashmap_len_not_counted() {
+    // Arrange: confirms the allowlist isn't Vec-specific.
+    let source = r#"
+use std::collections::HashMap;
+
+struct Registry {
+    entries: HashMap<i32, i32>,
+}
+impl Registry {
+    pub fn count(&self) -> usize { self.entries.len() }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (_counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(
+        fns[0].hidden_deps, 0,
+        "HashMap::len is pure - not a hidden dependency"
+    );
+}
+
+#[test]
+fn hidden_dep_self_field_vec_push_is_still_flagged() {
+    // Arrange: push isn't in the pure-methods allowlist - the fix must not
+    // blanket-exempt every method on a known value type, only the listed ones.
+    let source = r#"
+struct Log {
+    entries: Vec<i32>,
+}
+impl Log {
+    pub fn record(&mut self, entry: i32) { self.entries.push(entry); }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (_counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    assert_eq!(
+        fns[0].hidden_deps, 1,
+        "Vec::push mutates shared state - still a hidden dependency"
+    );
+}
+
+#[test]
+fn hidden_dep_self_field_custom_struct_get_is_still_flagged() {
+    // Arrange: `get` is the riskiest name to blanket-exempt - a project's own
+    // type can name a real I/O method `get` (a disk-backed cache, a repository).
+    // Nothing structural distinguishes it from Vec::get without type resolution,
+    // so it must stay flagged.
+    let source = r#"
+struct DiskCache {
+    path: String,
+}
+impl DiskCache {
+    pub fn get(&self, key: &str) -> String { key.to_string() }
+}
+
+struct Service {
+    cache: DiskCache,
+}
+impl Service {
+    pub fn lookup(&self, key: &str) -> String { self.cache.get(key) }
+}
+"#;
+    let dir = tempfile::tempdir().unwrap();
+    let _file = write_file(&dir, "lib.rs", source);
+
+    // Act
+    let (_counts, fns) = Collector::collect(source, &_file);
+
+    // Assert
+    let lookup_fn = fns.iter().find(|f| f.name == "lookup").unwrap();
+    assert_eq!(
+        lookup_fn.hidden_deps, 1,
+        "DiskCache is not a known value type - .get() still flagged"
+    );
+}
+
+#[test]
 fn hidden_dep_self_field_ref_dyn_not_counted() {
     // Arrange
     let source = r#"

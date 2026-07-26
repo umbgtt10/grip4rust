@@ -2,7 +2,16 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use std::collections::HashMap;
+
 use syn::visit::Visit;
+
+const KNOWN_VALUE_TYPES: &[&str] = &[
+    "Vec", "HashMap", "HashSet", "BTreeMap", "BTreeSet", "VecDeque", "String", "Option", "Cell",
+    "RefCell",
+];
+
+const PURE_VALUE_METHODS: &[&str] = &["clone", "len", "get", "is_empty", "contains", "iter"];
 
 const STD_CONSTRUCTORS: &[&str] = &[
     "Box", "Arc", "Rc", "String", "Vec", "HashMap", "HashSet", "Option", "Result", "Ok", "Err",
@@ -74,7 +83,7 @@ pub(crate) struct HiddenDepFinder {
     pub(crate) count: usize,
     pub(crate) weight: f64,
     pub(crate) labels: Vec<String>,
-    concrete_fields: Vec<String>,
+    concrete_fields: HashMap<String, String>,
 }
 
 impl HiddenDepFinder {
@@ -83,11 +92,11 @@ impl HiddenDepFinder {
             count: 0,
             weight: 0.0,
             labels: Vec::new(),
-            concrete_fields: Vec::new(),
+            concrete_fields: HashMap::new(),
         }
     }
 
-    pub(crate) fn set_concrete_fields(&mut self, fields: Vec<String>) {
+    pub(crate) fn set_concrete_fields(&mut self, fields: HashMap<String, String>) {
         self.concrete_fields = fields;
     }
 
@@ -177,12 +186,19 @@ impl HiddenDepFinder {
             return false;
         }
         if let Some(name) = Self::concrete_field_name(&expr_method.receiver) {
-            if self.concrete_fields.contains(&name) {
-                let label = format!("self.{name}.{}", expr_method.method);
-                self.add_dep(&label);
+            if let Some(type_name) = self.concrete_fields.get(&name) {
+                let method = expr_method.method.to_string();
+                if !Self::is_pure_value_method(type_name, &method) {
+                    let label = format!("self.{name}.{method}");
+                    self.add_dep(&label);
+                }
             }
         }
         true
+    }
+
+    fn is_pure_value_method(type_name: &str, method: &str) -> bool {
+        KNOWN_VALUE_TYPES.contains(&type_name) && PURE_VALUE_METHODS.contains(&method)
     }
 
     fn handle_macro_expr(&mut self, expr_macro: &syn::ExprMacro) -> bool {

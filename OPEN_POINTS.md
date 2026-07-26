@@ -33,30 +33,29 @@ honest about whether it's apples-to-apples.
 
 Not started.
 
-## Structural hidden-dep detection can't distinguish a value type from a live collaborator
+## Structural hidden-dep detection still can't clear a project's own value-type wrappers
 
-`HiddenDepFinder::check_path` (`src/hidden_dep_finder.rs`) flags
+`HiddenDepFinder::handle_method_call_expr` (`src/hidden_dep_finder.rs`) used to flag
 `self.concrete_field.method(...)` as a hidden dependency whenever `concrete_field`
-isn't behind `Box`/`Arc`/`&dyn Trait` — correct for a live collaborator
-(`self.db.query(...)`), but the same rule fires identically for
-`self.plain_vec.clone()`, `self.plain_vec.get(i)`, `self.plain_vec.len()` — plain,
-deterministic, side-effect-free methods on owned value types (`Vec`, `HashSet`,
-`String`, a project's own data-only structs). Nothing about cloning or
-bounds-checked-indexing a value type has the non-determinism or hidden-I/O
-character this dimension exists to catch, yet it costs exactly the same as
-reaching into a database.
+wasn't behind `Box`/`Arc`/`&dyn Trait`, regardless of what `method` was — so
+`self.plain_vec.clone()`/`.get(i)`/`.len()` cost exactly as much as
+`self.db.query(...)`. Fixed for known std value types: `Collector::visit_struct`
+now records each concrete field's type head alongside its name, and
+`handle_method_call_expr` exempts calls where both the field's type is a known
+value-type constructor (`Vec`, `HashMap`, `HashSet`, `BTreeMap`, `BTreeSet`,
+`VecDeque`, `String`, `Option`, `Cell`, `RefCell`) *and* the method is a known-pure
+value-type method (`clone`, `len`, `get`, `is_empty`, `contains`, `iter`).
 
-Confirmed empirically, not just in theory: analyzing Faction's commit history
-(10 sampled ratio-drop pairs), this single mechanism was the most common driver
-of regressions. The clearest case: a commit that made indexing defensive
-(`self.flags.get(i)` instead of panicking `self.flags[i]`) scored *worse* for it,
-purely because `.get()` is structurally indistinguishable from a call to a live
-collaborator.
+**What's still open:** a project's *own* data-only wrapper structs (a
+`ConfirmedSet`-style type wrapping a `Vec` internally) aren't in the value-type
+allowlist and still get flagged on every method call, including `.clone()`.
+Nothing short of real type resolution can distinguish "clone of a data-only
+wrapper" from "clone of a live collaborator" purely structurally — nor can it
+tell a custom type's own `.get()` (which could easily be a real disk- or
+network-backed lookup) from `Vec::get()`. Confirmed via Faction's commit
+history: `self.members.clone()` (where `members: Members`, a custom peer-set
+wrapper) is still flagged after this fix, correctly.
 
-Not started. Likely shape: an allowlist of known-pure value-type methods (`clone`,
-`len`, `get`, `is_empty`, `contains`, `iter`, ...) on known value-type constructors
-(`Vec`, `HashMap`, `HashSet`, `String`, `Option`, `Cell`, `RefCell`, ...), mirroring
-the existing `STD_CONSTRUCTORS` allowlist that already excludes `Vec::new()`/
-`Box::new()` from `check_path`. The harder open question is a project's *own*
-data-only structs (a `ConfirmedSet`-style wrapper) — nothing structural
-distinguishes those from a genuine collaborator without type resolution.
+Not started, and may not be fixable without a real type-resolution pass — this
+is a structurally harder problem than the fixed case, not just a bigger
+allowlist.
