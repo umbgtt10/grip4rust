@@ -4,7 +4,8 @@
 
 use std::collections::HashMap;
 
-use syn::visit::Visit;
+use syn::visit::{self, Visit};
+use syn::{Expr, ExprMacro, ExprMethodCall, ExprUnsafe, Member, Path, Stmt};
 
 use crate::known_hidden_dep_names::{PURE_VALUE_METHODS, STD_CONSTRUCTORS, STD_MODULE_CALLS};
 use crate::method_purity_registry::MethodPurityRegistry;
@@ -33,7 +34,7 @@ fn dep_weight(label: &str) -> f64 {
     }
 }
 
-fn path_label(path: &syn::Path) -> String {
+fn path_label(path: &Path) -> String {
     path.segments
         .iter()
         .map(|s| s.ident.to_string())
@@ -73,7 +74,7 @@ impl<'a> HiddenDepFinder<'a> {
         self.labels.push(label.to_string());
     }
 
-    fn check_path(&mut self, path: &syn::Path) {
+    fn check_path(&mut self, path: &Path) {
         let segments: Vec<_> = path.segments.iter().map(|s| s.ident.to_string()).collect();
         if segments.is_empty() {
             return;
@@ -101,7 +102,7 @@ impl<'a> HiddenDepFinder<'a> {
     }
 }
 
-fn is_print_macro(path: &syn::Path) -> bool {
+fn is_print_macro(path: &Path) -> bool {
     if let Some(name) = path.get_ident() {
         let n = name.to_string();
         return n == "println" || n == "eprintln" || n == "print" || n == "eprint";
@@ -110,44 +111,44 @@ fn is_print_macro(path: &syn::Path) -> bool {
 }
 
 impl<'ast, 'a> Visit<'ast> for HiddenDepFinder<'a> {
-    fn visit_stmt(&mut self, stmt: &'ast syn::Stmt) {
-        if let syn::Stmt::Macro(stmt_macro) = stmt {
+    fn visit_stmt(&mut self, stmt: &'ast Stmt) {
+        if let Stmt::Macro(stmt_macro) = stmt {
             if is_print_macro(&stmt_macro.mac.path) {
                 self.add_dep(&path_label(&stmt_macro.mac.path));
                 return;
             }
         }
-        syn::visit::visit_stmt(self, stmt);
+        visit::visit_stmt(self, stmt);
     }
 
-    fn visit_expr(&mut self, expr: &'ast syn::Expr) {
+    fn visit_expr(&mut self, expr: &'ast Expr) {
         if self.handle_expr(expr) {
-            syn::visit::visit_expr(self, expr);
+            visit::visit_expr(self, expr);
         }
     }
 
-    fn visit_expr_unsafe(&mut self, _expr: &'ast syn::ExprUnsafe) {
+    fn visit_expr_unsafe(&mut self, _expr: &'ast ExprUnsafe) {
         self.add_dep("unsafe { ... }");
     }
 }
 
 impl<'a> HiddenDepFinder<'a> {
     /// Returns whether the visitor should still recurse into `expr`'s children.
-    fn handle_expr(&mut self, expr: &syn::Expr) -> bool {
+    fn handle_expr(&mut self, expr: &Expr) -> bool {
         match expr {
-            syn::Expr::Call(expr_call) => {
-                if let syn::Expr::Path(expr_path) = &*expr_call.func {
+            Expr::Call(expr_call) => {
+                if let Expr::Path(expr_path) = &*expr_call.func {
                     self.check_path(&expr_path.path);
                 }
                 true
             }
-            syn::Expr::MethodCall(expr_method) => self.handle_method_call_expr(expr_method),
-            syn::Expr::Macro(expr_macro) => self.handle_macro_expr(expr_macro),
+            Expr::MethodCall(expr_method) => self.handle_method_call_expr(expr_method),
+            Expr::Macro(expr_macro) => self.handle_macro_expr(expr_macro),
             _ => true,
         }
     }
 
-    fn handle_method_call_expr(&mut self, expr_method: &syn::ExprMethodCall) -> bool {
+    fn handle_method_call_expr(&mut self, expr_method: &ExprMethodCall) -> bool {
         if Self::is_bare_self(&expr_method.receiver) {
             return false;
         }
@@ -174,7 +175,7 @@ impl<'a> HiddenDepFinder<'a> {
             || self.method_purity.is_known_pure_method(type_name, method)
     }
 
-    fn handle_macro_expr(&mut self, expr_macro: &syn::ExprMacro) -> bool {
+    fn handle_macro_expr(&mut self, expr_macro: &ExprMacro) -> bool {
         if is_print_macro(&expr_macro.mac.path) {
             self.add_dep(&path_label(&expr_macro.mac.path));
             return false;
@@ -182,25 +183,25 @@ impl<'a> HiddenDepFinder<'a> {
         true
     }
 
-    fn is_bare_self(receiver: &syn::Expr) -> bool {
+    fn is_bare_self(receiver: &Expr) -> bool {
         matches!(
             receiver,
-            syn::Expr::Path(expr_path)
+            Expr::Path(expr_path)
                 if expr_path.path.segments.len() == 1 && expr_path.path.segments[0].ident == "self"
         )
     }
 
-    fn concrete_field_name(receiver: &syn::Expr) -> Option<String> {
-        let syn::Expr::Field(expr_field) = receiver else {
+    fn concrete_field_name(receiver: &Expr) -> Option<String> {
+        let Expr::Field(expr_field) = receiver else {
             return None;
         };
-        let syn::Expr::Path(expr_path) = &*expr_field.base else {
+        let Expr::Path(expr_path) = &*expr_field.base else {
             return None;
         };
         if expr_path.path.segments.len() != 1 || expr_path.path.segments[0].ident != "self" {
             return None;
         }
-        let syn::Member::Named(ident) = &expr_field.member else {
+        let Member::Named(ident) = &expr_field.member else {
             return None;
         };
         Some(ident.to_string())

@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use syn::ExprUnsafe;
 use syn::visit::Visit;
 
 pub(crate) struct UnsafeFinder {
@@ -15,7 +16,7 @@ impl UnsafeFinder {
 }
 
 impl<'ast> Visit<'ast> for UnsafeFinder {
-    fn visit_expr_unsafe(&mut self, _expr: &'ast syn::ExprUnsafe) {
+    fn visit_expr_unsafe(&mut self, _expr: &'ast ExprUnsafe) {
         self.found = true;
     }
 }

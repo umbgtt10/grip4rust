@@ -2,7 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use syn::visit::Visit;
+use syn::visit::{self, Visit};
+use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall};
 
 const IO_METHOD_NAMES: &[&str] = &[
     "connect",
@@ -32,26 +33,26 @@ impl IoCallFinder {
 }
 
 impl<'ast> Visit<'ast> for IoCallFinder {
-    fn visit_expr(&mut self, expr: &'ast syn::Expr) {
+    fn visit_expr(&mut self, expr: &'ast Expr) {
         if self.handle_expr(expr) {
-            syn::visit::visit_expr(self, expr);
+            visit::visit_expr(self, expr);
         }
     }
 }
 
 impl IoCallFinder {
     /// Returns whether the visitor should still recurse into `expr`'s children.
-    fn handle_expr(&mut self, expr: &syn::Expr) -> bool {
+    fn handle_expr(&mut self, expr: &Expr) -> bool {
         match expr {
-            syn::Expr::Call(expr_call) => self.handle_call_expr(expr_call),
-            syn::Expr::MethodCall(expr_method) => self.handle_method_call_expr(expr_method),
-            syn::Expr::Macro(expr_macro) => self.handle_macro_expr(expr_macro),
+            Expr::Call(expr_call) => self.handle_call_expr(expr_call),
+            Expr::MethodCall(expr_method) => self.handle_method_call_expr(expr_method),
+            Expr::Macro(expr_macro) => self.handle_macro_expr(expr_macro),
             _ => true,
         }
     }
 
-    fn handle_call_expr(&mut self, expr_call: &syn::ExprCall) -> bool {
-        let syn::Expr::Path(expr_path) = &*expr_call.func else {
+    fn handle_call_expr(&mut self, expr_call: &ExprCall) -> bool {
+        let Expr::Path(expr_path) = &*expr_call.func else {
             return true;
         };
         let segments: Vec<_> = expr_path
@@ -76,7 +77,7 @@ impl IoCallFinder {
             )
     }
 
-    fn handle_method_call_expr(&mut self, expr_method: &syn::ExprMethodCall) -> bool {
+    fn handle_method_call_expr(&mut self, expr_method: &ExprMethodCall) -> bool {
         if is_io_method(&expr_method.method.to_string()) {
             self.found = true;
             return false;
@@ -84,7 +85,7 @@ impl IoCallFinder {
         true
     }
 
-    fn handle_macro_expr(&mut self, expr_macro: &syn::ExprMacro) -> bool {
+    fn handle_macro_expr(&mut self, expr_macro: &ExprMacro) -> bool {
         let Some(name) = expr_macro.mac.path.get_ident() else {
             return true;
         };

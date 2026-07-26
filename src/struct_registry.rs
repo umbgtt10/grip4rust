@@ -6,14 +6,15 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use syn::visit::Visit;
+use syn::{GenericArgument, Item, ItemMod, ItemStruct, PathArguments, Type, parse_file};
 
 pub const KNOWN_STD_VALUE_TYPES: &[&str] = &[
     "Vec", "HashMap", "HashSet", "BTreeMap", "BTreeSet", "VecDeque", "String", "Option", "Cell",
     "RefCell",
 ];
 
-pub fn field_type_head(ty: &syn::Type) -> String {
-    if let syn::Type::Path(type_path) = ty {
+pub fn field_type_head(ty: &Type) -> String {
+    if let Type::Path(type_path) = ty {
         type_path
             .path
             .segments
@@ -25,8 +26,8 @@ pub fn field_type_head(ty: &syn::Type) -> String {
     }
 }
 
-pub(crate) fn self_ty_name(ty: &syn::Type) -> String {
-    if let syn::Type::Path(type_path) = ty {
+pub(crate) fn self_ty_name(ty: &Type) -> String {
+    if let Type::Path(type_path) = ty {
         type_path
             .path
             .segments
@@ -38,13 +39,13 @@ pub(crate) fn self_ty_name(ty: &syn::Type) -> String {
     }
 }
 
-pub(crate) fn is_trait_object_type(ty: &syn::Type) -> bool {
+pub(crate) fn is_trait_object_type(ty: &Type) -> bool {
     match ty {
-        syn::Type::TraitObject(_) => true,
-        syn::Type::Reference(r) => is_trait_object_type(&r.elem),
-        syn::Type::Path(p) => p.path.segments.iter().any(|seg| match &seg.arguments {
-            syn::PathArguments::AngleBracketed(args) => args.args.iter().any(|arg| match arg {
-                syn::GenericArgument::Type(t) => is_trait_object_type(t),
+        Type::TraitObject(_) => true,
+        Type::Reference(r) => is_trait_object_type(&r.elem),
+        Type::Path(p) => p.path.segments.iter().any(|seg| match &seg.arguments {
+            PathArguments::AngleBracketed(args) => args.args.iter().any(|arg| match arg {
+                GenericArgument::Type(t) => is_trait_object_type(t),
                 _ => false,
             }),
             _ => false,
@@ -64,7 +65,7 @@ impl StructRegistry {
     pub fn build(files: &[(PathBuf, String)]) -> Self {
         let mut registry = Self::default();
         for (_, source) in files {
-            if let Ok(syntax) = syn::parse_file(source) {
+            if let Ok(syntax) = parse_file(source) {
                 for item in &syntax.items {
                     registry.visit_item(item);
                 }
@@ -103,17 +104,17 @@ impl StructRegistry {
 }
 
 impl<'ast> Visit<'ast> for StructRegistry {
-    fn visit_item(&mut self, item: &'ast syn::Item) {
+    fn visit_item(&mut self, item: &'ast Item) {
         match item {
-            syn::Item::Struct(item_struct) => self.record_struct(item_struct),
-            syn::Item::Mod(item_mod) => self.visit_inline_mod(item_mod),
+            Item::Struct(item_struct) => self.record_struct(item_struct),
+            Item::Mod(item_mod) => self.visit_inline_mod(item_mod),
             _ => {}
         }
     }
 }
 
 impl StructRegistry {
-    fn record_struct(&mut self, item_struct: &syn::ItemStruct) {
+    fn record_struct(&mut self, item_struct: &ItemStruct) {
         let name = item_struct.ident.to_string();
         let mut all_field_types = Vec::new();
         let mut concrete_fields = HashMap::new();
@@ -130,7 +131,7 @@ impl StructRegistry {
         self.concrete_fields_by_struct.insert(name, concrete_fields);
     }
 
-    fn visit_inline_mod(&mut self, item_mod: &syn::ItemMod) {
+    fn visit_inline_mod(&mut self, item_mod: &ItemMod) {
         if let Some((_, items)) = &item_mod.content {
             for inner in items {
                 self.visit_item(inner);

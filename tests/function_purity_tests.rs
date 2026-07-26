@@ -3,9 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 use grip::function_purity::FunctionPurity;
+use syn::{ItemFn, parse_str};
 
-fn parse_fn(source: &str) -> syn::ItemFn {
-    syn::parse_str(source).expect("valid fn source")
+fn parse_fn(source: &str) -> ItemFn {
+    parse_str(source).expect("valid fn source")
 }
 
 #[test]

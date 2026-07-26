@@ -7,7 +7,10 @@ use std::path::Path;
 
 use quote::ToTokens;
 use syn::visit::Visit;
-use syn::{Attribute, Item, ItemFn, Visibility};
+use syn::{
+    Attribute, Block, ImplItem, ImplItemFn, Item, ItemEnum, ItemFn, ItemImpl, ItemMod, ItemStruct,
+    ItemTrait, Path as SynPath, Visibility, parse_file,
+};
 
 use crate::contribution_schedule::ContributionSchedule;
 use crate::function_info::FunctionInfo;
@@ -53,7 +56,7 @@ impl<'a> Collector<'a> {
         method_purity: &'a MethodPurityRegistry,
     ) -> (ItemCounts, Vec<FunctionInfo>) {
         let file = path.to_string_lossy().replace('\\', "/");
-        let syntax = match syn::parse_file(source) {
+        let syntax = match parse_file(source) {
             Ok(s) => s,
             Err(_) => return (ItemCounts::default(), Vec::new()),
         };
@@ -129,7 +132,7 @@ impl<'a> Collector<'a> {
         });
     }
 
-    fn visit_struct(&mut self, item_struct: &syn::ItemStruct) {
+    fn visit_struct(&mut self, item_struct: &ItemStruct) {
         self.counts.total_items += 1;
         if matches!(
             self.classify_visibility(&item_struct.vis),
@@ -150,7 +153,7 @@ impl<'a> Collector<'a> {
         self.struct_concrete_fields.insert(name, concrete);
     }
 
-    fn visit_trait(&mut self, item_trait: &syn::ItemTrait) {
+    fn visit_trait(&mut self, item_trait: &ItemTrait) {
         self.counts.total_items += 1;
         if matches!(
             self.classify_visibility(&item_trait.vis),
@@ -160,7 +163,7 @@ impl<'a> Collector<'a> {
         }
     }
 
-    fn visit_enum(&mut self, item_enum: &syn::ItemEnum) {
+    fn visit_enum(&mut self, item_enum: &ItemEnum) {
         self.counts.total_items += 1;
         if matches!(
             self.classify_visibility(&item_enum.vis),
@@ -170,7 +173,7 @@ impl<'a> Collector<'a> {
         }
     }
 
-    fn visit_mod(&mut self, item_mod: &syn::ItemMod) {
+    fn visit_mod(&mut self, item_mod: &ItemMod) {
         if let Some((_, items)) = &item_mod.content {
             for inner in items {
                 self.visit_item(inner);
@@ -178,7 +181,7 @@ impl<'a> Collector<'a> {
         }
     }
 
-    fn visit_impl(&mut self, item_impl: &syn::ItemImpl) {
+    fn visit_impl(&mut self, item_impl: &ItemImpl) {
         if self.is_foreign_trait_impl(item_impl) {
             return;
         }
@@ -186,7 +189,7 @@ impl<'a> Collector<'a> {
         let self_ty_name = self::self_ty_name(&item_impl.self_ty);
 
         for item in &item_impl.items {
-            if let syn::ImplItem::Fn(method) = item {
+            if let ImplItem::Fn(method) = item {
                 if self.has_test_attr(&method.attrs) {
                     continue;
                 }
@@ -195,19 +198,14 @@ impl<'a> Collector<'a> {
         }
     }
 
-    fn is_foreign_trait_impl(&self, item_impl: &syn::ItemImpl) -> bool {
+    fn is_foreign_trait_impl(&self, item_impl: &ItemImpl) -> bool {
         item_impl
             .trait_
             .as_ref()
             .is_some_and(|(_, p, _)| self.is_foreign_trait(p))
     }
 
-    fn visit_impl_method(
-        &mut self,
-        method: &syn::ImplItemFn,
-        self_ty_name: &str,
-        is_trait_impl: bool,
-    ) {
+    fn visit_impl_method(&mut self, method: &ImplItemFn, self_ty_name: &str, is_trait_impl: bool) {
         let is_pure = !self.is_impl_method_impure(method);
         let concrete_fields = self
             .struct_concrete_fields
@@ -262,7 +260,7 @@ impl<'a> Collector<'a> {
         }
     }
 
-    fn is_impl_method_impure(&self, method: &syn::ImplItemFn) -> bool {
+    fn is_impl_method_impure(&self, method: &ImplItemFn) -> bool {
         if FunctionPurity::has_mut_param(&method.sig) {
             return true;
         }
@@ -276,7 +274,7 @@ impl<'a> Collector<'a> {
             || FunctionPurity::has_io_call(&method.block)
     }
 
-    fn is_foreign_trait(&self, path: &syn::Path) -> bool {
+    fn is_foreign_trait(&self, path: &SynPath) -> bool {
         if let Some(last) = path.segments.last() {
             let name = last.ident.to_string();
             if KNOWN_FOREIGN_TRAITS.contains(&name.as_str()) {
@@ -323,7 +321,7 @@ impl<'a> Collector<'a> {
         !FunctionPurity::has_unsafe_block(&item_fn.block)
     }
 
-    fn count_hidden_deps_in_block(&self, block: &syn::Block) -> HiddenDepFinder<'a> {
+    fn count_hidden_deps_in_block(&self, block: &Block) -> HiddenDepFinder<'a> {
         let mut finder = HiddenDepFinder::new(self.registry, self.method_purity);
         finder.visit_block(block);
         finder
@@ -331,7 +329,7 @@ impl<'a> Collector<'a> {
 
     fn count_hidden_deps_in_impl_method(
         &self,
-        method: &syn::ImplItemFn,
+        method: &ImplItemFn,
         concrete_fields: HashMap<String, String>,
     ) -> HiddenDepFinder<'a> {
         let mut finder = HiddenDepFinder::new(self.registry, self.method_purity);

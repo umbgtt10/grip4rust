@@ -6,6 +6,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use syn::visit::Visit;
+use syn::{ImplItem, ImplItemFn, Item, ItemImpl, parse_file};
 
 use crate::function_purity::FunctionPurity;
 use crate::hidden_dep_finder::HiddenDepFinder;
@@ -22,7 +23,7 @@ impl MethodPurityRegistry {
         let mut registry = Self::default();
         let no_nested_trust = Self::default();
         for (_, source) in files {
-            if let Ok(syntax) = syn::parse_file(source) {
+            if let Ok(syntax) = parse_file(source) {
                 for item in &syntax.items {
                     registry.visit_top_level_item(item, struct_registry, &no_nested_trust);
                 }
@@ -39,15 +40,15 @@ impl MethodPurityRegistry {
 
     fn visit_top_level_item(
         &mut self,
-        item: &syn::Item,
+        item: &Item,
         struct_registry: &StructRegistry,
         no_nested_trust: &MethodPurityRegistry,
     ) {
         match item {
-            syn::Item::Impl(item_impl) => {
+            Item::Impl(item_impl) => {
                 self.record_impl(item_impl, struct_registry, no_nested_trust);
             }
-            syn::Item::Mod(item_mod) => {
+            Item::Mod(item_mod) => {
                 if let Some((_, items)) = &item_mod.content {
                     for inner in items {
                         self.visit_top_level_item(inner, struct_registry, no_nested_trust);
@@ -60,7 +61,7 @@ impl MethodPurityRegistry {
 
     fn record_impl(
         &mut self,
-        item_impl: &syn::ItemImpl,
+        item_impl: &ItemImpl,
         struct_registry: &StructRegistry,
         no_nested_trust: &MethodPurityRegistry,
     ) {
@@ -70,7 +71,7 @@ impl MethodPurityRegistry {
         let type_name = self_ty_name(&item_impl.self_ty);
         let concrete_fields = struct_registry.concrete_fields_of(&type_name);
         for item in &item_impl.items {
-            if let syn::ImplItem::Fn(method) = item {
+            if let ImplItem::Fn(method) = item {
                 self.record_method(
                     &type_name,
                     method,
@@ -85,7 +86,7 @@ impl MethodPurityRegistry {
     fn record_method(
         &mut self,
         type_name: &str,
-        method: &syn::ImplItemFn,
+        method: &ImplItemFn,
         struct_registry: &StructRegistry,
         no_nested_trust: &MethodPurityRegistry,
         concrete_fields: &HashMap<String, String>,
@@ -102,7 +103,7 @@ impl MethodPurityRegistry {
         }
     }
 
-    fn has_pure_signature(method: &syn::ImplItemFn) -> bool {
+    fn has_pure_signature(method: &ImplItemFn) -> bool {
         !FunctionPurity::has_mut_param(&method.sig)
             && !FunctionPurity::is_unit_return(&method.sig)
             && method.sig.unsafety.is_none()
