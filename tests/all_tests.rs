@@ -11,6 +11,7 @@ mod contribution_schedule_tests;
 mod default_scorer_tests;
 mod fs_walk_tests;
 mod function_info_tests;
+mod function_purity_tests;
 mod grip_report_tests;
 mod item_counts_tests;
 mod lib_tests;
