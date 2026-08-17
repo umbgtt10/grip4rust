@@ -236,7 +236,7 @@ Invoke-Twin4RustGate "Mirrored tests cargo-grip4rust" @("cargo-grip4rust")
 # File risk gate
 # ---------------------------------------------------------------------------
 
-Invoke-Iceberg4RustGate "File risk cargo-grip4rust" @("cargo-grip4rust") -Threshold "29.5"
+Invoke-Iceberg4RustGate "File risk cargo-grip4rust" @("cargo-grip4rust") -Threshold "20"
 
 # ---------------------------------------------------------------------------
 

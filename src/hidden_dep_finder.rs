@@ -2,44 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::dep_weight_ladder::DepWeightLadder;
 use crate::known_hidden_dep_names::{PURE_VALUE_METHODS, STD_CONSTRUCTORS, STD_MODULE_CALLS};
 use crate::method_purity_registry::MethodPurityRegistry;
 use crate::struct_registry::{KNOWN_STD_VALUE_TYPES, StructRegistry};
 use std::collections::HashMap;
 use syn::visit::{self, Visit};
 use syn::{Expr, ExprMacro, ExprMethodCall, ExprUnsafe, Member, Path, Stmt};
-
-fn dep_weight(label: &str) -> f64 {
-    // Labels come from `path_label`, which joins macro path segments, so a
-    // print macro arrives as the bare name `print` with no `!`. Matching on
-    // `print!` never fires and drops the call into the unknown-dependency
-    // catch-all instead. `print` also prefixes `println`, and `eprint`
-    // prefixes `eprintln`, so two arms cover all four macros.
-    if label.starts_with("print") || label.starts_with("eprint") {
-        0.2
-    } else if label.starts_with("Instant")
-        || label.starts_with("SystemTime")
-        || label.starts_with("Utc")
-        || label.starts_with("Local")
-        || label.contains("elapsed")
-    {
-        0.3
-    } else if label.starts_with("env::") || label.starts_with("process::") {
-        0.4
-    } else if label.starts_with("unsafe") {
-        0.5
-    } else {
-        0.6
-    }
-}
-
-fn path_label(path: &Path) -> String {
-    path.segments
-        .iter()
-        .map(|s| s.ident.to_string())
-        .collect::<Vec<_>>()
-        .join("::")
-}
 
 pub struct HiddenDepFinder<'a> {
     pub count: usize,
@@ -68,7 +37,7 @@ impl<'a> HiddenDepFinder<'a> {
 
     fn add_dep(&mut self, label: &str) {
         self.count += 1;
-        let w = dep_weight(label);
+        let w = DepWeightLadder::weight_of(label);
         self.weight += w;
         self.labels.push(label.to_string());
     }
@@ -113,7 +82,7 @@ impl<'ast, 'a> Visit<'ast> for HiddenDepFinder<'a> {
     fn visit_stmt(&mut self, stmt: &'ast Stmt) {
         if let Stmt::Macro(stmt_macro) = stmt {
             if is_print_macro(&stmt_macro.mac.path) {
-                self.add_dep(&path_label(&stmt_macro.mac.path));
+                self.add_dep(&DepWeightLadder::label_of(&stmt_macro.mac.path));
                 return;
             }
         }
@@ -176,7 +145,7 @@ impl<'a> HiddenDepFinder<'a> {
 
     fn handle_macro_expr(&mut self, expr_macro: &ExprMacro) -> bool {
         if is_print_macro(&expr_macro.mac.path) {
-            self.add_dep(&path_label(&expr_macro.mac.path));
+            self.add_dep(&DepWeightLadder::label_of(&expr_macro.mac.path));
             return false;
         }
         true

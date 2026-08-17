@@ -19,6 +19,22 @@ pub struct ItemCounts {
 }
 
 impl ItemCounts {
+    // The counts know how to record an impl method; the collector only decides
+    // which kind it saw.
+    pub fn record_impl_method(&mut self, is_trait_impl: bool, is_pure: bool) {
+        if is_trait_impl {
+            self.local_trait_methods += 1;
+            if !is_pure {
+                self.local_trait_impure += 1;
+            }
+        } else {
+            self.inherent_methods += 1;
+            if !is_pure {
+                self.inherent_impure += 1;
+            }
+        }
+    }
+
     #[must_use]
     pub fn merged(self, other: &ItemCounts) -> Self {
         Self {
