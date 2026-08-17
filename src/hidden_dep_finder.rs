@@ -2,21 +2,20 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashMap;
-
-use syn::visit::{self, Visit};
-use syn::{Expr, ExprMacro, ExprMethodCall, ExprUnsafe, Member, Path, Stmt};
-
 use crate::known_hidden_dep_names::{PURE_VALUE_METHODS, STD_CONSTRUCTORS, STD_MODULE_CALLS};
 use crate::method_purity_registry::MethodPurityRegistry;
 use crate::struct_registry::{KNOWN_STD_VALUE_TYPES, StructRegistry};
+use std::collections::HashMap;
+use syn::visit::{self, Visit};
+use syn::{Expr, ExprMacro, ExprMethodCall, ExprUnsafe, Member, Path, Stmt};
 
 fn dep_weight(label: &str) -> f64 {
-    if label.starts_with("println")
-        || label.starts_with("eprintln")
-        || label.starts_with("print!")
-        || label.starts_with("eprint!")
-    {
+    // Labels come from `path_label`, which joins macro path segments, so a
+    // print macro arrives as the bare name `print` with no `!`. Matching on
+    // `print!` never fires and drops the call into the unknown-dependency
+    // catch-all instead. `print` also prefixes `println`, and `eprint`
+    // prefixes `eprintln`, so two arms cover all four macros.
+    if label.starts_with("print") || label.starts_with("eprint") {
         0.2
     } else if label.starts_with("Instant")
         || label.starts_with("SystemTime")

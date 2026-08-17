@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use syn::visit::{self, Visit};
-use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall};
+use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall, Path, Stmt};
 
 const IO_METHOD_NAMES: &[&str] = &[
     "connect",
@@ -22,17 +22,49 @@ fn is_io_method(name: &str) -> bool {
     IO_METHOD_NAMES.contains(&name)
 }
 
-pub(crate) struct IoCallFinder {
-    pub(crate) found: bool,
+pub struct IoCallFinder {
+    pub found: bool,
 }
 
 impl IoCallFinder {
-    pub(crate) fn new() -> Self {
+    #[must_use]
+    pub fn new() -> Self {
         Self { found: false }
     }
 }
 
+impl Default for IoCallFinder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+fn is_write_macro(path: &Path) -> bool {
+    match path.get_ident() {
+        Some(name) => {
+            let n = name.to_string();
+            n == "write" || n == "writeln"
+        }
+        None => false,
+    }
+}
+
 impl<'ast> Visit<'ast> for IoCallFinder {
+    // A macro in statement position is a `Stmt::Macro`, which the default
+    // visitor never routes through `visit_expr`. Without this arm a bare
+    // `write!(w, "x");` that discards its Result goes unseen, while the same
+    // call written `write!(w, "x")?` is caught, because the `?` makes it an
+    // expression. `HiddenDepFinder` reaches print macros the same way.
+    fn visit_stmt(&mut self, stmt: &'ast Stmt) {
+        if let Stmt::Macro(stmt_macro) = stmt {
+            if is_write_macro(&stmt_macro.mac.path) {
+                self.found = true;
+                return;
+            }
+        }
+        visit::visit_stmt(self, stmt);
+    }
+
     fn visit_expr(&mut self, expr: &'ast Expr) {
         if self.handle_expr(expr) {
             visit::visit_expr(self, expr);
@@ -86,11 +118,7 @@ impl IoCallFinder {
     }
 
     fn handle_macro_expr(&mut self, expr_macro: &ExprMacro) -> bool {
-        let Some(name) = expr_macro.mac.path.get_ident() else {
-            return true;
-        };
-        let n = name.to_string();
-        if n == "writeln" || n == "write" {
+        if is_write_macro(&expr_macro.mac.path) {
             self.found = true;
             return false;
         }
