@@ -2,17 +2,15 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::item_counts::ItemCounts;
+use crate::traits::cache_store::CacheStore;
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
-
-use anyhow::Result;
-use serde::{Deserialize, Serialize};
-
-use crate::item_counts::ItemCounts;
-use crate::traits::cache_store::CacheStore;
 
 #[derive(Debug)]
 pub struct Cache {

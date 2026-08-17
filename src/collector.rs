@@ -2,16 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::HashMap;
-use std::path::Path;
-
-use quote::ToTokens;
-use syn::visit::Visit;
-use syn::{
-    Attribute, Block, ImplItem, ImplItemFn, Item, ItemEnum, ItemFn, ItemImpl, ItemMod, ItemStruct,
-    ItemTrait, Path as SynPath, Visibility, parse_file,
-};
-
 use crate::contribution_schedule::ContributionSchedule;
 use crate::function_info::FunctionInfo;
 use crate::function_purity::FunctionPurity;
@@ -20,6 +10,14 @@ use crate::item_counts::ItemCounts;
 use crate::known_foreign_traits::KNOWN_FOREIGN_TRAITS;
 use crate::method_purity_registry::MethodPurityRegistry;
 use crate::struct_registry::{StructRegistry, field_type_head, is_trait_object_type, self_ty_name};
+use quote::ToTokens;
+use std::collections::HashMap;
+use std::path::Path;
+use syn::visit::Visit;
+use syn::{
+    Attribute, Block, ImplItem, ImplItemFn, Item, ItemEnum, ItemFn, ItemImpl, ItemMod, ItemStruct,
+    ItemTrait, Path as SynPath, Visibility, parse_file,
+};
 
 #[derive(Debug)]
 pub struct Collector<'a> {

@@ -2,11 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use syn::visit::Visit;
-use syn::{Block, FnArg, ReturnType, Signature, Type};
-
 use crate::io_call_finder::IoCallFinder;
 use crate::unsafe_finder::UnsafeFinder;
+use syn::visit::Visit;
+use syn::{Block, FnArg, ReturnType, Signature, Type};
 
 pub struct FunctionPurity;
 

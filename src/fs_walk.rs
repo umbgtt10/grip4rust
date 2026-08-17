@@ -2,13 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::traits::walk::Walk;
+use anyhow::{Context, Result};
 use std::fs;
 use std::path::{Path, PathBuf};
-
-use anyhow::{Context, Result};
 use walkdir::WalkDir;
-
-use crate::traits::walk::Walk;
 
 #[derive(Debug, Clone)]
 pub struct FsWalk {

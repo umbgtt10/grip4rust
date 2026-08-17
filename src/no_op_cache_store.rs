@@ -2,10 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::Path;
-
 use crate::item_counts::ItemCounts;
 use crate::traits::cache_store::CacheStore;
+use std::path::Path;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct NoOpCacheStore;

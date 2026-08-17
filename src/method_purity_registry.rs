@@ -2,15 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
-
-use syn::visit::Visit;
-use syn::{ImplItem, ImplItemFn, Item, ItemImpl, parse_file};
-
 use crate::function_purity::FunctionPurity;
 use crate::hidden_dep_finder::HiddenDepFinder;
 use crate::struct_registry::{StructRegistry, self_ty_name};
+use std::collections::{HashMap, HashSet};
+use std::path::PathBuf;
+use syn::visit::Visit;
+use syn::{ImplItem, ImplItemFn, Item, ItemImpl, parse_file};
 
 #[derive(Debug, Default)]
 pub struct MethodPurityRegistry {

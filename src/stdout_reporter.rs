@@ -2,16 +2,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::io::{self, Write};
-
-use anyhow::Result;
-
 use crate::grip_report::GripReport;
 use crate::module_stats::ModuleStats;
 use crate::offenders_renderer::OffendersRenderer;
 use crate::overall_summary_renderer::OverallSummaryRenderer;
 use crate::traits::reporter::Reporter;
 use crate::verbose_functions_renderer::VerboseFunctionsRenderer;
+use anyhow::Result;
+use std::io::{self, Write};
 
 #[derive(Debug, Clone)]
 pub struct StdoutReporter {

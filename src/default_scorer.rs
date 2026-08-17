@@ -2,11 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::BTreeMap;
-
 use crate::item_counts::ItemCounts;
 use crate::module_stats::ModuleStats;
 use crate::traits::scorer::Scorer;
+use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, Default)]
 pub struct DefaultScorer;

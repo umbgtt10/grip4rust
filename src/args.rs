@@ -2,10 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use clap::Parser;
 use std::ffi::OsString;
 use std::path::PathBuf;
-
-use clap::Parser;
 
 #[derive(Debug, Clone, Parser)]
 #[command(name = "cargo-grip4rust")]

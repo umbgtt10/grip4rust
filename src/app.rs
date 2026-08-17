@@ -2,12 +2,6 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::ffi::OsString;
-use std::path::Path;
-use std::process::ExitCode;
-
-use anyhow::{Result, anyhow};
-
 use crate::args::Args;
 use crate::cache::Cache;
 use crate::collector::Collector;
@@ -26,6 +20,10 @@ use crate::traits::cache_store::CacheStore;
 use crate::traits::reporter::Reporter;
 use crate::traits::scorer::Scorer;
 use crate::traits::walk::Walk;
+use anyhow::{Result, anyhow};
+use std::ffi::OsString;
+use std::path::Path;
+use std::process::ExitCode;
 
 type CollectedFiles = (Vec<(String, ItemCounts)>, Vec<FunctionInfo>);
 

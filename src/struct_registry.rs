@@ -4,7 +4,6 @@
 
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-
 use syn::visit::Visit;
 use syn::{GenericArgument, Item, ItemMod, ItemStruct, PathArguments, Type, parse_file};
 

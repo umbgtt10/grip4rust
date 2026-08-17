@@ -2,9 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::PathBuf;
-
 use crate::args::Args;
+use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
 pub struct Config {
