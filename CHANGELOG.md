@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-08-17
+
+Two scoring defects, both surfaced by the first tests these files ever had.
+Minor rather than patch: `IoCallFinder` becomes public API, and crates using
+`print!` or a bare `write!` statement will see their scores move.
+
 ### Fixed
 
 - `print!` and `eprint!` are scored at 0.2 like `println!`/`eprintln!`, instead

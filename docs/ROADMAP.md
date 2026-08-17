@@ -2,8 +2,8 @@
 
 **Crate:** `cargo-grip`  
 **License:** MIT  
-**Last updated:** 2026-07-26  
-**Current status:** Phase 4 — ✅ Complete (latest feature phase; shipped in v0.5.0) · **Latest release:** v0.7.0 (cross-file hidden-dependency resolution, no new phase)
+**Last updated:** 2026-08-17  
+**Current status:** Phase 4 — ✅ Complete (latest feature phase; shipped in v0.5.0) · **Latest release:** v0.8.0 (print/write detection fixes and mirrored tests for the finders, no new phase)
 
 ---
 
