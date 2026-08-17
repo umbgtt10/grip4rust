@@ -9,22 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- `Invoke-Grip4RustSelfGate` in `scripts/run_stage_2.ps1` — stage 2 now
-  holds `grip` to its own score, with a floor of 59 that ratchets upward.
-  Previously the self-analysis step ran `cargo run -- --json | Out-Null`,
-  which discarded the report and so caught only an outright panic; the
-  score could have fallen to zero without turning the gate red. This is
-  the same defect, in the same file, as the one fixed for the CRAP gate
-  in 0.7.0. The gate reads `overall.grip_score` from the JSON rather than
-  using `--threshold`, because `App::handle_output` returns before the
-  reporter runs, so a `--threshold` failure prints no score to explain
-  itself.
-- `Invoke-Twin4RustGate` in `scripts/run_stage_2.ps1` — the mirrored-test
-  rule is now enforced here, as it already was in `crap4rust`, `slotgate`
-  and both `etheram` protocol repos. Requires `cargo-twin4rust` 0.2.0 or
-  later; 0.1.0 reports two false gaps on this crate's const-only files.
-
 ## [0.8.0] — 2026-08-17
 
 Two scoring defects, both surfaced by the first tests these files ever had.
@@ -59,6 +43,19 @@ or `eprint!` calls and no bare `write!` statements. Self-analysis stays at 59.
   whole weight ladder and its ordering, all ten I/O method names, all seven
   flagged path roots, macros in both statement and expression position, and the
   concrete-field purity paths. Both defects above were found by these tests.
+- `Invoke-Grip4RustSelfGate` in `scripts/run_stage_2.ps1` — stage 2 now holds
+  `grip` to its own score, with a floor of 59 that ratchets upward. Previously
+  the self-analysis step ran `cargo run -- --json | Out-Null`, which discarded
+  the report and so caught only an outright panic; the score could have fallen
+  to zero without turning the gate red. This is the same defect, in the same
+  file, as the one fixed for the CRAP gate in 0.7.0. The gate reads
+  `overall.grip_score` from the JSON rather than passing `--threshold`, because
+  `App::handle_output` returns before the reporter runs, so a `--threshold`
+  failure exits non-zero having printed no score to explain itself.
+- `Invoke-Twin4RustGate` in `scripts/run_stage_2.ps1` — the mirrored-test rule
+  is now enforced here, as it already was in `crap4rust`, `slotgate` and both
+  `etheram` protocol repos. Requires `cargo-twin4rust` 0.2.0 or later; 0.1.0
+  reports two false gaps on this crate's const-only files.
 
 ### Changed
 
