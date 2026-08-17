@@ -5,12 +5,46 @@
 $ErrorActionPreference = "Stop"
 Push-Location (Split-Path $PSScriptRoot -Parent)
 
-function Invoke-Step {
-    param([string]$Label, [scriptblock]$Command)
+# A tool that scores testability should be held to the number it reports.
+# Runs the freshly built binary rather than whatever version happens to be
+# installed, so the gate reflects the working tree.
+#
+# The floor is a ratchet: raise it when the score improves, never lower it to
+# turn a red build green. `--threshold` is deliberately not used, because
+# `handle_output` returns before the reporter runs, so a threshold failure
+# prints no score to explain itself.
+function Invoke-Grip4RustSelfGate {
+    param(
+        [string]$Label = "grip self-analysis",
+        [int]$MinScore
+    )
+
     Write-Host "$Label..." -ForegroundColor Cyan
-    & $Command
-    if ($LASTEXITCODE -ne 0) {
-        Write-Host "`nFailed: $Label (exit code $LASTEXITCODE)" -ForegroundColor Red
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $output = & cargo run --quiet -- --json
+    $exitCode = $LASTEXITCODE
+    $ErrorActionPreference = $previousErrorActionPreference
+
+    if ($exitCode -ne 0) {
+        Write-Host "`nFailed: $Label (exit code $exitCode)" -ForegroundColor Red
+        Pop-Location
+        exit 1
+    }
+
+    $score = (($output -join "`n") | ConvertFrom-Json).overall.grip_score
+
+    if ($null -eq $score) {
+        Write-Host "`nFailed: $Label (report carries no overall grip score)" -ForegroundColor Red
+        Pop-Location
+        exit 1
+    }
+
+    Write-Host "  grip score: $score / 100  (floor: $MinScore)"
+
+    if ($score -lt $MinScore) {
+        Write-Host "`nFailed: $Label (score $score is below the floor of $MinScore)" -ForegroundColor Red
         Pop-Location
         exit 1
     }
@@ -133,9 +167,7 @@ function Invoke-Crap4RustGate {
 # Self-analysis: grip on grip
 # ---------------------------------------------------------------------------
 
-Invoke-Step "cargo-grip self-analysis" {
-    cargo run -- --json | Out-Null
-}
+Invoke-Grip4RustSelfGate -MinScore 59
 
 # ---------------------------------------------------------------------------
 # CRAP gate
