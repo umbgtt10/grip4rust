@@ -78,7 +78,7 @@ crates or `ra_ap_*`/`rust-analyzer` crates should ever appear.
 
 ## Related
 
-- `OPEN_POINTS.md` — "Foreign-trait allowlist as configuration" is the
+- `../OPEN_POINTS.md` — "Foreign-trait allowlist as configuration" is the
   accepted mitigation for this ADR's classification ceiling, not a
   contradiction of it.
 - `braintax`'s own `ADR-AstOnlyNoTypeResolution.md` — the same decision,

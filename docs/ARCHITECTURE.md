@@ -103,7 +103,7 @@ found). It delegates to five smaller, single-purpose helpers as it walks:
 | `ContributionSchedule` | Given a function's purity, trait-seam status, and hidden-dep weight, what's its absolute contribution `[0.0, 1.0]`? |
 | `HiddenDepFinder` | Which calls in this function body are hidden dependencies, and how severe is each one? Consults `StructRegistry`/`MethodPurityRegistry` for `self.field.method()` calls. |
 | `FunctionPurity` | Does this signature/body disqualify a function from being pure — a `&mut` param or receiver, a unit return, an `unsafe` fn or block, an I/O call? Shared by `Collector` and `MethodPurityRegistry`, so the same rule applies whether a function is being scored or being checked as a candidate accessor. |
-| `IoCallFinder` | Does this method body perform I/O (the piece of `FunctionPurity`'s check that needs a real AST walk)? |
+| `IoCallFinder` | Does this method body perform I/O (the piece of `FunctionPurity`'s check that needs a real AST walk)? Walks statements as well as expressions, so a `write!(w, "x");` that discards its `Result` is seen alongside the `write!(w, "x")?` form. |
 | `UnsafeFinder` | Does this function body contain an `unsafe` block (ditto)? |
 
 `Collector` itself decides trait-boundary classification (`is_foreign_trait`,

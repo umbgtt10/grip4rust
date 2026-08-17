@@ -39,9 +39,14 @@ adds a weight; `dep_weight` is the sum across every hidden dependency in
 that function. Weight is looked up per call by `dep_weight(label)` in
 `hidden_dep_finder.rs`, keyed on the label's text prefix:
 
+Labels come from `path_label`, which joins a macro's **path segments**, so a
+print macro arrives as the bare name `print` — never `print!`. A prefix written
+with a `!` can therefore never match. Two arms cover all four macros, since
+`print` prefixes `println` and `eprint` prefixes `eprintln`.
+
 | Label prefix | Weight | Examples |
 |---|---|---|
-| `println`, `eprintln`, `print!`, `eprint!` | 0.2 | `println!("...")` |
+| `print`, `eprint` (so also `println`, `eprintln`) | 0.2 | `println!("...")`, `print!("...")` |
 | `Instant`, `SystemTime`, `Utc`, `Local`, or contains `elapsed` | 0.3 | `Instant::now()`, `.elapsed()` |
 | `env::`, `process::` | 0.4 | `env::var(...)`, `process::exit(...)` |
 | `unsafe` | 0.5 | `unsafe { ... }` |
@@ -189,7 +194,7 @@ accessor — stays flagged exactly as if neither registry existed. See
 
 - `docs/ADRs/ADR-AstOnlyNoTypeResolution.md` — why classification is
   name/structure-based rather than type-resolved.
-- `../OPEN_POINTS.md` — the foreign-trait allowlist gap and configurable
+- `OPEN_POINTS.md` — the foreign-trait allowlist gap and configurable
   `grip_score` weights.
 - `fixture/` — every fixture crate is a worked example of one dimension
   in isolation; `tests/fixtures/data_only` specifically demonstrates the

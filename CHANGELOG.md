@@ -9,6 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `print!` and `eprint!` are scored at 0.2 like `println!`/`eprintln!`, instead
+  of falling through to the 0.6 unknown-dependency weight. `dep_weight` matched
+  on the prefixes `print!` and `eprint!` — with a `!` — but labels come from
+  `path_label`, which joins macro **path segments** and so yields the bare name
+  `print`. Both arms were unreachable and every `print!` was scored as if it
+  were an unrecognised reach-out. `docs/FORMULA.md` documented the intended 0.2
+  all along; the code never implemented it.
+- `IoCallFinder` detects `write!`/`writeln!` in statement position. It only
+  overrode `visit_expr`, and a macro used as a statement is a `Stmt::Macro`
+  that the default visitor never routes through `visit_expr`. A bare
+  `write!(w, "x");` discarding its `Result` went unseen, while the same call
+  written `write!(w, "x")?` was caught, because the `?` makes it an expression.
+  `HiddenDepFinder` already reached print macros via `visit_stmt`; this brings
+  `IoCallFinder` into line, and both macro paths now share one predicate so
+  they cannot drift apart again.
+
+Neither defect changes this crate's own score: its sources contain no `print!`
+or `eprint!` calls and no bare `write!` statements. Self-analysis stays at 59.
+
+### Added
+
+- Mirrored test files for `hidden_dep_finder`, `io_call_finder` and
+  `no_op_cache_store`, the three sources that had none. 24 tests covering the
+  whole weight ladder and its ordering, all ten I/O method names, all seven
+  flagged path roots, macros in both statement and expression position, and the
+  concrete-field purity paths. Both defects above were found by these tests.
+
+### Changed
+
+- `IoCallFinder` is `pub` rather than `pub(crate)`, so it is reachable from the
+  integration tests this crate requires, with a `Default` impl alongside `new`.
+- `OPEN_POINTS.md` and `ROADMAP.md` moved to `docs/`, alongside the other
+  long-form documentation.
+
 ## [0.7.0] — 2026-07-26
 
 ### Fixed

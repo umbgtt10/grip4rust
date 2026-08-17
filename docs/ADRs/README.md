@@ -6,7 +6,7 @@ ecosystem repos, these are not priority-tiered; `grip` is a single-crate CLI
 tool with a small enough decision surface that a flat list is sufficient.
 
 Further deferred/unstarted design decisions are tracked in
-`../../OPEN_POINTS.md`, not here — an ADR records a decision already made,
+`../OPEN_POINTS.md`, not here — an ADR records a decision already made,
 not one still being weighed.
 
 ## Index

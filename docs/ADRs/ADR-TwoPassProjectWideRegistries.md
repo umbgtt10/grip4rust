@@ -91,7 +91,7 @@ single, non-recursive pass already proves correctly (each `HiddenDepFinder`
 run inside the registry-build phase is handed an *empty*
 `MethodPurityRegistry`, so nested custom-accessor calls inside a candidate
 method's body are conservatively left unresolved during that pass — never
-incorrectly trusted, just not yet proven). Left open in `OPEN_POINTS.md`,
+incorrectly trusted, just not yet proven). Left open in `../OPEN_POINTS.md`,
 not silently absent.
 
 **Folding local trait-impl methods into `MethodPurityRegistry`** alongside
@@ -100,7 +100,7 @@ load-bearing local/foreign trait-impl distinction (`is_foreign_trait`,
 feeding `trait_ratio` itself) — collapsing "is this method's body pure"
 and "is this method reached through a trait boundary" into one registry
 blurs an axis that's currently clean elsewhere in the codebase. Deferred,
-not rejected outright; see `OPEN_POINTS.md`.
+not rejected outright; see `../OPEN_POINTS.md`.
 
 ## Consequences
 
@@ -138,6 +138,6 @@ genuinely impure method (real I/O in the body) does not.
 - `docs/ARCHITECTURE.md` — where the two passes sit in `App`'s pipeline.
 - `docs/FORMULA.md` — the exact trust rules `clone` vs. the other four
   value methods use, and why they differ.
-- `OPEN_POINTS.md` — the four boundaries this ADR's rejected alternatives
+- `../OPEN_POINTS.md` — the four boundaries this ADR's rejected alternatives
   left open: trait-impl methods, recursive nested trust, enums, and
   generic/cross-crate types.

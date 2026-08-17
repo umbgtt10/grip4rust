@@ -43,8 +43,8 @@ Full derivation of every term, every weight, and the structural rules
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How a `grip` invocation flows through the code, module by module. |
 | [`docs/FORMULA.md`](docs/FORMULA.md) | Every scoring term, in full, kept in sync with `src/`. |
 | [`docs/ADRs/`](docs/ADRs/) | Why the codebase is shaped the way it is. |
-| [`ROADMAP.md`](ROADMAP.md) | What's shipped, what's next. |
-| [`OPEN_POINTS.md`](OPEN_POINTS.md) | Known gaps, deliberately deferred. |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | What's shipped, what's next. |
+| [`docs/OPEN_POINTS.md`](docs/OPEN_POINTS.md) | Known gaps, deliberately deferred. |
 | [`CHANGELOG.md`](CHANGELOG.md) | Release history. |
 
 ---
@@ -151,7 +151,7 @@ not just its receiver's shape. Full rule table in
 
 - **Purity is a heuristic.** `grip` classifies functions by signature and body patterns, not by type inference. It makes mistakes at the margin.
 - **No cross-crate analysis.** `StructRegistry`/`MethodPurityRegistry` resolve `self.field.clone()`/`.method()` project-wide — across files, as long as both the struct and its impl are inside the scanned path. A struct or impl defined outside it (a dependency, a sibling workspace member not included in the scan) is not resolved.
-- **Method-purity resolution is inherent-only and non-recursive.** A pure accessor reached through a trait impl isn't trusted, and a custom accessor whose own body calls *another* custom type's accessor won't have that inner call trusted either — see `OPEN_POINTS.md`.
+- **Method-purity resolution is inherent-only and non-recursive.** A pure accessor reached through a trait impl isn't trusted, and a custom accessor whose own body calls *another* custom type's accessor won't have that inner call trusted either — see `docs/OPEN_POINTS.md`.
 - **No inter-procedural tracking.** A function that receives a constructed dependency from its caller appears clean.
 - **No runtime or coverage data.** `grip` measures *testability*, not *testing*. Use a coverage tool alongside it.
 - **Single-segment trait ambiguity.** `impl Display for X` with `use std::fmt::Display` is correctly excluded. `impl Display for X` without the import relies on the known-foreign list.
