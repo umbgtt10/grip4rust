@@ -16,6 +16,42 @@ function Invoke-Step {
     }
 }
 
+function Invoke-Twin4RustGate {
+    param(
+        [string]$Label,
+        [string[]]$Packages
+    )
+
+    Write-Host "$Label..." -ForegroundColor Cyan
+
+    if (-not (Get-Command cargo-twin4rust -ErrorAction SilentlyContinue)) {
+        Write-Host "`ncargo-twin4rust is not installed." -ForegroundColor Red
+        Write-Host "Install it with: cargo install cargo-twin4rust" -ForegroundColor Red
+        Pop-Location
+        exit 1
+    }
+
+    $manifestPath = (Resolve-Path (Join-Path $PSScriptRoot "..\Cargo.toml")).Path
+
+    $args = @("twin4rust", "--manifest-path", $manifestPath)
+    foreach ($package in $Packages) {
+        $args += @("--package", $package)
+    }
+
+    $previousErrorActionPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    $output = & cargo @args 2>&1
+    $ErrorActionPreference = $previousErrorActionPreference
+    $exitCode = $LASTEXITCODE
+    $output | ForEach-Object { Write-Host $_ }
+
+    if ($exitCode -ne 0) {
+        Write-Host "`nFailed: $Label (source files without a mirrored test)" -ForegroundColor Red
+        Pop-Location
+        exit 1
+    }
+}
+
 function Invoke-Crap4RustGate {
     param(
         [string]$Label,
@@ -106,6 +142,18 @@ Invoke-Step "cargo-grip self-analysis" {
 # ---------------------------------------------------------------------------
 
 Invoke-Crap4RustGate "CRAP cargo-grip4rust" @("cargo-grip4rust")
+
+# ---------------------------------------------------------------------------
+# Mirrored test gate
+#
+# The fixture crates under tests/fixtures are analysis inputs, not sources of
+# this crate, so they never reach twin4rust: it resolves source roots from this
+# package's own cargo targets.
+# ---------------------------------------------------------------------------
+
+Invoke-Twin4RustGate "Mirrored tests cargo-grip4rust" @("cargo-grip4rust")
+
+# ---------------------------------------------------------------------------
 
 Write-Host "`ngrip Stage 2 passed!" -ForegroundColor Green
 Pop-Location
