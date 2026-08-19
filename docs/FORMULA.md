@@ -197,5 +197,5 @@ accessor — stays flagged exactly as if neither registry existed. See
 - `OPEN_POINTS.md` — the foreign-trait allowlist gap and configurable
   `grip_score` weights.
 - `fixture/` — every fixture crate is a worked example of one dimension
-  in isolation; `tests/fixtures/data_only` specifically demonstrates the
+  in isolation; `fixture/data_only` specifically demonstrates the
   zero-function `None` case.

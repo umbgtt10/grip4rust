@@ -61,7 +61,7 @@ are `Box<dyn Trait>` fields rather than generic parameters.
 | `Reporter` | `StdoutReporter` | Render a `GripReport` as human-readable text or JSON. |
 | `CacheStore` | `Cache` (real) / `NoOpCacheStore` (always-miss fake) | Skip re-parsing a file whose mtime+size haven't changed since the last run. |
 
-Every fixture crate under `tests/fixtures/` exercises `App::with_deps()`
+Every fixture tree under `fixture/` exercises `App::with_deps()`
 with a mix of real and fake implementations of these four traits — that's
 the seam the whole test suite is built around.
 

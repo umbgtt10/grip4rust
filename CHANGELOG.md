@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Restructured to a workspace: `core/` is the published package and the eight
+  fixture trees moved to a sibling `fixture/`, out of the package entirely.
+  Package name, lib name and version are unchanged (`cargo-grip4rust`, `grip`,
+  0.8.0) and `cargo package` still verifies. The eight `analysis_tests.rs` moved
+  with them into `core/tests/`, where they belong -- they use `grip::app::App`
+  and are this crate's tests, not the fixtures'.
+
+  Fixture source is no longer in the published tarball, which is the deliberate
+  trade: a fixture is either inside the package or outside it, and inside was
+  what made convention linters judge input data as though this repository had
+  written it.
+- Test files across `core/tests/` reordered to the house standard: imports in
+  one sorted group, then constants, helpers and tests, each alphabetical, with
+  spacing normalised. Four section-banner comments in
+  `hidden_dep_finder_tests.rs` were removed -- alphabetical ordering had already
+  scattered the tests they headed, leaving each banner sitting above something
+  it did not describe.
+
 ### Added
 - `UnsafeFinder` is public API, with the mirrored test file it never had.
   It is the visitor behind the `unsafe` term in `FunctionPurity`, and it was

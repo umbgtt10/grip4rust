@@ -23,7 +23,10 @@ function Invoke-Grip4RustSelfGate {
 
     $previousErrorActionPreference = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
-    $output = & cargo run --quiet -- --json
+    # Analyse core, not the workspace root: fixture/ holds deliberately sloppy
+    # sample code that is analysis input, never this tool's own source.
+    $corePath = (Resolve-Path (Join-Path $PSScriptRoot "..\core")).Path
+    $output = & cargo run --quiet -p cargo-grip4rust -- $corePath --json
     $exitCode = $LASTEXITCODE
     $ErrorActionPreference = $previousErrorActionPreference
 
@@ -65,7 +68,7 @@ function Invoke-Twin4RustGate {
         exit 1
     }
 
-    $manifestPath = (Resolve-Path (Join-Path $PSScriptRoot "..\Cargo.toml")).Path
+    $manifestPath = (Resolve-Path (Join-Path $PSScriptRoot "..\core\Cargo.toml")).Path
 
     $args = @("twin4rust", "--manifest-path", $manifestPath)
     foreach ($package in $Packages) {
@@ -100,7 +103,7 @@ function Invoke-Crap4RustGate {
 
     Write-Host "$Label..." -ForegroundColor Cyan
 
-    $manifestPath = (Resolve-Path (Join-Path $PSScriptRoot "..\Cargo.toml")).Path
+    $manifestPath = (Resolve-Path (Join-Path $PSScriptRoot "..\core\Cargo.toml")).Path
     $args = @("--manifest-path", $manifestPath)
     foreach ($package in $Packages) {
         $args += @("--package", $package)
@@ -183,7 +186,7 @@ function Invoke-Iceberg4RustGate {
         exit 1
     }
 
-    $manifestPath = (Resolve-Path (Join-Path $PSScriptRoot "..\Cargo.toml")).Path
+    $manifestPath = (Resolve-Path (Join-Path $PSScriptRoot "..\core\Cargo.toml")).Path
 
     # The ceiling is passed as a string rather than a [double] so it reaches the
     # CLI unchanged. Interpolating a [double] formats it with the current culture,

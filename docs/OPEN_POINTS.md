@@ -1,23 +1,34 @@
 # Open Points
 
-## Fixture trees are un-excludable from convention linters, and manifests are not the answer
+## `pub` inside a private module is counted as public API
 
-`stern4rust` reports ~100 offences against `tests/fixtures/*/`, because it walks
-those trees as though this repository had written them: it demands a `mod.rs`
-per folder, the repository header, and its test-file shape. The code is fine;
-the tool is judging input data as source.
+`ItemClassifier::classify_visibility` maps an item's own `Visibility` token to
+`Pub` / `PubCrate` / `Private` and is given nothing else -- no module path, no
+parent chain. So `pub struct Widget` inside `mod internals;` is scored as public
+API even though nothing outside the crate can name it.
 
-`stern4rust` skips any directory holding its own `Cargo.toml`, so adding one per
-fixture makes the offences disappear -- verified, and `grip4rust`'s own 220
-tests still pass. **Do not do it.** That is exactly what [0.5.0] removed: a
-nested manifest makes `cargo package` treat the fixture as a separate package
-and silently drop its `[[test]]` targets and files from the published crate.
-Measured again while considering it: the published tarball goes from 28 fixture
-files to 0.
+That idiom is ordinary Rust: `pub` within a private module is the normal way to
+write internals that siblings may use freely. Any codebase leaning on it carries
+an inflated `public_items` and a depressed `grip_score` for surface it does not
+actually expose.
 
-The real answer is an exclude flag in the linter -- `crap4rust` already carries
-`--exclude-path` for the same reason. Until `stern4rust` has one, this
-repository's honest offence count is the non-fixture subset, not the total.
+Measured on `fixture/sloppy_calc`, whose modules are private and whose types are
+not: making the types `pub` while leaving the modules private takes
+`public_items` from 4 to 6 and the score from 35 to 37 -- identical to making
+them `pub(crate)`, because both readings stop at the item's own token.
+
+Not fixable within [ADR-AstOnlyNoTypeResolution](ADRs/ADR-AstOnlyNoTypeResolution.md)
+as it stands: effective visibility needs the module tree walked, which is the
+resolution that ADR rules out. A narrower fix is available without abandoning
+it -- a project-wide pre-pass recording which modules are private, then
+demoting a `Pub` item found inside one, in the same shape as
+[ADR-TwoPassProjectWideRegistries](ADRs/ADR-TwoPassProjectWideRegistries.md).
+
+Related consequence worth recording: this is why `fixture/sloppy_calc`,
+`fixture/dep_mixed` and `fixture/dep_monolith` do not compile and are not
+workspace members. Their privacy and their undeclared types are the signal being
+measured, and every spelling that satisfies the compiler moves the numbers their
+own tests pin. Verified by trying it.
 
 ## Foreign-trait allowlist as configuration
 
