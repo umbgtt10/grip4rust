@@ -29,4 +29,5 @@ mod overall_stats_tests;
 mod overall_summary_renderer_tests;
 mod stdout_reporter_tests;
 mod struct_registry_tests;
+mod unsafe_finder_tests;
 mod verbose_functions_renderer_tests;

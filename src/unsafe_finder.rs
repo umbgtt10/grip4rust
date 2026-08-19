@@ -5,13 +5,19 @@
 use syn::ExprUnsafe;
 use syn::visit::Visit;
 
-pub(crate) struct UnsafeFinder {
-    pub(crate) found: bool,
+pub struct UnsafeFinder {
+    pub found: bool,
 }
 
 impl UnsafeFinder {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self { found: false }
+    }
+}
+
+impl Default for UnsafeFinder {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

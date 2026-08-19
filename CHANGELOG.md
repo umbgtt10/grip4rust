@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `UnsafeFinder` is public API, with the mirrored test file it never had.
+  It is the visitor behind the `unsafe` term in `FunctionPurity`, and it was
+  `pub(crate)`, so no integration test could reach it -- which is why the
+  mirror was missing rather than merely overdue. Six tests, the sharpest being
+  that an `unsafe fn` is **not** an unsafe block: `visit_expr_unsafe` fires on
+  the expression, so a function merely declared unsafe must not register. A
+  rewrite that reached for the keyword instead of the AST node would pass every
+  other test and fail that one.
+
+### Fixed
+- `twin4rust` had been reporting `src/unsafe_finder.rs -> tests/unsafe_finder_tests.rs`
+  as a gap since `ae4b93c`, so stage 2 was red on `main`. It is green again.
+
 ## [0.8.0] — 2026-08-17
 
 Two scoring defects, both surfaced by the first tests these files ever had.

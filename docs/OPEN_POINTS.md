@@ -1,5 +1,24 @@
 # Open Points
 
+## Fixture trees are un-excludable from convention linters, and manifests are not the answer
+
+`stern4rust` reports ~100 offences against `tests/fixtures/*/`, because it walks
+those trees as though this repository had written them: it demands a `mod.rs`
+per folder, the repository header, and its test-file shape. The code is fine;
+the tool is judging input data as source.
+
+`stern4rust` skips any directory holding its own `Cargo.toml`, so adding one per
+fixture makes the offences disappear -- verified, and `grip4rust`'s own 220
+tests still pass. **Do not do it.** That is exactly what [0.5.0] removed: a
+nested manifest makes `cargo package` treat the fixture as a separate package
+and silently drop its `[[test]]` targets and files from the published crate.
+Measured again while considering it: the published tarball goes from 28 fixture
+files to 0.
+
+The real answer is an exclude flag in the linter -- `crap4rust` already carries
+`--exclude-path` for the same reason. Until `stern4rust` has one, this
+repository's honest offence count is the non-fixture subset, not the total.
+
 ## Foreign-trait allowlist as configuration
 
 `is_foreign_trait()` (`src/collector.rs`) checks a hardcoded ~40-name
