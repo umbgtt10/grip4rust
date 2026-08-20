@@ -20,48 +20,16 @@ name = "grip"
 name = "all_tests"
 path = "tests/all_tests.rs"
 
-[[test]]
-name = "clean_calc_tests"
-path = "tests/clean_calc_analysis_tests.rs"
-
-[[test]]
-name = "data_only_tests"
-path = "tests/data_only_analysis_tests.rs"
-
-[[test]]
-name = "dep_clean_tests"
-path = "tests/dep_clean_analysis_tests.rs"
-
-[[test]]
-name = "dep_injected_tests"
-path = "tests/dep_injected_analysis_tests.rs"
-
-[[test]]
-name = "dep_mixed_tests"
-path = "tests/dep_mixed_analysis_tests.rs"
-
-[[test]]
-name = "dep_monolith_tests"
-path = "tests/dep_monolith_analysis_tests.rs"
-
-[[test]]
-name = "sloppy_calc_tests"
-path = "tests/sloppy_calc_analysis_tests.rs"
-
-[[test]]
-name = "trait_check_tests"
-path = "tests/trait_check_analysis_tests.rs"
-
 [dependencies]
-anyhow = "1"
-clap = { version = "4", features = ["derive"] }
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-quote = "1"
-syn = { version = "2", features = ["full", "visit"] }
-walkdir = "2"
+anyhow = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+quote = { workspace = true }
+syn = { workspace = true }
+walkdir = { workspace = true }
 
 [dev-dependencies]
-assert_cmd = "2"
-predicates = "3"
-tempfile = "3"
+assert_cmd = { workspace = true }
+predicates = { workspace = true }
+tempfile = { workspace = true }

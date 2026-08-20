@@ -2,9 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod analysis;
-pub mod detection;
-pub mod invocation;
-pub mod lib_tests;
-pub mod main_tests;
-pub mod reporting;
+pub mod app_tests;
+pub mod args_tests;
+pub mod cache_tests;
+pub mod config_tests;
+pub mod no_op_cache_store_tests;

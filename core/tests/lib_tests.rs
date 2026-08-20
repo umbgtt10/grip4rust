@@ -2,13 +2,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use grip::app::run_from_args;
+use grip::invocation::app::run_from_args;
 use std::fs;
+use std::path::PathBuf;
 use std::process::ExitCode;
 use tempfile::TempDir;
 
 fn fixture_path(name: &str) -> String {
-    std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("..")
         .join("fixture")
         .join(name)

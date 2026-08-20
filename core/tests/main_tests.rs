@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use assert_cmd::Command;
+use predicates::str::contains;
 use std::fs;
 use tempfile::TempDir;
 
@@ -40,7 +41,5 @@ fn binary_prints_score_on_valid_dir() {
         .assert();
 
     // Assert
-    assert
-        .success()
-        .stdout(predicates::str::contains("grip score"));
+    assert.success().stdout(contains("grip score"));
 }

@@ -4,7 +4,7 @@
 
 use std::path::Path;
 
-use crate::item_counts::ItemCounts;
+use crate::analysis::item_counts::ItemCounts;
 
 pub trait CacheStore {
     fn get(&self, path: &Path) -> Option<ItemCounts>;

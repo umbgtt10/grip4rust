@@ -1,0 +1,34 @@
+# End-to-end validation of grip4rust against the fixture trees.
+#
+# Each of these tests points the analyser at one tree under fixture/ and asserts
+# on the report it produces. Their subject is a fixture scenario, not any one
+# source file, so they never had a mirror in core/ to be named after -- which is
+# what paired-test-file kept reporting while they lived there. They were also
+# eight separate [[test]] targets in core's manifest, which is what
+# registry-completeness was reporting: declared one by one beside all_tests.rs
+# rather than in it.
+#
+# A workspace member rather than an excluded crate, so `cargo test` at the root
+# still runs every one of them. Stage 2 passes `--package cargo-grip4rust` to
+# each gate, so the house rules measure core/ and leave this alone.
+[package]
+name = "validation"
+version = "0.8.0"
+edition = "2024"
+rust-version = "1.85"
+description = "End-to-end validation of grip4rust against the fixture trees"
+license = "MIT"
+publish = false
+
+autotests = false
+
+[[test]]
+name = "all_tests"
+path = "tests/all_tests.rs"
+
+[dev-dependencies]
+# The package is cargo-grip4rust; its [lib] target is `grip`, which is the name
+# these tests import.
+cargo-grip4rust = { workspace = true }
+anyhow = { workspace = true }
+serde_json = { workspace = true }

@@ -4,8 +4,8 @@
 
 use std::collections::BTreeMap;
 
-use crate::item_counts::ItemCounts;
-use crate::module_stats::ModuleStats;
+use crate::analysis::item_counts::ItemCounts;
+use crate::reporting::module_stats::ModuleStats;
 
 pub trait Scorer {
     fn score_counts(&self, counts: &ItemCounts) -> (Option<u32>, f64, f64, f64, f64, f64);

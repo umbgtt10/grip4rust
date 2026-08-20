@@ -4,7 +4,7 @@
 
 use anyhow::Result;
 
-use crate::grip_report::GripReport;
+use crate::reporting::grip_report::GripReport;
 
 pub trait Reporter {
     fn render(&self, report: &GripReport) -> Result<String>;

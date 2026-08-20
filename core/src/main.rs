@@ -2,10 +2,11 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use grip::invocation::app::run;
 use std::process::ExitCode;
 
 fn main() -> ExitCode {
-    match grip::app::run() {
+    match run() {
         Ok(ec) => ec,
         Err(e) => {
             eprintln!("error: {e}");
