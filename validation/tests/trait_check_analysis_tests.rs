@@ -10,6 +10,8 @@ use grip::invocation::no_op_cache_store::NoOpCacheStore;
 use grip::reporting::default_scorer::DefaultScorer;
 use grip::reporting::grip_report::GripReport;
 use grip::traits::reporter::Reporter;
+use serde_json::from_str;
+use serde_json::to_string_pretty;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -38,7 +40,7 @@ fn analyze() -> serde_json::Value {
     );
     app.run().expect("app run failed");
     let captured = captured.borrow();
-    serde_json::from_str(&captured).expect("valid JSON")
+    from_str(&captured).expect("valid JSON")
 }
 
 struct CaptureReporter {
@@ -47,7 +49,7 @@ struct CaptureReporter {
 
 impl Reporter for CaptureReporter {
     fn render(&self, report: &GripReport) -> Result<String> {
-        let json = serde_json::to_string_pretty(report)?;
+        let json = to_string_pretty(report)?;
         *self.captured.borrow_mut() = json.clone();
         Ok(json)
     }
@@ -61,6 +63,7 @@ impl Reporter for CaptureReporter {
 
 #[test]
 fn modules_have_trait_fields() {
+    // Arrange & Act & Assert
     let report = analyze();
     let modules = report["modules"].as_array().unwrap();
     for module in modules {
@@ -84,6 +87,7 @@ fn modules_have_trait_fields() {
 
 #[test]
 fn overall_has_trait_fields() {
+    // Arrange & Act & Assert
     let report = analyze();
     let overall = &report["overall"];
     assert!(
@@ -98,6 +102,7 @@ fn overall_has_trait_fields() {
 
 #[test]
 fn overall_has_trait_ratio() {
+    // Arrange & Act & Assert
     let report = analyze();
     let overall = &report["overall"];
     assert!(
@@ -108,6 +113,7 @@ fn overall_has_trait_ratio() {
 
 #[test]
 fn overall_score_is_reasonable() {
+    // Arrange & Act & Assert
     let report = analyze();
     let overall = &report["overall"];
     let score = overall["grip_score"].as_u64().unwrap();
@@ -120,6 +126,7 @@ fn overall_score_is_reasonable() {
 
 #[test]
 fn overall_trait_ratio_is_below_one() {
+    // Arrange & Act & Assert
     let report = analyze();
     let overall = &report["overall"];
     let ratio = overall["trait_ratio"].as_f64().unwrap();
@@ -131,6 +138,7 @@ fn overall_trait_ratio_is_below_one() {
 
 #[test]
 fn total_impl_methods_are_counted() {
+    // Arrange & Act & Assert
     let report = analyze();
     let overall = &report["overall"];
     let inherent = overall["inherent_methods"].as_u64().unwrap();

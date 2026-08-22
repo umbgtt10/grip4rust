@@ -10,6 +10,8 @@ use grip::invocation::no_op_cache_store::NoOpCacheStore;
 use grip::reporting::default_scorer::DefaultScorer;
 use grip::reporting::grip_report::GripReport;
 use grip::traits::reporter::Reporter;
+use serde_json::from_str;
+use serde_json::to_string_pretty;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -38,7 +40,7 @@ fn analyze() -> serde_json::Value {
     );
     let _ = app.run().unwrap();
     let captured = captured.borrow().clone();
-    serde_json::from_str(&captured).unwrap()
+    from_str(&captured).unwrap()
 }
 
 struct CaptureReporter {
@@ -47,7 +49,7 @@ struct CaptureReporter {
 
 impl Reporter for CaptureReporter {
     fn render(&self, report: &GripReport) -> Result<String> {
-        let json = serde_json::to_string_pretty(report)?;
+        let json = to_string_pretty(report)?;
         *self.captured.borrow_mut() = json.clone();
         Ok(json)
     }
@@ -57,6 +59,20 @@ impl Reporter for CaptureReporter {
         print!("{}", json);
         Ok(())
     }
+}
+
+#[test]
+fn analyze_a_sloppy_calculator_scores_below_fifty() {
+    // Arrange & Act
+    let parsed = analyze();
+
+    // Assert
+    let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
+    assert!(
+        grip_score < 50,
+        "expected bad score < 50, got {}",
+        grip_score
+    );
 }
 
 #[test]
@@ -84,19 +100,5 @@ fn low_pure_ratio() {
         pure_ratio < 0.7,
         "expected low pure ratio, got {}",
         pure_ratio
-    );
-}
-
-#[test]
-fn scores_bad() {
-    // Arrange & Act
-    let parsed = analyze();
-
-    // Assert
-    let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
-    assert!(
-        grip_score < 50,
-        "expected bad score < 50, got {}",
-        grip_score
     );
 }

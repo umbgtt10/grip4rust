@@ -10,6 +10,8 @@ use grip::invocation::no_op_cache_store::NoOpCacheStore;
 use grip::reporting::default_scorer::DefaultScorer;
 use grip::reporting::grip_report::GripReport;
 use grip::traits::reporter::Reporter;
+use serde_json::from_str;
+use serde_json::to_string_pretty;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -38,7 +40,7 @@ fn analyze() -> serde_json::Value {
     );
     let _ = app.run().unwrap();
     let captured = captured.borrow().clone();
-    serde_json::from_str(&captured).unwrap()
+    from_str(&captured).unwrap()
 }
 
 fn analyze_at(fixture_path: &PathBuf) -> serde_json::Value {
@@ -61,7 +63,7 @@ fn analyze_at(fixture_path: &PathBuf) -> serde_json::Value {
     );
     let _ = app.run().unwrap();
     let captured = captured.borrow().clone();
-    serde_json::from_str(&captured).unwrap()
+    from_str(&captured).unwrap()
 }
 
 struct CaptureReporter {
@@ -70,7 +72,7 @@ struct CaptureReporter {
 
 impl Reporter for CaptureReporter {
     fn render(&self, report: &GripReport) -> Result<String> {
-        let json = serde_json::to_string_pretty(report)?;
+        let json = to_string_pretty(report)?;
         *self.captured.borrow_mut() = json.clone();
         Ok(json)
     }
@@ -80,6 +82,25 @@ impl Reporter for CaptureReporter {
         print!("{}", json);
         Ok(())
     }
+}
+
+#[test]
+fn analyze_a_clean_calculator_scores_between_forty_and_seventy() {
+    // Arrange & Act
+    let parsed = analyze();
+
+    // Assert
+    let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
+    assert!(
+        grip_score >= 40,
+        "expected decent score >= 40, got {}",
+        grip_score
+    );
+    assert!(
+        grip_score < 70,
+        "expected imperfect score < 70, got {}",
+        grip_score
+    );
 }
 
 #[test]
@@ -107,25 +128,6 @@ fn high_pure_ratio() {
         pure_ratio >= 0.5,
         "expected reasonable pure ratio, got {}",
         pure_ratio
-    );
-}
-
-#[test]
-fn scores_good() {
-    // Arrange & Act
-    let parsed = analyze();
-
-    // Assert
-    let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
-    assert!(
-        grip_score >= 40,
-        "expected decent score >= 40, got {}",
-        grip_score
-    );
-    assert!(
-        grip_score < 70,
-        "expected imperfect score < 70, got {}",
-        grip_score
     );
 }
 

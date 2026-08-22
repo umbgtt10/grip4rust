@@ -10,6 +10,8 @@ use grip::invocation::no_op_cache_store::NoOpCacheStore;
 use grip::reporting::default_scorer::DefaultScorer;
 use grip::reporting::grip_report::GripReport;
 use grip::traits::reporter::Reporter;
+use serde_json::from_str;
+use serde_json::to_string_pretty;
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -38,7 +40,7 @@ fn analyze() -> serde_json::Value {
     );
     app.run().expect("app run failed");
     let captured = captured.borrow();
-    serde_json::from_str(&captured).expect("valid JSON")
+    from_str(&captured).expect("valid JSON")
 }
 
 struct CaptureReporter {
@@ -47,7 +49,7 @@ struct CaptureReporter {
 
 impl Reporter for CaptureReporter {
     fn render(&self, report: &GripReport) -> Result<String> {
-        let json = serde_json::to_string_pretty(report)?;
+        let json = to_string_pretty(report)?;
         *self.captured.borrow_mut() = json.clone();
         Ok(json)
     }
