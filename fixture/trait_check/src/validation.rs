@@ -1,3 +1,7 @@
+// Copyright 2026 Umberto Gotti <umberto.gotti@umbertogotti.dev>
+// Licensed under the MIT License
+// SPDX-License-Identifier: MIT
+
 pub trait PaymentGateway {
     fn authorize(&mut self, card: &str, amount: f64) -> Result<String, String>;
     fn capture(&mut self, amount: f64) -> Result<String, String>;
