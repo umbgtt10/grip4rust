@@ -2,9 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use xtask::grip::grip_report::GripReport;
 use xtask::grip::grip_report_parser::GripReportParser;
 
-fn report_scoring(score: i64) -> xtask::grip::grip_report::GripReport {
+fn report_scoring(score: i64) -> GripReport {
     let json = format!(r#"{{"overall": {{"grip_score": {score}}}}}"#);
     GripReportParser::new().parse(&json).expect("parses")
 }

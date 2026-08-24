@@ -105,6 +105,31 @@ fn run_with_a_crappy_report_names_how_many_were_found() {
     assert_eq!(result, Err(String::from("1 crappy functions detected")));
 }
 
+// A tool that fails late can emit thousands of lines before it gives up, and
+// the ones that say why are the last. Truncating from the wrong end, or
+// truncating in reverse, would hand the operator the least useful thirty.
+#[test]
+fn run_with_a_long_unparseable_output_keeps_the_last_thirty_lines_in_order() {
+    // Arrange
+    let stdout = (1..=200)
+        .map(|line| format!("line {line}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+    let runner = FakeCommandRunner::new()
+        .with_stdout(&stdout)
+        .with_streaming_code(Some(101));
+    let parser = CrapReportParser::new();
+
+    // Act
+    let result = gate(&runner, &parser).run();
+
+    // Assert
+    let error = result.expect_err("output carrying no report must fail");
+    assert!(error.contains("line 171\nline 172"));
+    assert!(error.ends_with("line 200"));
+    assert!(!error.contains("line 170"));
+}
+
 #[test]
 fn run_with_no_report_in_the_output_also_reports_the_exit_code() {
     // Arrange
@@ -138,31 +163,6 @@ fn run_with_no_report_in_the_output_surfaces_the_tools_own_message() {
         result.is_err_and(|error| error.contains("cargo llvm-cov failed")),
         "the tool's own stdout must reach the operator, not just an exit code"
     );
-}
-
-// A tool that fails late can emit thousands of lines before it gives up, and
-// the ones that say why are the last. Truncating from the wrong end, or
-// truncating in reverse, would hand the operator the least useful thirty.
-#[test]
-fn run_with_a_long_unparseable_output_keeps_the_last_thirty_lines_in_order() {
-    // Arrange
-    let stdout = (1..=200)
-        .map(|line| format!("line {line}"))
-        .collect::<Vec<_>>()
-        .join("\n");
-    let runner = FakeCommandRunner::new()
-        .with_stdout(&stdout)
-        .with_streaming_code(Some(101));
-    let parser = CrapReportParser::new();
-
-    // Act
-    let result = gate(&runner, &parser).run();
-
-    // Assert
-    let error = result.expect_err("output carrying no report must fail");
-    assert!(error.contains("line 171\nline 172"));
-    assert!(error.ends_with("line 200"));
-    assert!(!error.contains("line 170"));
 }
 
 #[test]

@@ -17,6 +17,7 @@ use xtask::grip::grip_report_parser::GripReportParser;
 use xtask::process::system_command_runner::SystemCommandRunner;
 
 const PACKAGE: &str = "cargo-grip4rust";
+const XTASK_PACKAGE: &str = "xtask";
 const CRAP_THRESHOLD: &str = "15";
 const ICEBERG_THRESHOLD: &str = "20";
 const GRIP_FLOOR: i64 = 59;
@@ -46,7 +47,14 @@ fn run_stage2() -> ExitCode {
     let grip_parser = GripReportParser::new();
     let packages = vec![String::from(PACKAGE)];
 
-    let stern = SternGate::new(&runner, workspace_manifest, packages.clone());
+    // The house rules reach xtask as well, so the crate that runs the gates is
+    // held to them too. The measuring gates below cannot: they are scoped to
+    // core/ to stay off validation, and xtask lives outside that manifest.
+    let stern = SternGate::new(
+        &runner,
+        workspace_manifest,
+        vec![String::from(PACKAGE), String::from(XTASK_PACKAGE)],
+    );
     let grip = GripSelfGate::new(
         &runner,
         &grip_parser,

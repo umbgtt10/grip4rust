@@ -13,6 +13,15 @@ fn is_success_with_a_non_zero_exit_code_returns_false() {
     assert!(!outcome.is_success());
 }
 
+#[test]
+fn is_success_with_a_zero_exit_code_returns_true() {
+    // Arrange
+    let outcome = CommandOutcome::new(Some(0), String::new(), String::new());
+
+    // Act & Assert
+    assert!(outcome.is_success());
+}
+
 // A signalled process carries no exit code at all, which is a failure rather
 // than an unknown to be waved through.
 #[test]
@@ -22,15 +31,6 @@ fn is_success_with_no_exit_code_returns_false() {
 
     // Act & Assert
     assert!(!outcome.is_success());
-}
-
-#[test]
-fn is_success_with_a_zero_exit_code_returns_true() {
-    // Arrange
-    let outcome = CommandOutcome::new(Some(0), String::new(), String::new());
-
-    // Act & Assert
-    assert!(outcome.is_success());
 }
 
 #[test]

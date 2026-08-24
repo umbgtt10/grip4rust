@@ -7,10 +7,6 @@ use xtask::gates::gate::Gate;
 use xtask::gates::grip_self_gate::GripSelfGate;
 use xtask::grip::grip_report_parser::GripReportParser;
 
-fn report_scoring(score: i64) -> String {
-    format!(r#"{{"overall": {{"grip_score": {score}}}}}"#)
-}
-
 fn gate<'a>(runner: &'a FakeCommandRunner, parser: &'a GripReportParser) -> GripSelfGate<'a> {
     GripSelfGate::new(
         runner,
@@ -19,6 +15,10 @@ fn gate<'a>(runner: &'a FakeCommandRunner, parser: &'a GripReportParser) -> Grip
         String::from("core"),
         59,
     )
+}
+
+fn report_scoring(score: i64) -> String {
+    format!(r#"{{"overall": {{"grip_score": {score}}}}}"#)
 }
 
 #[test]
@@ -65,6 +65,21 @@ fn run_builds_the_tool_from_this_checkout_rather_than_an_install() {
     let call = &runner.calls()[0];
     assert_eq!(call[0], "run");
     assert!(call.contains(&String::from("cargo-grip4rust")));
+}
+
+// A build failure has no report to read, so the exit code and stderr are all
+// there is to report with.
+#[test]
+fn run_with_a_failing_build_reports_the_exit_code_rather_than_parsing() {
+    // Arrange
+    let runner = FakeCommandRunner::new().with_streaming_code(Some(101));
+    let parser = GripReportParser::new();
+
+    // Act
+    let result = gate(&runner, &parser).run();
+
+    // Assert
+    assert!(result.is_err_and(|error| error.contains("101")));
 }
 
 #[test]
@@ -120,19 +135,4 @@ fn run_with_output_that_is_not_a_report_returns_a_parse_error() {
 
     // Assert
     assert!(result.is_err_and(|error| error.contains("could not parse grip4rust JSON")));
-}
-
-// A build failure has no report to read, so the exit code and stderr are all
-// there is to report with.
-#[test]
-fn run_with_a_failing_build_reports_the_exit_code_rather_than_parsing() {
-    // Arrange
-    let runner = FakeCommandRunner::new().with_streaming_code(Some(101));
-    let parser = GripReportParser::new();
-
-    // Act
-    let result = gate(&runner, &parser).run();
-
-    // Assert
-    assert!(result.is_err_and(|error| error.contains("101")));
 }
