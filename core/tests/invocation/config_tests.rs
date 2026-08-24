@@ -14,7 +14,7 @@ fn from_args_preserves_json() {
     let config = Config::from_args(args);
 
     // Assert
-    assert_eq!(config.json, true);
+    assert!(config.json);
 }
 
 #[test]

@@ -24,13 +24,17 @@ That means:
 
 Run gates:
 
-`powershell -File scripts\run_stage_1.ps1`
-`powershell -File scripts\run_stage_2.ps1`
+`just stage1`
+`just stage2`
 
 If either gate is not green, the work is not complete.
 
+Both run identically on Windows, Linux and macOS, and the same two commands run
+in CI -- there is no second definition of the gates to drift out of step.
+
 Stage 1 is formatting, clippy and tests -- cargo built-ins only, so it works on
-a fresh checkout. Stage 2 is five gates, run in this order:
+a fresh checkout with none of the house tools installed. Stage 2 is five gates,
+run in this order:
 
 | gate | asks |
 |---|---|
@@ -49,10 +53,21 @@ unconfigured. `docs/header.txt` holds the three-line header every `.rs` file
 carries and `stern4rust.toml` names it -- in the config rather than the gate
 script, so a hand-run of `cargo stern4rust` checks exactly what the gate checks.
 
+`cargo install just`
+`cargo install cargo-llvm-cov`
 `cargo install cargo-stern4rust`
 `cargo install cargo-crap4rust`
 `cargo install cargo-twin4rust`
 `cargo install cargo-iceberg4rust`
+
+cargo-grip4rust is deliberately not in that list. The self-analysis gate builds
+it from this checkout, so the score it reports is the score of the tree being
+changed rather than of whatever version happens to be installed.
+
+Stage 2 is driven by `cargo xtask stage2` -- a real crate under `xtask/`, gated
+like any other code, rather than a script. Each gate is a `Gate` implementation
+constructed against a `CommandRunner` trait, so the argument lists and the
+failure messages are covered by `xtask`'s own integration tests.
 
 Every stage 2 gate is scoped `--package cargo-grip4rust`, which is what keeps
 the rest of the repository out of them:
@@ -64,6 +79,8 @@ the rest of the repository out of them:
   -- but each of its tests is named for a fixture scenario rather than for a
   source file in `core/`, so measuring them against the house rules would
   demand mirrors that cannot exist.
+- `xtask/` is the gate runner itself. Stage 1 covers it in full; the stage 2
+  gates would otherwise be measuring the thing that invoked them.
 
 ## Orthogonality, trait surface and cognitive complexity
 

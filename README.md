@@ -55,6 +55,47 @@ Full derivation of every term, every weight, and the structural rules
 cargo install cargo-grip4rust
 ```
 
+## Development
+
+```sh
+just stage1
+just stage2
+```
+
+Both must be green before a change is complete. Stage 1 is formatting, clippy
+and tests — cargo built-ins only, so it works on a fresh checkout with none of
+the tools below installed. Stage 2 is `cargo xtask stage2`, which runs, in
+order: `cargo stern4rust` (house coding rules), **grip self-analysis**,
+`cargo crap4rust` (complexity against coverage), `cargo twin4rust` (every source
+file has a mirrored test file) and `cargo iceberg4rust` (file risk).
+
+The self-analysis gate is this repository's alone. It builds `cargo-grip4rust`
+from the working tree, points it at `core/`, and fails if the score drops below
+a floor — so a change that costs this codebase testability is caught by the very
+measure the tool exists to report. It is a *floor*, unlike every other threshold
+in stage 2: higher is better.
+
+Everything the two stages need, none of which ships with cargo:
+
+| Tool | Install | Needed by |
+|---|---|---|
+| [`just`](https://github.com/casey/just) | `cargo install just` | both stages |
+| [`cargo-llvm-cov`](https://github.com/taiki-e/cargo-llvm-cov) | `cargo install cargo-llvm-cov` | stage 2 |
+| `llvm-tools` rustup component | `rustup component add llvm-tools` | stage 2 |
+| `cargo-stern4rust` | `cargo install cargo-stern4rust` | stage 2 |
+| `cargo-crap4rust` | `cargo install cargo-crap4rust` | stage 2 |
+| `cargo-twin4rust` | `cargo install cargo-twin4rust` | stage 2 |
+| `cargo-iceberg4rust` | `cargo install cargo-iceberg4rust` | stage 2 |
+
+`cargo-llvm-cov` and `llvm-tools` are what the CRAP gate needs; without them it
+fails with a bare exit code that says nothing about a missing install.
+
+`cargo-grip4rust` itself is deliberately absent from that table — the gate
+builds it from your checkout rather than taking an installed copy.
+
+CI (`.github/workflows/ci.yml`) runs both stages on Ubuntu, Windows and macOS
+for every pull request and every push to `main`.
+
 ## Usage
 
 ```sh

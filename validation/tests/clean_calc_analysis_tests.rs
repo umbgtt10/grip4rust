@@ -13,6 +13,7 @@ use grip::traits::reporter::Reporter;
 use serde_json::from_str;
 use serde_json::to_string_pretty;
 use std::cell::RefCell;
+use std::path::Path;
 use std::path::PathBuf;
 use std::rc::Rc;
 
@@ -43,9 +44,9 @@ fn analyze() -> serde_json::Value {
     from_str(&captured).unwrap()
 }
 
-fn analyze_at(fixture_path: &PathBuf) -> serde_json::Value {
+fn analyze_at(fixture_path: &Path) -> serde_json::Value {
     let config = Config {
-        path: fixture_path.clone(),
+        path: fixture_path.to_path_buf(),
         json: true,
         threshold: None,
         verbose: false,

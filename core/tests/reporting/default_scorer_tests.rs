@@ -101,7 +101,6 @@ fn score_counts_with_everything_pure_and_public_returns_one_hundred() {
         local_trait_impure: 1,
         total_contribution: 2.0,
         clean_functions: 2,
-        ..Default::default()
     };
 
     // Act
