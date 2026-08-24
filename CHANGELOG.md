@@ -9,11 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] — 2026-08-24
+
+Minor rather than patch on two counts: `UnsafeFinder` becomes public API, and
+the published tarball no longer carries the fixture trees. Nothing about
+scoring changed, so no crate's score moves — but this crate's own does, from
+59 to 61, because its public surface grew to 37 items from 34.
+
+The rest is how the gates are run. They were two PowerShell scripts, which
+meant a contributor on Linux or macOS could not run the gates their change was
+required to pass.
+
 ### Added
 - `xtask/`, a real crate replacing the stage 2 PowerShell script. Each of the
   five gates is a `Gate` implementation constructed against a `CommandRunner`
-  trait, so the argument lists and failure messages are covered by 81
+  trait, so the argument lists and failure messages are covered by 82
   integration tests rather than being unobservable shell.
+- `UnsafeFinder` is public API, with the mirrored test file it never had.
+  It is the visitor behind the `unsafe` term in `FunctionPurity`, and it was
+  `pub(crate)`, so no integration test could reach it -- which is why the
+  mirror was missing rather than merely overdue. Six tests, the sharpest being
+  that an `unsafe fn` is **not** an unsafe block: `visit_expr_unsafe` fires on
+  the expression, so a function merely declared unsafe must not register. A
+  rewrite that reached for the keyword instead of the AST node would pass every
+  other test and fail that one.
 - Grip self-analysis as a first-class stage 2 gate, between the house rules and
   CRAP. It builds `cargo-grip4rust` from the working tree, points it at `core/`
   and fails below a floor of 59 -- a floor, not a ceiling, unlike every other
@@ -25,8 +44,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Gates run through `just stage1` / `just stage2` on all three platforms.
-  `scripts/run_stage_1.ps1` and `scripts/run_stage_2.ps1` are removed; a
-  Windows-only gate is not a gate contributors on Linux or macOS can run.
 - Stage 1 now lints test targets too (`cargo clippy --workspace --all-targets`),
   which the PowerShell script never did. That surfaced five pre-existing
   offences in `core/tests/` and `validation/tests/`, all fixed.
@@ -35,10 +52,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nobody is there to review it. A local `just stage1` still formats in place.
 - Restructured to a workspace: `core/` is the published package and the eight
   fixture trees moved to a sibling `fixture/`, out of the package entirely.
-  Package name, lib name and version are unchanged (`cargo-grip4rust`, `grip`,
-  0.8.0) and `cargo package` still verifies. The eight `analysis_tests.rs` moved
-  with them into `core/tests/`, where they belong -- they use `grip::app::App`
-  and are this crate's tests, not the fixtures'.
+  Package name and lib name are unchanged (`cargo-grip4rust`, `grip`) and
+  `cargo package` still verifies. The eight `analysis_tests.rs` moved with them
+  into `core/tests/`, where they belong -- they use `grip::app::App` and are
+  this crate's tests, not the fixtures'.
 
   Fixture source is no longer in the published tarball, which is the deliberate
   trade: a fixture is either inside the package or outside it, and inside was
@@ -51,15 +68,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scattered the tests they headed, leaving each banner sitting above something
   it did not describe.
 
-### Added
-- `UnsafeFinder` is public API, with the mirrored test file it never had.
-  It is the visitor behind the `unsafe` term in `FunctionPurity`, and it was
-  `pub(crate)`, so no integration test could reach it -- which is why the
-  mirror was missing rather than merely overdue. Six tests, the sharpest being
-  that an `unsafe fn` is **not** an unsafe block: `visit_expr_unsafe` fires on
-  the expression, so a function merely declared unsafe must not register. A
-  rewrite that reached for the keyword instead of the AST node would pass every
-  other test and fail that one.
+### Removed
+- `scripts/run_stage_1.ps1` and `scripts/run_stage_2.ps1`. A Windows-only gate
+  is not a gate contributors on Linux or macOS can run.
 
 ### Fixed
 - `twin4rust` had been reporting `src/unsafe_finder.rs -> tests/unsafe_finder_tests.rs`
@@ -490,6 +501,9 @@ or `eprint!` calls and no bare `write!` statements. Self-analysis stays at 59.
 - Hello-world binary with cargo subcommand support
 - `Cargo.toml` metadata, MIT license, README placeholder
 
+[0.9.0]: https://github.com/umbgtt10/grip4rust/compare/v0.8.0...v0.9.0
+[0.8.0]: https://github.com/umbgtt10/grip4rust/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/umbgtt10/grip4rust/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/umbgtt10/grip4rust/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/umbgtt10/grip4rust/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/umbgtt10/grip4rust/compare/v0.3.0...v0.4.0

@@ -13,7 +13,7 @@
 # each gate, so the house rules measure core/ and leave this alone.
 [package]
 name = "validation"
-version = "0.8.0"
+version = "0.9.0"
 edition = "2024"
 rust-version = "1.85"
 description = "End-to-end validation of grip4rust against the fixture trees"
