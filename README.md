@@ -123,30 +123,35 @@ cargo grip4rust [OPTIONS] [PATH]
 ## Output
 
 ```
-cargo-grip4rust 0.8.0 -- .
+cargo-grip4rust 0.9.0 -- core
 ══════════════════════════════════════════════════════
 
-Overall grip score:    59 / 100
-Absolute grip total:   68.03
-Public surface:        34 items
-Total functions:       116
-Probably pure:         75 / 116  (64.7%)
-Trait methods:         19 / 106 impl methods are trait-bound  (34.1%)
-Hidden deps:           avg 47.97  — 3.4% clean  (58.6% avg contribution)
+Overall grip score:    61 / 100
+Absolute grip total:   72.06
+Public surface:        37 items
+Total functions:       122
+Probably pure:         80 / 122  (65.6%)
+Trait methods:         20 / 113 impl methods are trait-bound  (35.7%)
+Hidden deps:           avg 49.94  — 3.3% clean  (59.1% avg contribution)
 
 Per module:
-  .                               grip:  59   pure:  64.7%   pub:  30   traits:  34.1%   clean:   3.4%  ⚠️
+  .                               grip:  74   pure: 100.0%   pub:   0   traits:    N/A   clean:   0.0%
+  analysis                        grip:  55   pure:  61.4%   pub:  12   traits:  17.6%   clean:   0.0%  ⚠️
+  detection                       grip:  54   pure:  51.5%   pub:   5   traits:  37.5%   clean:   0.0%  ⚠️
+  invocation                      grip:  65   pure:  65.2%   pub:   7   traits:  62.5%   clean:   4.3%  ⚠️
+  reporting                       grip:  94   pure:  95.2%   pub:   9   traits: 100.0%   clean:  14.3%
   traits                          grip: N/A   pure:   0.0%   pub:   4   traits:    N/A   clean:   0.0%
 ```
 
-(`grip`'s own source, analyzed by itself — `N/A` on the `traits` module is
-the zero-function case: `grip_score` is `Option<u32>`, `None` rather than
-a misleading default when there's nothing to score.)
+(`grip`'s own source, analyzed by itself — and the number `just stage2` holds
+above a floor of 59. `N/A` on the `traits` module is the zero-function case:
+`grip_score` is `Option<u32>`, `None` rather than a misleading default when
+there's nothing to score.)
 
 ### Verbose output (`--verbose`)
 
 ```
-grip 0.8.0 -- my-crate — verbose
+grip 0.9.0 -- my-crate — verbose
 ══════════════════════════════════════════════════════
 
   timer.rs:
