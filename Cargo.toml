@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["core", "validation"]
+members = ["core", "validation", "xtask"]
 
 # Declared once here; every member takes them with `.workspace = true`, so a
 # version is bumped in one place and no two members can disagree.

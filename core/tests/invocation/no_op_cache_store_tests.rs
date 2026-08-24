@@ -14,6 +14,9 @@ fn counts(total_functions: usize) -> ItemCounts {
     }
 }
 
+// The `default()` call is the subject here, not incidental construction, so
+// clippy's advice to drop it would delete the test rather than tidy it.
+#[allow(clippy::default_constructed_unit_structs)]
 #[test]
 fn default_behaves_the_same_as_new() {
     // Arrange -- the type derives Default, so a caller can obtain one either

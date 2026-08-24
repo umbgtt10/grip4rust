@@ -9,7 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `xtask/`, a real crate replacing the stage 2 PowerShell script. Each of the
+  five gates is a `Gate` implementation constructed against a `CommandRunner`
+  trait, so the argument lists and failure messages are covered by 81
+  integration tests rather than being unobservable shell.
+- Grip self-analysis as a first-class stage 2 gate, between the house rules and
+  CRAP. It builds `cargo-grip4rust` from the working tree, points it at `core/`
+  and fails below a floor of 59 -- a floor, not a ceiling, unlike every other
+  threshold in stage 2.
+- `.github/workflows/ci.yml`: both stages on Ubuntu, Windows and macOS, for
+  every pull request and every push to `main`. CI runs `just stage1` /
+  `just stage2` -- the same two commands a developer runs -- so there is no
+  second definition of the gates to drift out of step.
+
 ### Changed
+- Gates run through `just stage1` / `just stage2` on all three platforms.
+  `scripts/run_stage_1.ps1` and `scripts/run_stage_2.ps1` are removed; a
+  Windows-only gate is not a gate contributors on Linux or macOS can run.
+- Stage 1 now lints test targets too (`cargo clippy --workspace --all-targets`),
+  which the PowerShell script never did. That surfaced five pre-existing
+  offences in `core/tests/` and `validation/tests/`, all fixed.
+- CI checks formatting instead of applying it (`cargo fmt --check` when `CI` is
+  set), so drift fails the build rather than being silently rewritten where
+  nobody is there to review it. A local `just stage1` still formats in place.
 - Restructured to a workspace: `core/` is the published package and the eight
   fixture trees moved to a sibling `fixture/`, out of the package entirely.
   Package name, lib name and version are unchanged (`cargo-grip4rust`, `grip`,

@@ -20,7 +20,7 @@ fn json_flag_is_false_by_default() {
     let args = Args::parse_from_args(vec!["cargo-grip4rust"]);
 
     // Assert
-    assert_eq!(args.json, false);
+    assert!(!args.json);
 }
 
 #[test]
@@ -29,7 +29,7 @@ fn json_flag_is_parsed() {
     let args = Args::parse_from_args(vec!["cargo-grip4rust", "--json"]);
 
     // Assert
-    assert_eq!(args.json, true);
+    assert!(args.json);
 }
 
 #[test]
