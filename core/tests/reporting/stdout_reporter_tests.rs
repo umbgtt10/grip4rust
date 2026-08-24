@@ -9,6 +9,7 @@ use grip::reporting::offender::Offender;
 use grip::reporting::overall_stats::OverallStats;
 use grip::reporting::stdout_reporter::StdoutReporter;
 use grip::traits::reporter::Reporter;
+use serde_json::Value;
 use serde_json::from_str;
 
 fn dummy_report() -> GripReport {
@@ -200,7 +201,7 @@ fn json_output_has_version() {
     let out = reporter.render(&report).unwrap();
 
     // Assert
-    let parsed: serde_json::Value = from_str(&out).unwrap();
+    let parsed: Value = from_str(&out).unwrap();
     assert_eq!(parsed["version"], "0.1.0");
 }
 
@@ -214,7 +215,7 @@ fn json_output_is_valid() {
     let out = reporter.render(&report).unwrap();
 
     // Assert
-    let parsed: serde_json::Value = from_str(&out).unwrap();
+    let parsed: Value = from_str(&out).unwrap();
     assert_eq!(parsed["overall"]["grip_score"], 71);
     assert!(parsed.get("modules").is_some());
 }

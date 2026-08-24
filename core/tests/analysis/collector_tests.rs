@@ -11,7 +11,7 @@ use std::io::Write;
 use std::path::PathBuf;
 use tempfile::{TempDir, tempdir};
 
-fn write_file(dir: &TempDir, name: &str, contents: &str) -> std::path::PathBuf {
+fn write_file(dir: &TempDir, name: &str, contents: &str) -> PathBuf {
     let path = dir.path().join(name);
     let mut fh = File::create(&path).unwrap();
     fh.write_all(contents.as_bytes()).unwrap();
