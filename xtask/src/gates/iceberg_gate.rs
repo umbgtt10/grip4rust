@@ -44,8 +44,11 @@ impl Gate for IcebergGate<'_> {
         }
 
         // The ceiling travels as a string so it reaches the CLI unchanged. Formatting
-        // a float here would render it with the current locale's separator, and `9,5`
-        // does not parse.
+        // a float would render it with the current locale's separator: a ceiling of
+        // 9.5 arrives as `9,5` where the comma is the decimal mark, and that does not
+        // parse. This repository's ceiling is a whole number today, so nothing would
+        // go wrong right now -- the string is what keeps that true after the first
+        // edit to a fractional one.
         let mut args = vec![
             String::from("iceberg4rust"),
             String::from("--manifest-path"),

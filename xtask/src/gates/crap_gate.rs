@@ -34,10 +34,16 @@ impl<'a> CrapGate<'a> {
         }
     }
 
+    // Walked from the end so the Vec is bounded by the tail length rather than
+    // by however much a failing tool managed to emit before it gave up.
     fn tail(stdout: &str) -> String {
-        let lines = stdout.lines().collect::<Vec<_>>();
-        let start = lines.len().saturating_sub(STDOUT_TAIL_LINES);
-        lines[start..].join("\n")
+        let mut lines = stdout
+            .lines()
+            .rev()
+            .take(STDOUT_TAIL_LINES)
+            .collect::<Vec<_>>();
+        lines.reverse();
+        lines.join("\n")
     }
 }
 
