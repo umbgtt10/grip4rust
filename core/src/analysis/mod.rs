@@ -10,4 +10,5 @@ pub mod item_classifier;
 pub mod item_counts;
 pub mod method_purity_registry;
 pub mod struct_registry;
+pub mod transitive_value_type_resolver;
 pub mod visibility_level;

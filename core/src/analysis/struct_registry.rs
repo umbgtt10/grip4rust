@@ -2,7 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::collections::{HashMap, HashSet};
+use crate::analysis::transitive_value_type_resolver::TransitiveValueTypeResolver;
+use std::collections::HashMap;
 use std::path::PathBuf;
 use syn::visit::Visit;
 use syn::{GenericArgument, Item, ItemMod, ItemStruct, PathArguments, Type, parse_file};
@@ -75,7 +76,7 @@ impl StructRegistry {
 
     #[must_use]
     pub fn is_transitive_value_type(&self, type_name: &str) -> bool {
-        self.resolve(type_name, &mut HashSet::new())
+        TransitiveValueTypeResolver::new(&self.fields_by_struct).resolve(type_name)
     }
 
     #[must_use]
@@ -84,21 +85,6 @@ impl StructRegistry {
             .get(type_name)
             .cloned()
             .unwrap_or_default()
-    }
-
-    fn resolve(&self, type_name: &str, visiting: &mut HashSet<String>) -> bool {
-        if KNOWN_STD_VALUE_TYPES.contains(&type_name) {
-            return true;
-        }
-        if !visiting.insert(type_name.to_string()) {
-            return false;
-        }
-        let result = self
-            .fields_by_struct
-            .get(type_name)
-            .is_some_and(|fields| fields.iter().all(|field| self.resolve(field, visiting)));
-        visiting.remove(type_name);
-        result
     }
 }
 

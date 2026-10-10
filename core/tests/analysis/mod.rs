@@ -10,3 +10,4 @@ pub mod item_classifier_tests;
 pub mod item_counts_tests;
 pub mod method_purity_registry_tests;
 pub mod struct_registry_tests;
+pub mod transitive_value_type_resolver_tests;
