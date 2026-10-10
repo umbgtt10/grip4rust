@@ -9,6 +9,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.1] — 2026-10-10
+
+Patch rather than minor: no public item of the `grip` library changed its
+signature or went away. Three public types were added --
+`TransitiveValueTypeResolver`, `TypePathSegments` and `InlineModule` -- and
+additions do not break a caller. The tool itself is unchanged: same CLI, same
+output, same exit codes. That was checked rather than assumed, by running
+release binaries built before and after over fifteen source trees in five
+output modes and diffing the results, which were byte-identical. The
+self-analysis score holds at 61; the surface it counts grew to 40 items from
+37, the three new types.
+
+Everything else is how this repository is held to the family's rules.
+
+### Added
+- A dry4rust gate, second in stage 2 behind the house rules. It runs
+  `cargo dry4rust` over `core/src` at a floor of 25 AST nodes, with zero
+  ceilings, against `dry4rust-baseline.json`, so it fails on duplication a
+  change adds rather than on what was already there. It found three exact
+  groups and nothing near; all three were shared (see Changed), so the
+  baseline is recorded empty. `DryGate` is built against `CommandRunner` like
+  the other gates and has eight tests of its own. CI installs
+  `cargo-dry4rust` beside the other stage 2 tools.
+- `validation/src/`: the harness the eight end-to-end suites share
+  (`FixtureAnalysis`, `CaptureReporter`), which every one of them used to carry
+  a copy of, and one `<fixture>_analysis.rs` per scenario naming the fixture
+  tree it analyses. Four tests cover the harness itself.
+
+### Changed
+- All twenty-two stern4rust rules (0.14) apply to every workspace member,
+  `validation` included, with nothing skipped, selected, excluded or
+  unconfigured, and no baseline. `validation` had skipped `paired-test-file`
+  because it had no `src/`; each of its test files now pairs with the scenario
+  file in `src/` it exercises. No test was removed and no assertion changed.
+- The stern4rust gate scans `validation` as well as `cargo-grip4rust` and
+  `xtask`, so it checks what a hand-run of `cargo stern4rust` checks.
+- `StructRegistry::is_transitive_value_type` resolves through
+  `TransitiveValueTypeResolver`, which owns the set of types being visited
+  instead of having it passed in as `&mut HashSet` -- stern4rust 0.14's
+  `returned-mutations`. Each call starts from an empty set, as before.
+- The three duplicate groups are shared: `field_type_head` and
+  `self_ty_name` delegate to `TypePathSegments` (last and first path segment),
+  the two inline-module walks read `InlineModule::items`, and `Collector`
+  counts structs, traits and enums through one method.
+
+### Fixed
+- Nine `imported-paths` offences in `validation/tests/`, each returning
+  `serde_json::Value` by path. A bare `cargo stern4rust` reported them; stage 2
+  could not, because its gate did not scan `validation`.
+
 ## [0.9.0] — 2026-08-24
 
 Minor rather than patch on two counts: `UnsafeFinder` becomes public API, and
@@ -501,6 +551,7 @@ or `eprint!` calls and no bare `write!` statements. Self-analysis stays at 59.
 - Hello-world binary with cargo subcommand support
 - `Cargo.toml` metadata, MIT license, README placeholder
 
+[0.9.1]: https://github.com/umbgtt10/grip4rust/compare/v0.9.0...v0.9.1
 [0.9.0]: https://github.com/umbgtt10/grip4rust/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/umbgtt10/grip4rust/compare/v0.7.0...v0.8.0
 [0.7.0]: https://github.com/umbgtt10/grip4rust/compare/v0.6.0...v0.7.0

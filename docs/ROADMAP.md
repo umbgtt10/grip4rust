@@ -2,8 +2,8 @@
 
 **Crate:** `cargo-grip4rust`  
 **License:** MIT  
-**Last updated:** 2026-08-24  
-**Current status:** Phase 4 — ✅ Complete (latest feature phase; shipped in v0.5.0) · **Latest release:** v0.9.0 (cross-platform `just`/`xtask` gates and grip self-analysis, no new phase)
+**Last updated:** 2026-10-10  
+**Current status:** Phase 4 — ✅ Complete (latest feature phase; shipped in v0.5.0) · **Latest release:** v0.9.1 (every stern4rust rule on every member and a dry4rust gate, no behaviour change, no new phase)
 
 ---
 

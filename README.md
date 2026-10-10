@@ -126,20 +126,20 @@ cargo grip4rust [OPTIONS] [PATH]
 ## Output
 
 ```
-cargo-grip4rust 0.9.0 -- core
+cargo-grip4rust 0.9.1 -- core
 ══════════════════════════════════════════════════════
 
 Overall grip score:    61 / 100
-Absolute grip total:   72.06
-Public surface:        37 items
-Total functions:       122
-Probably pure:         80 / 122  (65.6%)
-Trait methods:         20 / 113 impl methods are trait-bound  (35.7%)
-Hidden deps:           avg 49.94  — 3.3% clean  (59.1% avg contribution)
+Absolute grip total:   75.68
+Public surface:        40 items
+Total functions:       130
+Probably pure:         87 / 130  (66.9%)
+Trait methods:         20 / 121 impl methods are trait-bound  (34.9%)
+Hidden deps:           avg 54.32  — 3.1% clean  (58.2% avg contribution)
 
 Per module:
   .                               grip:  74   pure: 100.0%   pub:   0   traits:    N/A   clean:   0.0%
-  analysis                        grip:  55   pure:  61.4%   pub:  12   traits:  17.6%   clean:   0.0%  ⚠️
+  analysis                        grip:  55   pure:  65.4%   pub:  15   traits:  16.7%   clean:   0.0%  ⚠️
   detection                       grip:  54   pure:  51.5%   pub:   5   traits:  37.5%   clean:   0.0%  ⚠️
   invocation                      grip:  65   pure:  65.2%   pub:   7   traits:  62.5%   clean:   4.3%  ⚠️
   reporting                       grip:  94   pure:  95.2%   pub:   9   traits: 100.0%   clean:  14.3%
@@ -154,7 +154,7 @@ there's nothing to score.)
 ### Verbose output (`--verbose`)
 
 ```
-grip 0.9.0 -- my-crate — verbose
+grip 0.9.1 -- my-crate — verbose
 ══════════════════════════════════════════════════════
 
   timer.rs:
