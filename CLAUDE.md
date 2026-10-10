@@ -33,12 +33,13 @@ Both run identically on Windows, Linux and macOS, and the same two commands run
 in CI -- there is no second definition of the gates to drift out of step.
 
 Stage 1 is formatting, clippy and tests -- cargo built-ins only, so it works on
-a fresh checkout with none of the house tools installed. Stage 2 is five gates,
+a fresh checkout with none of the house tools installed. Stage 2 is six gates,
 run in this order:
 
 | gate | asks |
 |---|---|
 | `cargo stern4rust` | do the house coding rules hold |
+| `cargo dry4rust` | did this change add duplicated code |
 | `cargo grip4rust` | does this tool still score itself above its floor |
 | `cargo crap4rust` | is any function complex and untested |
 | `cargo twin4rust` | does every source file have a mirrored test file |
@@ -56,9 +57,33 @@ than the gate script, so a hand-run of `cargo stern4rust` checks exactly what
 the gate checks. The gate names all three members for the same reason: while it
 named two, `validation` broke `imported-paths` nine times with stage 2 green.
 
+dry4rust runs **second**, for the reason stern4rust runs first: removing a
+duplicate moves code between files, which changes what every gate behind it
+measures -- the grip score included. It scans `core/src` only -- tests repeat their arrangement by
+design -- and checks with zero ceilings against `dry4rust-baseline.json`, the
+duplication already there when the gate arrived. So it fails on what a change
+adds, not on what it inherited; a duplicate removed is admitted, a copy added
+to a recorded group is not.
+
+The baseline is empty. When the gate arrived it found three exact groups at
+25 nodes and every one could be shared without changing a result: the
+last-segment and first-segment type names now share `TypePathSegments`, the
+two inline-module walks share `InlineModule`, and the item counting `Collector`
+repeated for structs, traits and enums is one method. Nothing was left to
+record, so any group at all is one a change added.
+
+It counts only code units of 25 AST nodes or more: below that sit one-line
+delegations -- `field_type_head` handing its type to `TypePathSegments`, a
+`visit_trait` handing its visibility to the counter -- whose sameness is a
+shared signature rather than a copy. Re-record the baseline only to drop groups
+that are gone, never to admit new ones, and at the same floor -- a baseline
+matches only at the floor it was recorded at:
+`cargo dry4rust --path core/src --min-nodes 25 --baseline "$PWD/dry4rust-baseline.json" baseline`.
+
 `cargo install just`
 `cargo install cargo-llvm-cov`
 `cargo install cargo-stern4rust`
+`cargo install cargo-dry4rust`
 `cargo install cargo-crap4rust`
 `cargo install cargo-twin4rust`
 `cargo install cargo-iceberg4rust`

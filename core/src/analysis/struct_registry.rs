@@ -2,7 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use crate::analysis::inline_module::InlineModule;
 use crate::analysis::transitive_value_type_resolver::TransitiveValueTypeResolver;
+use crate::analysis::type_path_segments::TypePathSegments;
 use std::collections::HashMap;
 use std::path::PathBuf;
 use syn::visit::Visit;
@@ -14,29 +16,11 @@ pub const KNOWN_STD_VALUE_TYPES: &[&str] = &[
 ];
 
 pub fn field_type_head(ty: &Type) -> String {
-    if let Type::Path(type_path) = ty {
-        type_path
-            .path
-            .segments
-            .last()
-            .map(|s| s.ident.to_string())
-            .unwrap_or_default()
-    } else {
-        String::new()
-    }
+    TypePathSegments::new(ty).last_ident()
 }
 
 pub(crate) fn self_ty_name(ty: &Type) -> String {
-    if let Type::Path(type_path) = ty {
-        type_path
-            .path
-            .segments
-            .first()
-            .map(|s| s.ident.to_string())
-            .unwrap_or_default()
-    } else {
-        String::new()
-    }
+    TypePathSegments::new(ty).first_ident()
 }
 
 pub(crate) fn is_trait_object_type(ty: &Type) -> bool {
@@ -117,10 +101,8 @@ impl StructRegistry {
     }
 
     fn visit_inline_mod(&mut self, item_mod: &ItemMod) {
-        if let Some((_, items)) = &item_mod.content {
-            for inner in items {
-                self.visit_item(inner);
-            }
+        for inner in InlineModule::new(item_mod).items() {
+            self.visit_item(inner);
         }
     }
 }

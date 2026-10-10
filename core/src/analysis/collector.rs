@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::analysis::function_info::FunctionInfo;
+use crate::analysis::inline_module::InlineModule;
 use crate::analysis::item_classifier::ItemClassifier;
 use crate::analysis::item_counts::ItemCounts;
 use crate::analysis::method_purity_registry::MethodPurityRegistry;
@@ -17,7 +18,7 @@ use std::path::Path;
 use syn::visit::Visit;
 use syn::{
     Block, ImplItem, ImplItemFn, Item, ItemEnum, ItemFn, ItemImpl, ItemMod, ItemStruct, ItemTrait,
-    parse_file,
+    Visibility, parse_file,
 };
 
 #[derive(Debug)]
@@ -136,13 +137,7 @@ impl<'a> Collector<'a> {
     }
 
     fn visit_struct(&mut self, item_struct: &ItemStruct) {
-        self.counts.total_items += 1;
-        if matches!(
-            ItemClassifier::classify_visibility(&item_struct.vis),
-            VisibilityLevel::Pub | VisibilityLevel::PubCrate
-        ) {
-            self.counts.public_items += 1;
-        }
+        self.record_item(&item_struct.vis);
         let name = item_struct.ident.to_string();
         let concrete: HashMap<String, String> = item_struct
             .fields
@@ -157,19 +152,17 @@ impl<'a> Collector<'a> {
     }
 
     fn visit_trait(&mut self, item_trait: &ItemTrait) {
-        self.counts.total_items += 1;
-        if matches!(
-            ItemClassifier::classify_visibility(&item_trait.vis),
-            VisibilityLevel::Pub | VisibilityLevel::PubCrate
-        ) {
-            self.counts.public_items += 1;
-        }
+        self.record_item(&item_trait.vis);
     }
 
     fn visit_enum(&mut self, item_enum: &ItemEnum) {
+        self.record_item(&item_enum.vis);
+    }
+
+    fn record_item(&mut self, vis: &Visibility) {
         self.counts.total_items += 1;
         if matches!(
-            ItemClassifier::classify_visibility(&item_enum.vis),
+            ItemClassifier::classify_visibility(vis),
             VisibilityLevel::Pub | VisibilityLevel::PubCrate
         ) {
             self.counts.public_items += 1;
@@ -177,10 +170,8 @@ impl<'a> Collector<'a> {
     }
 
     fn visit_mod(&mut self, item_mod: &ItemMod) {
-        if let Some((_, items)) = &item_mod.content {
-            for inner in items {
-                self.visit_item(inner);
-            }
+        for inner in InlineModule::new(item_mod).items() {
+            self.visit_item(inner);
         }
     }
 

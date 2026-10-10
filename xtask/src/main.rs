@@ -7,6 +7,7 @@ use std::path::Path;
 use std::process::ExitCode;
 use xtask::crap::crap_report_parser::CrapReportParser;
 use xtask::gates::crap_gate::CrapGate;
+use xtask::gates::dry_gate::DryGate;
 use xtask::gates::gate::Gate;
 use xtask::gates::grip_self_gate::GripSelfGate;
 use xtask::gates::iceberg_gate::IcebergGate;
@@ -22,6 +23,9 @@ const XTASK_PACKAGE: &str = "xtask";
 const CRAP_THRESHOLD: &str = "15";
 const ICEBERG_THRESHOLD: &str = "20";
 const GRIP_FLOOR: i64 = 59;
+const DRY_PATH: &[&str] = &["core", "src"];
+const DRY_BASELINE: &str = "dry4rust-baseline.json";
+const DRY_MIN_NODES: &str = "25";
 
 // Reading the real process argv and wiring the concrete runner are the two
 // things no test can reach, so they are all this binary does.
@@ -38,8 +42,8 @@ fn main() -> ExitCode {
 fn run_stage2() -> ExitCode {
     let workspace_manifest = path_from_root(&["Cargo.toml"]);
     // The measuring gates are pointed at core/ rather than the workspace root,
-    // which is what keeps them off the validation crate, whose tests drive the
-    // built binary and mirror no source file.
+    // which is what keeps them off the validation crate, whose subject is a
+    // fixture scenario rather than code this crate ships.
     let core_manifest = path_from_root(&["core", "Cargo.toml"]);
     let core_dir = path_from_root(&["core"]);
 
@@ -63,6 +67,19 @@ fn run_stage2() -> ExitCode {
             String::from(XTASK_PACKAGE),
         ],
     );
+    // Second, for the same reason stern4rust is first: removing a duplicate
+    // moves code between files, which changes what every gate behind it
+    // measures. The published crate's source only -- tests repeat their
+    // arrangement by design -- against a baseline of what was already
+    // duplicated when the gate arrived, so it fails on what a change adds
+    // rather than on what it inherited. Below the 25-node floor sit one-line
+    // delegations whose sameness is a shared signature rather than a copy.
+    let dry = DryGate::new(
+        &runner,
+        path_from_root(DRY_PATH),
+        path_from_root(&[DRY_BASELINE]),
+        String::from(DRY_MIN_NODES),
+    );
     let grip = GripSelfGate::new(
         &runner,
         &grip_parser,
@@ -85,7 +102,7 @@ fn run_stage2() -> ExitCode {
         String::from(ICEBERG_THRESHOLD),
     );
 
-    let gates: Vec<&dyn Gate> = vec![&stern, &grip, &crap, &twin, &iceberg];
+    let gates: Vec<&dyn Gate> = vec![&stern, &dry, &grip, &crap, &twin, &iceberg];
 
     match Stage2::new(gates).run() {
         Ok(()) => {
