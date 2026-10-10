@@ -2,69 +2,12 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Result;
-use grip::analysis::fs_walk::FsWalk;
-use grip::invocation::app::App;
-use grip::invocation::config::Config;
-use grip::invocation::no_op_cache_store::NoOpCacheStore;
-use grip::reporting::default_scorer::DefaultScorer;
-use grip::reporting::grip_report::GripReport;
-use grip::traits::reporter::Reporter;
-use serde_json::from_str;
-use serde_json::to_string_pretty;
-use std::cell::RefCell;
-use std::path::PathBuf;
-use std::rc::Rc;
-
-fn analyze() -> serde_json::Value {
-    let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("fixture")
-        .join("dep_injected");
-    let config = Config {
-        path: fixture_path,
-        json: true,
-        threshold: None,
-        verbose: false,
-    };
-    let captured = Rc::new(RefCell::new(String::new()));
-    let reporter = CaptureReporter {
-        captured: Rc::clone(&captured),
-    };
-    let app = App::with_deps(
-        Box::new(FsWalk::new(&config.path)),
-        Box::new(DefaultScorer::new()),
-        Box::new(reporter),
-        Box::new(NoOpCacheStore::new()),
-        config,
-    );
-    app.run().expect("app run failed");
-    let captured = captured.borrow();
-    from_str(&captured).expect("valid JSON")
-}
-
-struct CaptureReporter {
-    captured: Rc<RefCell<String>>,
-}
-
-impl Reporter for CaptureReporter {
-    fn render(&self, report: &GripReport) -> Result<String> {
-        let json = to_string_pretty(report)?;
-        *self.captured.borrow_mut() = json.clone();
-        Ok(json)
-    }
-
-    fn write(&self, report: &GripReport) -> Result<()> {
-        let json = self.render(report)?;
-        print!("{json}");
-        Ok(())
-    }
-}
+use validation::dep_injected_analysis::DepInjectedAnalysis;
 
 #[test]
 fn injected_module_has_high_score() {
     // Arrange & Act
-    let report = analyze();
+    let report = DepInjectedAnalysis::report();
     let score = report["overall"]["grip_score"].as_u64().unwrap();
 
     // Assert
@@ -74,7 +17,7 @@ fn injected_module_has_high_score() {
 #[test]
 fn injected_module_zero_hidden_deps() {
     // Arrange & Act
-    let report = analyze();
+    let report = DepInjectedAnalysis::report();
     let functions = report["functions"].as_array().unwrap();
 
     // Assert

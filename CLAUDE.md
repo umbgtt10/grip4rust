@@ -48,10 +48,13 @@ stern4rust runs **first** because its corrections are renames, file moves and
 directory splits: a layout it is about to reject is a layout the others would
 have measured for nothing. Its findings are also the cheapest to act on.
 
-All twenty-one of its rules are enforced, with nothing skipped and nothing
-unconfigured. `docs/header.txt` holds the three-line header every `.rs` file
-carries and `stern4rust.toml` names it -- in the config rather than the gate
-script, so a hand-run of `cargo stern4rust` checks exactly what the gate checks.
+All twenty-two of its rules are enforced on every member -- `cargo-grip4rust`,
+`validation` and `xtask` -- with nothing skipped, selected, excluded or
+unconfigured, and no baseline. `docs/header.txt` holds the three-line header
+every `.rs` file carries and `stern4rust.toml` names it -- in the config rather
+than the gate script, so a hand-run of `cargo stern4rust` checks exactly what
+the gate checks. The gate names all three members for the same reason: while it
+named two, `validation` broke `imported-paths` nine times with stage 2 green.
 
 `cargo install just`
 `cargo install cargo-llvm-cov`
@@ -69,18 +72,25 @@ like any other code, rather than a script. Each gate is a `Gate` implementation
 constructed against a `CommandRunner` trait, so the argument lists and the
 failure messages are covered by `xtask`'s own integration tests.
 
-Every stage 2 gate is scoped `--package cargo-grip4rust`, which is what keeps
-the rest of the repository out of them:
+Every measuring gate in stage 2 is scoped to `cargo-grip4rust`, which is what
+keeps the rest of the repository out of them. The house-rules gate is the one
+exception: it takes every member.
 
 - `fixture/` holds bare source trees, deliberately written to score badly. They
-  carry no manifest, so they are not packages and no gate reaches them.
+  carry no manifest and sit beside the members rather than inside one, so they
+  are not packages and no gate reaches them -- stern4rust included, which is
+  why `stern4rust.toml` needs no exclusion for them.
 - `validation/` holds the end-to-end tests that point the analyser at those
-  trees. It **is** a workspace member, so the root `cargo test` runs all of it
-  -- but each of its tests is named for a fixture scenario rather than for a
-  source file in `core/`, so measuring them against the house rules would
-  demand mirrors that cannot exist.
-- `xtask/` is the gate runner itself. Stage 1 covers it in full; the stage 2
-  gates would otherwise be measuring the thing that invoked them.
+  trees. It **is** a workspace member, so the root `cargo test` runs all of it.
+  Its `src/` is the harness every scenario shares (`FixtureAnalysis`,
+  `CaptureReporter`) and one `<fixture>_analysis.rs` per scenario, the single
+  place naming the tree it analyses; each `<fixture>_analysis_tests.rs` pairs
+  with one, so stern4rust holds it to every rule, `paired-test-file` included.
+  The measuring gates leave it alone: its subject is a fixture scenario, not
+  code this crate ships.
+- `xtask/` is the gate runner itself. Stage 1 and the house rules cover it in
+  full; the measuring gates would otherwise be measuring the thing that invoked
+  them.
 
 ## Orthogonality, trait surface and cognitive complexity
 

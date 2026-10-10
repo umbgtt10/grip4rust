@@ -2,15 +2,21 @@
 #
 # Each of these tests points the analyser at one tree under fixture/ and asserts
 # on the report it produces. Their subject is a fixture scenario, not any one
-# source file, so they never had a mirror in core/ to be named after -- which is
-# what paired-test-file kept reporting while they lived there. They were also
-# eight separate [[test]] targets in core's manifest, which is what
-# registry-completeness was reporting: declared one by one beside all_tests.rs
-# rather than in it.
+# source file in core/ -- which is what paired-test-file kept reporting while
+# they lived there. They were also eight separate [[test]] targets in core's
+# manifest, which is what registry-completeness was reporting: declared one by
+# one beside all_tests.rs rather than in it.
+#
+# The scenario is what src/ names. Each `<fixture>_analysis.rs` is the one place
+# that says which tree under fixture/ its scenario analyses, and
+# `<fixture>_analysis_tests.rs` beside it asserts on the report -- so every test
+# file pairs with a source file and paired-test-file holds here with nothing
+# skipped. The harness those eight share, which every test file used to carry a
+# copy of, is `FixtureAnalysis` and `CaptureReporter`.
 #
 # A workspace member rather than an excluded crate, so `cargo test` at the root
-# still runs every one of them. Stage 2 passes `--package cargo-grip4rust` to
-# each gate, so the house rules measure core/ and leave this alone.
+# still runs every one of them. The stern4rust gate in stage 2 takes this
+# package as well; the measuring gates are pointed at core/ and leave it alone.
 [package]
 name = "validation"
 version = "0.9.0"
@@ -22,13 +28,17 @@ publish = false
 
 autotests = false
 
+[lib]
+name = "validation"
+path = "src/lib.rs"
+
 [[test]]
 name = "all_tests"
 path = "tests/all_tests.rs"
 
-[dev-dependencies]
+[dependencies]
 # The package is cargo-grip4rust; its [lib] target is `grip`, which is the name
-# these tests import.
+# the harness and the tests import.
 cargo-grip4rust = { workspace = true }
 anyhow = { workspace = true }
 serde_json = { workspace = true }

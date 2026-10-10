@@ -2,93 +2,13 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Result;
-use grip::analysis::fs_walk::FsWalk;
-use grip::invocation::app::App;
-use grip::invocation::config::Config;
-use grip::invocation::no_op_cache_store::NoOpCacheStore;
-use grip::reporting::default_scorer::DefaultScorer;
-use grip::reporting::grip_report::GripReport;
-use grip::traits::reporter::Reporter;
-use serde_json::from_str;
-use serde_json::to_string_pretty;
-use std::cell::RefCell;
-use std::path::Path;
-use std::path::PathBuf;
-use std::rc::Rc;
-
-fn analyze() -> serde_json::Value {
-    let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("fixture")
-        .join("clean_calc");
-    let config = Config {
-        path: fixture_path,
-        json: true,
-        threshold: None,
-        verbose: false,
-    };
-    let captured = Rc::new(RefCell::new(String::new()));
-    let reporter = CaptureReporter {
-        captured: Rc::clone(&captured),
-    };
-    let app = App::with_deps(
-        Box::new(FsWalk::new(&config.path)),
-        Box::new(DefaultScorer::new()),
-        Box::new(reporter),
-        Box::new(NoOpCacheStore::new()),
-        config,
-    );
-    let _ = app.run().unwrap();
-    let captured = captured.borrow().clone();
-    from_str(&captured).unwrap()
-}
-
-fn analyze_at(fixture_path: &Path) -> serde_json::Value {
-    let config = Config {
-        path: fixture_path.to_path_buf(),
-        json: true,
-        threshold: None,
-        verbose: false,
-    };
-    let captured = Rc::new(RefCell::new(String::new()));
-    let reporter = CaptureReporter {
-        captured: Rc::clone(&captured),
-    };
-    let app = App::with_deps(
-        Box::new(FsWalk::new(&config.path)),
-        Box::new(DefaultScorer::new()),
-        Box::new(reporter),
-        Box::new(NoOpCacheStore::new()),
-        config,
-    );
-    let _ = app.run().unwrap();
-    let captured = captured.borrow().clone();
-    from_str(&captured).unwrap()
-}
-
-struct CaptureReporter {
-    captured: Rc<RefCell<String>>,
-}
-
-impl Reporter for CaptureReporter {
-    fn render(&self, report: &GripReport) -> Result<String> {
-        let json = to_string_pretty(report)?;
-        *self.captured.borrow_mut() = json.clone();
-        Ok(json)
-    }
-
-    fn write(&self, report: &GripReport) -> Result<()> {
-        let json = self.render(report)?;
-        print!("{}", json);
-        Ok(())
-    }
-}
+use validation::clean_calc_analysis::CleanCalcAnalysis;
+use validation::sloppy_calc_analysis::SloppyCalcAnalysis;
 
 #[test]
 fn analyze_a_clean_calculator_scores_between_forty_and_seventy() {
     // Arrange & Act
-    let parsed = analyze();
+    let parsed = CleanCalcAnalysis::report();
 
     // Assert
     let grip_score = parsed["overall"]["grip_score"].as_u64().unwrap();
@@ -107,7 +27,7 @@ fn analyze_a_clean_calculator_scores_between_forty_and_seventy() {
 #[test]
 fn has_many_public_items() {
     // Arrange & Act
-    let parsed = analyze();
+    let parsed = CleanCalcAnalysis::report();
 
     // Assert
     let public_items = parsed["overall"]["public_items"].as_u64().unwrap();
@@ -121,7 +41,7 @@ fn has_many_public_items() {
 #[test]
 fn high_pure_ratio() {
     // Arrange & Act
-    let parsed = analyze();
+    let parsed = CleanCalcAnalysis::report();
 
     // Assert
     let pure_ratio = parsed["overall"]["pure_ratio"].as_f64().unwrap();
@@ -135,16 +55,8 @@ fn high_pure_ratio() {
 #[test]
 fn scores_higher_than_sloppy() {
     // Arrange & Act
-    let clean_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("fixture")
-        .join("clean_calc");
-    let sloppy_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("..")
-        .join("fixture")
-        .join("sloppy_calc");
-    let clean = analyze_at(&clean_path);
-    let sloppy = analyze_at(&sloppy_path);
+    let clean = CleanCalcAnalysis::report();
+    let sloppy = SloppyCalcAnalysis::report();
 
     // Assert
     let clean_score = clean["overall"]["grip_score"].as_u64().unwrap();

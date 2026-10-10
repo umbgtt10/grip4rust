@@ -3,15 +3,14 @@
 # The header rule is the one rule that cannot hold until it is told what the
 # header says. Naming the file here rather than in the gate script means a
 # hand-run of `cargo stern4rust` checks exactly what the gate checks.
-header-file = "docs/header.txt"
-
-# `validation` has no `src/` at all: it runs the built binary against the
-# fixture crates and asserts on the JSON that comes back. Its tests are named
-# for the fixture they analyse -- `clean_calc`, `sloppy_calc`, `data_only` --
-# and `paired-test-file` asks every `<x>_tests.rs` to name an `src/<x>.rs`.
-# There is no `src/` here for one to be named after, so the rule has nothing to
-# match rather than something it dislikes.
 #
-# Nothing else is skipped, in this package or any other.
-[package.validation]
-skip = ["paired-test-file"]
+# Every rule applies to every member -- `cargo-grip4rust`, `validation` and
+# `xtask` -- with nothing skipped, selected or excluded. `validation` once
+# skipped `paired-test-file` because it had no `src/` for its test files to be
+# named after; it now has one, and each scenario's test file pairs with the
+# source file naming its fixture.
+#
+# `fixture/` needs no exclusion. Its trees are written to score badly on
+# purpose, but they carry no manifest and sit beside the members rather than
+# inside one, so no scan ever reaches them.
+header-file = "docs/header.txt"
