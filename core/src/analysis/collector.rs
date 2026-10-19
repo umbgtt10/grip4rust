@@ -7,9 +7,7 @@ use crate::analysis::inline_module::InlineModule;
 use crate::analysis::item_classifier::ItemClassifier;
 use crate::analysis::item_counts::ItemCounts;
 use crate::analysis::method_purity_registry::MethodPurityRegistry;
-use crate::analysis::struct_registry::{
-    StructRegistry, field_type_head, is_trait_object_type, self_ty_name,
-};
+use crate::analysis::struct_registry::StructRegistry;
 use crate::analysis::visibility_level::VisibilityLevel;
 use crate::detection::contribution_schedule::ContributionSchedule;
 use crate::detection::hidden_dep_finder::HiddenDepFinder;
@@ -142,10 +140,10 @@ impl<'a> Collector<'a> {
         let concrete: HashMap<String, String> = item_struct
             .fields
             .iter()
-            .filter(|f| !is_trait_object_type(&f.ty))
+            .filter(|f| !StructRegistry::is_trait_object_type(&f.ty))
             .filter_map(|f| {
                 let field_name = f.ident.as_ref()?.to_string();
-                Some((field_name, field_type_head(&f.ty)))
+                Some((field_name, StructRegistry::field_type_head(&f.ty)))
             })
             .collect();
         self.struct_concrete_fields.insert(name, concrete);
@@ -180,7 +178,7 @@ impl<'a> Collector<'a> {
             return;
         }
         let is_trait_impl = item_impl.trait_.is_some();
-        let self_ty_name = self_ty_name(&item_impl.self_ty);
+        let self_ty_name = StructRegistry::self_ty_name(&item_impl.self_ty);
 
         for item in &item_impl.items {
             if let ImplItem::Fn(method) = item {

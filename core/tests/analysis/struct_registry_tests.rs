@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use grip::analysis::struct_registry::{StructRegistry, field_type_head};
+use grip::analysis::struct_registry::StructRegistry;
 use std::path::PathBuf;
 use syn::Type;
 use syn::parse_str;
@@ -39,7 +39,7 @@ fn field_type_head_on_a_path_type_returns_its_last_segment() {
     let ty: Type = parse_str("std::collections::HashMap").expect("parse type");
 
     // Act
-    let head = field_type_head(&ty);
+    let head = StructRegistry::field_type_head(&ty);
 
     // Assert
     assert_eq!(head, "HashMap");
@@ -51,7 +51,7 @@ fn field_type_head_on_a_type_that_is_not_a_path_returns_an_empty_string() {
     let ty: Type = parse_str("[u8; 4]").expect("parse type");
 
     // Act
-    let head = field_type_head(&ty);
+    let head = StructRegistry::field_type_head(&ty);
 
     // Assert
     assert_eq!(head, "");

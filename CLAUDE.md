@@ -49,7 +49,7 @@ stern4rust runs **first** because its corrections are renames, file moves and
 directory splits: a layout it is about to reject is a layout the others would
 have measured for nothing. Its findings are also the cheapest to act on.
 
-All twenty-two of its rules are enforced on every member -- `cargo-grip4rust`,
+All twenty-four of its rules are enforced on every member -- `cargo-grip4rust`,
 `validation` and `xtask` -- with nothing skipped, selected, excluded or
 unconfigured, and no baseline. `docs/header.txt` holds the three-line header
 every `.rs` file carries and `stern4rust.toml` names it -- in the config rather

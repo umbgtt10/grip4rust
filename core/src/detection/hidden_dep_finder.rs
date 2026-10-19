@@ -70,20 +70,20 @@ impl<'a> HiddenDepFinder<'a> {
             self.add_dep(&label);
         }
     }
-}
 
-fn is_print_macro(path: &Path) -> bool {
-    if let Some(name) = path.get_ident() {
-        let n = name.to_string();
-        return n == "println" || n == "eprintln" || n == "print" || n == "eprint";
+    fn is_print_macro(path: &Path) -> bool {
+        if let Some(name) = path.get_ident() {
+            let n = name.to_string();
+            return n == "println" || n == "eprintln" || n == "print" || n == "eprint";
+        }
+        false
     }
-    false
 }
 
 impl<'ast, 'a> Visit<'ast> for HiddenDepFinder<'a> {
     fn visit_stmt(&mut self, stmt: &'ast Stmt) {
         if let Stmt::Macro(stmt_macro) = stmt {
-            if is_print_macro(&stmt_macro.mac.path) {
+            if Self::is_print_macro(&stmt_macro.mac.path) {
                 self.add_dep(&DepWeightLadder::label_of(&stmt_macro.mac.path));
                 return;
             }
@@ -146,7 +146,7 @@ impl<'a> HiddenDepFinder<'a> {
     }
 
     fn handle_macro_expr(&mut self, expr_macro: &ExprMacro) -> bool {
-        if is_print_macro(&expr_macro.mac.path) {
+        if Self::is_print_macro(&expr_macro.mac.path) {
             self.add_dep(&DepWeightLadder::label_of(&expr_macro.mac.path));
             return false;
         }

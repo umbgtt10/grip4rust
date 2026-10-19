@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use grip::invocation::app::run_from_args;
+use grip::invocation::app::App;
 use std::fs;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -26,13 +26,13 @@ fn write_project(dir: &TempDir, source: &str) {
 #[test]
 fn injected_outperforms_monolith() {
     // Arrange & Act
-    let clean = run_from_args(vec![
+    let clean = App::run_from_args(vec![
         "cargo-grip4rust",
         &fixture_path("dep_injected"),
         "--threshold",
         "70",
     ]);
-    let mono = run_from_args(vec![
+    let mono = App::run_from_args(vec![
         "cargo-grip4rust",
         &fixture_path("dep_monolith"),
         "--threshold",
@@ -58,7 +58,7 @@ fn run_from_args_empty_dir_errors() {
     let dir = TempDir::new().unwrap();
 
     // Act
-    let result = run_from_args(vec!["cargo-grip4rust", &dir.path().to_string_lossy()]);
+    let result = App::run_from_args(vec!["cargo-grip4rust", &dir.path().to_string_lossy()]);
 
     // Assert
     assert!(result.is_err());
@@ -71,7 +71,7 @@ fn run_from_args_threshold_fails() {
     write_project(&dir, "fn greet() -> &'static str { \"hello\" }\n");
 
     // Act
-    let result = run_from_args(vec![
+    let result = App::run_from_args(vec![
         "cargo-grip4rust",
         &dir.path().to_string_lossy(),
         "--threshold",
@@ -89,7 +89,7 @@ fn run_from_args_threshold_passes() {
     write_project(&dir, "pub fn greet() -> &'static str { \"hello\" }\n");
 
     // Act
-    let result = run_from_args(vec![
+    let result = App::run_from_args(vec![
         "cargo-grip4rust",
         &dir.path().to_string_lossy(),
         "--threshold",
@@ -107,7 +107,7 @@ fn run_from_args_valid_dir_succeeds() {
     write_project(&dir, "pub fn greet() -> &'static str { \"hello\" }\n");
 
     // Act
-    let result = run_from_args(vec!["cargo-grip4rust", &dir.path().to_string_lossy()]);
+    let result = App::run_from_args(vec!["cargo-grip4rust", &dir.path().to_string_lossy()]);
 
     // Assert
     assert_eq!(result.unwrap(), ExitCode::SUCCESS);

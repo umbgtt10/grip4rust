@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::analysis::function_purity::FunctionPurity;
-use crate::analysis::struct_registry::{StructRegistry, self_ty_name};
+use crate::analysis::struct_registry::StructRegistry;
 use crate::detection::hidden_dep_finder::HiddenDepFinder;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
@@ -66,7 +66,7 @@ impl MethodPurityRegistry {
         if item_impl.trait_.is_some() {
             return;
         }
-        let type_name = self_ty_name(&item_impl.self_ty);
+        let type_name = StructRegistry::self_ty_name(&item_impl.self_ty);
         let concrete_fields = struct_registry.concrete_fields_of(&type_name);
         for item in &item_impl.items {
             if let ImplItem::Fn(method) = item {

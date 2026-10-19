@@ -15,29 +15,6 @@ pub const KNOWN_STD_VALUE_TYPES: &[&str] = &[
     "RefCell",
 ];
 
-pub fn field_type_head(ty: &Type) -> String {
-    TypePathSegments::new(ty).last_ident()
-}
-
-pub(crate) fn self_ty_name(ty: &Type) -> String {
-    TypePathSegments::new(ty).first_ident()
-}
-
-pub(crate) fn is_trait_object_type(ty: &Type) -> bool {
-    match ty {
-        Type::TraitObject(_) => true,
-        Type::Reference(r) => is_trait_object_type(&r.elem),
-        Type::Path(p) => p.path.segments.iter().any(|seg| match &seg.arguments {
-            PathArguments::AngleBracketed(args) => args.args.iter().any(|arg| match arg {
-                GenericArgument::Type(t) => is_trait_object_type(t),
-                _ => false,
-            }),
-            _ => false,
-        }),
-        _ => false,
-    }
-}
-
 #[derive(Debug, Default)]
 pub struct StructRegistry {
     fields_by_struct: HashMap<String, Vec<String>>,
@@ -70,6 +47,29 @@ impl StructRegistry {
             .cloned()
             .unwrap_or_default()
     }
+
+    pub fn field_type_head(ty: &Type) -> String {
+        TypePathSegments::new(ty).last_ident()
+    }
+
+    pub(crate) fn self_ty_name(ty: &Type) -> String {
+        TypePathSegments::new(ty).first_ident()
+    }
+
+    pub(crate) fn is_trait_object_type(ty: &Type) -> bool {
+        match ty {
+            Type::TraitObject(_) => true,
+            Type::Reference(r) => Self::is_trait_object_type(&r.elem),
+            Type::Path(p) => p.path.segments.iter().any(|seg| match &seg.arguments {
+                PathArguments::AngleBracketed(args) => args.args.iter().any(|arg| match arg {
+                    GenericArgument::Type(t) => Self::is_trait_object_type(t),
+                    _ => false,
+                }),
+                _ => false,
+            }),
+            _ => false,
+        }
+    }
 }
 
 impl<'ast> Visit<'ast> for StructRegistry {
@@ -88,9 +88,9 @@ impl StructRegistry {
         let mut all_field_types = Vec::new();
         let mut concrete_fields = HashMap::new();
         for f in &item_struct.fields {
-            let type_head = field_type_head(&f.ty);
+            let type_head = Self::field_type_head(&f.ty);
             all_field_types.push(type_head.clone());
-            if !is_trait_object_type(&f.ty) {
+            if !Self::is_trait_object_type(&f.ty) {
                 if let Some(field_name) = f.ident.as_ref().map(ToString::to_string) {
                     concrete_fields.insert(field_name, type_head);
                 }

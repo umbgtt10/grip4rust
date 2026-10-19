@@ -18,10 +18,6 @@ const IO_METHOD_NAMES: &[&str] = &[
     "accept",
 ];
 
-fn is_io_method(name: &str) -> bool {
-    IO_METHOD_NAMES.contains(&name)
-}
-
 pub struct IoCallFinder {
     pub found: bool,
 }
@@ -31,21 +27,25 @@ impl IoCallFinder {
     pub fn new() -> Self {
         Self { found: false }
     }
+
+    fn is_io_method(name: &str) -> bool {
+        IO_METHOD_NAMES.contains(&name)
+    }
+
+    fn is_write_macro(path: &Path) -> bool {
+        match path.get_ident() {
+            Some(name) => {
+                let n = name.to_string();
+                n == "write" || n == "writeln"
+            }
+            None => false,
+        }
+    }
 }
 
 impl Default for IoCallFinder {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-fn is_write_macro(path: &Path) -> bool {
-    match path.get_ident() {
-        Some(name) => {
-            let n = name.to_string();
-            n == "write" || n == "writeln"
-        }
-        None => false,
     }
 }
 
@@ -57,7 +57,7 @@ impl<'ast> Visit<'ast> for IoCallFinder {
     // expression. `HiddenDepFinder` reaches print macros the same way.
     fn visit_stmt(&mut self, stmt: &'ast Stmt) {
         if let Stmt::Macro(stmt_macro) = stmt {
-            if is_write_macro(&stmt_macro.mac.path) {
+            if Self::is_write_macro(&stmt_macro.mac.path) {
                 self.found = true;
                 return;
             }
@@ -94,7 +94,9 @@ impl IoCallFinder {
             .map(|s| s.ident.to_string())
             .collect();
 
-        if Self::is_flagged_path(&segments) || segments.last().is_some_and(|n| is_io_method(n)) {
+        if Self::is_flagged_path(&segments)
+            || segments.last().is_some_and(|n| Self::is_io_method(n))
+        {
             self.found = true;
             return false;
         }
@@ -110,7 +112,7 @@ impl IoCallFinder {
     }
 
     fn handle_method_call_expr(&mut self, expr_method: &ExprMethodCall) -> bool {
-        if is_io_method(&expr_method.method.to_string()) {
+        if Self::is_io_method(&expr_method.method.to_string()) {
             self.found = true;
             return false;
         }
@@ -118,7 +120,7 @@ impl IoCallFinder {
     }
 
     fn handle_macro_expr(&mut self, expr_macro: &ExprMacro) -> bool {
-        if is_write_macro(&expr_macro.mac.path) {
+        if Self::is_write_macro(&expr_macro.mac.path) {
             self.found = true;
             return false;
         }

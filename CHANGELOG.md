@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+The command line, output and exit codes are unchanged. The library is not:
+four `pub` free functions became associated functions, for stern4rust 0.17.0's
+new `owned-functions` rule -- a file with a subject holds no free function.
+
+### Changed
+- `analysis::struct_registry`'s `field_type_head`, `self_ty_name` and
+  `is_trait_object_type` are associated functions of `StructRegistry`;
+  `HiddenDepFinder` and `IoCallFinder` own their private helpers.
+- `invocation::app::run_from_args` is `App::run_from_args`, and the free `run`
+  is gone: `main.rs` reads the process's arguments and hands them, with the
+  cargo subcommand stripped, to `App::run_from_args`. `Args::parse_cargo`,
+  which only `run` used, goes with it.
+- All twenty-four stern4rust rules apply to every workspace member.
+
 ## [0.9.1] — 2026-10-10
 
 Patch rather than minor: no public item of the `grip` library changed its
