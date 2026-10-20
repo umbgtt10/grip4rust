@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The command line, output and exit codes are unchanged. The library is not:
 four `pub` free functions became associated functions, for stern4rust 0.17.0's
-new `owned-functions` rule -- a file with a subject holds no free function.
+new `owned-functions` rule -- a file with a subject holds no free function --
+and `Scorer::score_counts` returns a struct where it returned a tuple.
 
 ### Changed
 - `analysis::struct_registry`'s `field_type_head`, `self_ty_name` and
@@ -22,6 +23,10 @@ new `owned-functions` rule -- a file with a subject holds no free function.
   cargo subcommand stripped, to `App::run_from_args`. `Args::parse_cargo`,
   which only `run` used, goes with it.
 - All twenty-four stern4rust rules apply to every workspace member.
+- `Scorer::score_counts` returns a `reporting::scores::Scores` instead of
+  `(Option<u32>, f64, f64, f64, f64, f64)`, whose five ratios only their
+  position told apart; stern4rust's coming `distinct-tuple-elements` rule asks
+  for the names. The fields are named as in `OverallStats` and `ModuleStats`.
 
 ## [0.9.1] — 2026-10-10
 

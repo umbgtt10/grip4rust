@@ -4,6 +4,7 @@
 
 use crate::analysis::item_counts::ItemCounts;
 use crate::reporting::module_stats::ModuleStats;
+use crate::reporting::scores::Scores;
 use crate::traits::scorer::Scorer;
 use std::collections::BTreeMap;
 
@@ -18,7 +19,7 @@ impl DefaultScorer {
 }
 
 impl Scorer for DefaultScorer {
-    fn score_counts(&self, counts: &ItemCounts) -> (Option<u32>, f64, f64, f64, f64, f64) {
+    fn score_counts(&self, counts: &ItemCounts) -> Scores {
         let pure_ratio = if counts.total_functions > 0 {
             counts.pure_functions as f64 / counts.total_functions as f64
         } else {
@@ -57,14 +58,14 @@ impl Scorer for DefaultScorer {
         } else {
             None
         };
-        (
+        Scores {
             grip_score,
             pure_ratio,
             public_ratio,
             trait_ratio,
             avg_contribution,
             clean_fn_ratio,
-        )
+        }
     }
 
     fn agg_modules(
@@ -87,14 +88,14 @@ impl Scorer for DefaultScorer {
         modules
             .into_iter()
             .map(|(path, counts)| {
-                let (
+                let Scores {
                     grip_score,
                     pure_ratio,
                     public_ratio,
                     trait_ratio,
                     avg_contribution,
                     clean_fn_ratio,
-                ) = self.score_counts(&counts);
+                } = self.score_counts(&counts);
                 ModuleStats {
                     path,
                     grip_score,

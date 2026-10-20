@@ -6,9 +6,10 @@ use std::collections::BTreeMap;
 
 use crate::analysis::item_counts::ItemCounts;
 use crate::reporting::module_stats::ModuleStats;
+use crate::reporting::scores::Scores;
 
 pub trait Scorer {
-    fn score_counts(&self, counts: &ItemCounts) -> (Option<u32>, f64, f64, f64, f64, f64);
+    fn score_counts(&self, counts: &ItemCounts) -> Scores;
     fn agg_modules(
         &self,
         files: Vec<(String, ItemCounts)>,

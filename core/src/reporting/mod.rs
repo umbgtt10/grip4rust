@@ -9,5 +9,6 @@ pub mod offender;
 pub mod offenders_renderer;
 pub mod overall_stats;
 pub mod overall_summary_renderer;
+pub mod scores;
 pub mod stdout_reporter;
 pub mod verbose_functions_renderer;

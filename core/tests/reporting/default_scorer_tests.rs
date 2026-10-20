@@ -52,12 +52,12 @@ fn empty_module_gives_no_score() {
     let counts = ItemCounts::default();
 
     // Act
-    let (score, pure, public, _, _, _) = scorer().score_counts(&counts);
+    let scores = scorer().score_counts(&counts);
 
     // Assert
-    assert_eq!(score, None);
-    assert_eq!(pure, 0.0);
-    assert_eq!(public, 0.0);
+    assert_eq!(scores.grip_score, None);
+    assert_eq!(scores.pure_ratio, 0.0);
+    assert_eq!(scores.public_ratio, 0.0);
 }
 
 #[test]
@@ -104,12 +104,12 @@ fn score_counts_with_everything_pure_and_public_returns_one_hundred() {
     };
 
     // Act
-    let (score, pure, public, _, _, _) = scorer().score_counts(&counts);
+    let scores = scorer().score_counts(&counts);
 
     // Assert
-    assert_eq!(score, Some(100));
-    assert_eq!(pure, 1.0);
-    assert_eq!(public, 1.0);
+    assert_eq!(scores.grip_score, Some(100));
+    assert_eq!(scores.pure_ratio, 1.0);
+    assert_eq!(scores.public_ratio, 1.0);
 }
 
 #[test]
@@ -125,10 +125,10 @@ fn score_counts_with_nothing_pure_or_public_returns_zero() {
     };
 
     // Act
-    let (score, pure, public, _, _, _) = scorer().score_counts(&counts);
+    let scores = scorer().score_counts(&counts);
 
     // Assert
-    assert_eq!(score, Some(0));
-    assert_eq!(pure, 0.0);
-    assert_eq!(public, 0.0);
+    assert_eq!(scores.grip_score, Some(0));
+    assert_eq!(scores.pure_ratio, 0.0);
+    assert_eq!(scores.public_ratio, 0.0);
 }

@@ -15,6 +15,7 @@ use crate::reporting::default_scorer::DefaultScorer;
 use crate::reporting::grip_report::GripReport;
 use crate::reporting::offender::Offender;
 use crate::reporting::overall_stats::OverallStats;
+use crate::reporting::scores::Scores;
 use crate::reporting::stdout_reporter::StdoutReporter;
 use crate::traits::cache_store::CacheStore;
 use crate::traits::reporter::Reporter;
@@ -103,8 +104,14 @@ impl App {
         functions: Vec<FunctionInfo>,
     ) -> GripReport {
         let (overall_counts, modules) = self.scorer.agg_modules(indexed);
-        let (grip_score, pure_ratio, public_ratio, trait_ratio, avg_contribution, clean_fn_ratio) =
-            self.scorer.score_counts(&overall_counts);
+        let Scores {
+            grip_score,
+            pure_ratio,
+            public_ratio,
+            trait_ratio,
+            avg_contribution,
+            clean_fn_ratio,
+        } = self.scorer.score_counts(&overall_counts);
         let overall = OverallStats {
             grip_score,
             public_items: overall_counts.public_items,
