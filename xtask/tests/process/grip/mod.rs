@@ -3,5 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 pub mod grip_overall_tests;
+pub mod grip_report_failure_tests;
 pub mod grip_report_parser_tests;
 pub mod grip_report_tests;

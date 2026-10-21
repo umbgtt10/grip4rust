@@ -79,7 +79,7 @@ fn run_with_a_failing_build_reports_the_exit_code_rather_than_parsing() {
     let result = gate(&runner, &parser).run();
 
     // Assert
-    assert!(result.is_err_and(|error| error.contains("101")));
+    assert!(result.is_err_and(|error| error.to_string().contains("101")));
 }
 
 #[test]
@@ -106,7 +106,7 @@ fn run_with_a_score_below_the_floor_names_both_numbers() {
 
     // Assert
     assert_eq!(
-        result,
+        result.map_err(|failure| failure.to_string()),
         Err(String::from("score 58 is below the floor of 59"))
     );
 }
@@ -134,5 +134,7 @@ fn run_with_output_that_is_not_a_report_returns_a_parse_error() {
     let result = gate(&runner, &parser).run();
 
     // Assert
-    assert!(result.is_err_and(|error| error.contains("could not parse grip4rust JSON")));
+    assert!(
+        result.is_err_and(|error| error.to_string().contains("could not parse grip4rust JSON"))
+    );
 }

@@ -40,7 +40,9 @@ fn parse_a_report_missing_the_overall_section_returns_an_error() {
     let result = parser.parse(r#"{"version": 1}"#);
 
     // Assert
-    assert!(result.is_err_and(|error| error.contains("could not parse grip4rust JSON")));
+    assert!(
+        result.is_err_and(|error| error.to_string().contains("could not parse grip4rust JSON"))
+    );
 }
 
 #[test]
@@ -52,7 +54,9 @@ fn parse_empty_output_returns_an_error() {
     let result = parser.parse("");
 
     // Assert
-    assert!(result.is_err_and(|error| error.contains("could not parse grip4rust JSON")));
+    assert!(
+        result.is_err_and(|error| error.to_string().contains("could not parse grip4rust JSON"))
+    );
 }
 
 #[test]
@@ -64,5 +68,7 @@ fn parse_output_that_is_not_json_returns_an_error() {
     let result = parser.parse("error: could not compile `cargo-grip4rust`");
 
     // Assert
-    assert!(result.is_err_and(|error| error.contains("could not parse grip4rust JSON")));
+    assert!(
+        result.is_err_and(|error| error.to_string().contains("could not parse grip4rust JSON"))
+    );
 }

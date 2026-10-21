@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::grip::grip_report::GripReport;
+use crate::grip::grip_report_failure::GripReportFailure;
 use serde_json::from_str;
 
 pub struct GripReportParser;
@@ -14,8 +15,10 @@ impl GripReportParser {
 
     // `cargo run --quiet` puts nothing of its own on stdout, so unlike
     // crap4rust's report this one needs no searching for where the JSON starts.
-    pub fn parse(&self, stdout: &str) -> Result<GripReport, String> {
-        from_str(stdout).map_err(|error| format!("could not parse grip4rust JSON: {error}"))
+    pub fn parse(&self, stdout: &str) -> Result<GripReport, GripReportFailure> {
+        from_str(stdout).map_err(|error| GripReportFailure {
+            reason: error.to_string(),
+        })
     }
 }
 

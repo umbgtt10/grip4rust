@@ -4,4 +4,5 @@
 
 pub mod grip_overall;
 pub mod grip_report;
+pub mod grip_report_failure;
 pub mod grip_report_parser;

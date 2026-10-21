@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::gates::gate::Gate;
+use crate::gates::gate_failure::GateFailure;
 use crate::grip::grip_report_parser::GripReportParser;
 use crate::process::command_runner::CommandRunner;
 
@@ -37,7 +38,7 @@ impl Gate for GripSelfGate<'_> {
         String::from("grip self-analysis")
     }
 
-    fn run(&self) -> Result<(), String> {
+    fn run(&self) -> Result<(), GateFailure> {
         // Built from this checkout rather than taken from an install: a tool
         // that reports its own grip has to report the tree being changed.
         let args = vec![
@@ -53,10 +54,10 @@ impl Gate for GripSelfGate<'_> {
         let outcome = self.runner.run_capturing("cargo", &args)?;
 
         if !outcome.is_success() {
-            return Err(format!(
-                "exit code {:?}\nstderr: {}",
-                outcome.exit_code, outcome.stderr
-            ));
+            return Err(GateFailure::ExitedWith {
+                exit_code: outcome.exit_code,
+                stderr: outcome.stderr,
+            });
         }
 
         let report = self.parser.parse(&outcome.stdout)?;
@@ -67,10 +68,10 @@ impl Gate for GripSelfGate<'_> {
             return Ok(());
         }
 
-        Err(format!(
+        Err(GateFailure::Found(format!(
             "score {} is below the floor of {}",
             report.score(),
             self.floor
-        ))
+        )))
     }
 }
