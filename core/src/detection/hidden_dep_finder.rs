@@ -103,6 +103,22 @@ impl<'ast, 'a> Visit<'ast> for HiddenDepFinder<'a> {
 }
 
 impl<'a> HiddenDepFinder<'a> {
+    fn concrete_field_name(receiver: &Expr) -> Option<String> {
+        let Expr::Field(expr_field) = receiver else {
+            return None;
+        };
+        let Expr::Path(expr_path) = &*expr_field.base else {
+            return None;
+        };
+        if expr_path.path.segments.len() != 1 || expr_path.path.segments[0].ident != "self" {
+            return None;
+        }
+        let Member::Named(ident) = &expr_field.member else {
+            return None;
+        };
+        Some(ident.to_string())
+    }
+
     /// Returns whether the visitor should still recurse into `expr`'s children.
     fn handle_expr(&mut self, expr: &Expr) -> bool {
         match expr {
@@ -116,6 +132,14 @@ impl<'a> HiddenDepFinder<'a> {
             Expr::Macro(expr_macro) => self.handle_macro_expr(expr_macro),
             _ => true,
         }
+    }
+
+    fn handle_macro_expr(&mut self, expr_macro: &ExprMacro) -> bool {
+        if Self::is_print_macro(&expr_macro.mac.path) {
+            self.add_dep(&DepWeightLadder::label_of(&expr_macro.mac.path));
+            return false;
+        }
+        true
     }
 
     fn handle_method_call_expr(&mut self, expr_method: &ExprMethodCall) -> bool {
@@ -134,6 +158,14 @@ impl<'a> HiddenDepFinder<'a> {
         true
     }
 
+    fn is_bare_self(receiver: &Expr) -> bool {
+        matches!(
+            receiver,
+            Expr::Path(expr_path)
+                if expr_path.path.segments.len() == 1 && expr_path.path.segments[0].ident == "self"
+        )
+    }
+
     fn is_pure_value_method(&self, type_name: &str, method: &str) -> bool {
         if !PURE_VALUE_METHODS.contains(&method) {
             return false;
@@ -143,37 +175,5 @@ impl<'a> HiddenDepFinder<'a> {
         }
         KNOWN_STD_VALUE_TYPES.contains(&type_name)
             || self.method_purity.is_known_pure_method(type_name, method)
-    }
-
-    fn handle_macro_expr(&mut self, expr_macro: &ExprMacro) -> bool {
-        if Self::is_print_macro(&expr_macro.mac.path) {
-            self.add_dep(&DepWeightLadder::label_of(&expr_macro.mac.path));
-            return false;
-        }
-        true
-    }
-
-    fn is_bare_self(receiver: &Expr) -> bool {
-        matches!(
-            receiver,
-            Expr::Path(expr_path)
-                if expr_path.path.segments.len() == 1 && expr_path.path.segments[0].ident == "self"
-        )
-    }
-
-    fn concrete_field_name(receiver: &Expr) -> Option<String> {
-        let Expr::Field(expr_field) = receiver else {
-            return None;
-        };
-        let Expr::Path(expr_path) = &*expr_field.base else {
-            return None;
-        };
-        if expr_path.path.segments.len() != 1 || expr_path.path.segments[0].ident != "self" {
-            return None;
-        }
-        let Member::Named(ident) = &expr_field.member else {
-            return None;
-        };
-        Some(ident.to_string())
     }
 }

@@ -94,6 +94,44 @@ impl<'ast, 'a> Visit<'ast> for Collector<'a> {
 }
 
 impl<'a> Collector<'a> {
+    fn count_hidden_deps_in_block(&self, block: &Block) -> HiddenDepFinder<'a> {
+        let mut finder = HiddenDepFinder::new(self.registry, self.method_purity);
+        finder.visit_block(block);
+        finder
+    }
+
+    fn count_hidden_deps_in_impl_method(
+        &self,
+        method: &ImplItemFn,
+        concrete_fields: HashMap<String, String>,
+    ) -> HiddenDepFinder<'a> {
+        let mut finder = HiddenDepFinder::new(self.registry, self.method_purity);
+        finder.set_concrete_fields(concrete_fields);
+        finder.visit_block(&method.block);
+        finder
+    }
+
+    fn is_foreign_trait_impl(&self, item_impl: &ItemImpl) -> bool {
+        item_impl
+            .trait_
+            .as_ref()
+            .is_some_and(|(_, p, _)| ItemClassifier::is_foreign_trait(p))
+    }
+
+    fn record_item(&mut self, vis: &Visibility) {
+        self.counts.total_items += 1;
+        if matches!(
+            ItemClassifier::classify_visibility(vis),
+            VisibilityLevel::Pub | VisibilityLevel::PubCrate
+        ) {
+            self.counts.public_items += 1;
+        }
+    }
+
+    fn visit_enum(&mut self, item_enum: &ItemEnum) {
+        self.record_item(&item_enum.vis);
+    }
+
     fn visit_fn(&mut self, item_fn: &ItemFn) {
         let name = item_fn.sig.ident.to_string();
         let is_pub = matches!(
@@ -134,45 +172,6 @@ impl<'a> Collector<'a> {
         });
     }
 
-    fn visit_struct(&mut self, item_struct: &ItemStruct) {
-        self.record_item(&item_struct.vis);
-        let name = item_struct.ident.to_string();
-        let concrete: HashMap<String, String> = item_struct
-            .fields
-            .iter()
-            .filter(|f| !StructRegistry::is_trait_object_type(&f.ty))
-            .filter_map(|f| {
-                let field_name = f.ident.as_ref()?.to_string();
-                Some((field_name, StructRegistry::field_type_head(&f.ty)))
-            })
-            .collect();
-        self.struct_concrete_fields.insert(name, concrete);
-    }
-
-    fn visit_trait(&mut self, item_trait: &ItemTrait) {
-        self.record_item(&item_trait.vis);
-    }
-
-    fn visit_enum(&mut self, item_enum: &ItemEnum) {
-        self.record_item(&item_enum.vis);
-    }
-
-    fn record_item(&mut self, vis: &Visibility) {
-        self.counts.total_items += 1;
-        if matches!(
-            ItemClassifier::classify_visibility(vis),
-            VisibilityLevel::Pub | VisibilityLevel::PubCrate
-        ) {
-            self.counts.public_items += 1;
-        }
-    }
-
-    fn visit_mod(&mut self, item_mod: &ItemMod) {
-        for inner in InlineModule::new(item_mod).items() {
-            self.visit_item(inner);
-        }
-    }
-
     fn visit_impl(&mut self, item_impl: &ItemImpl) {
         if self.is_foreign_trait_impl(item_impl) {
             return;
@@ -188,13 +187,6 @@ impl<'a> Collector<'a> {
                 self.visit_impl_method(method, &self_ty_name, is_trait_impl);
             }
         }
-    }
-
-    fn is_foreign_trait_impl(&self, item_impl: &ItemImpl) -> bool {
-        item_impl
-            .trait_
-            .as_ref()
-            .is_some_and(|(_, p, _)| ItemClassifier::is_foreign_trait(p))
     }
 
     fn visit_impl_method(&mut self, method: &ImplItemFn, self_ty_name: &str, is_trait_impl: bool) {
@@ -238,20 +230,28 @@ impl<'a> Collector<'a> {
         });
     }
 
-    fn count_hidden_deps_in_block(&self, block: &Block) -> HiddenDepFinder<'a> {
-        let mut finder = HiddenDepFinder::new(self.registry, self.method_purity);
-        finder.visit_block(block);
-        finder
+    fn visit_mod(&mut self, item_mod: &ItemMod) {
+        for inner in InlineModule::new(item_mod).items() {
+            self.visit_item(inner);
+        }
     }
 
-    fn count_hidden_deps_in_impl_method(
-        &self,
-        method: &ImplItemFn,
-        concrete_fields: HashMap<String, String>,
-    ) -> HiddenDepFinder<'a> {
-        let mut finder = HiddenDepFinder::new(self.registry, self.method_purity);
-        finder.set_concrete_fields(concrete_fields);
-        finder.visit_block(&method.block);
-        finder
+    fn visit_struct(&mut self, item_struct: &ItemStruct) {
+        self.record_item(&item_struct.vis);
+        let name = item_struct.ident.to_string();
+        let concrete: HashMap<String, String> = item_struct
+            .fields
+            .iter()
+            .filter(|f| !StructRegistry::is_trait_object_type(&f.ty))
+            .filter_map(|f| {
+                let field_name = f.ident.as_ref()?.to_string();
+                Some((field_name, StructRegistry::field_type_head(&f.ty)))
+            })
+            .collect();
+        self.struct_concrete_fields.insert(name, concrete);
+    }
+
+    fn visit_trait(&mut self, item_trait: &ItemTrait) {
+        self.record_item(&item_trait.vis);
     }
 }

@@ -80,6 +80,14 @@ impl App {
         self.handle_output(&report)
     }
 
+    pub fn run_from_args<I, T>(args: I) -> Result<ExitCode>
+    where
+        I: IntoIterator<Item = T>,
+        T: Into<OsString> + Clone,
+    {
+        Self::new(Config::from_args(Args::parse_from_args(args))).run()
+    }
+
     fn collect_files(&self) -> Result<CollectedFiles> {
         let files = self.walker.rust_files()?;
         let registry = StructRegistry::build(&files);
@@ -177,13 +185,5 @@ impl App {
         } else {
             ".".to_string()
         }
-    }
-
-    pub fn run_from_args<I, T>(args: I) -> Result<ExitCode>
-    where
-        I: IntoIterator<Item = T>,
-        T: Into<OsString> + Clone,
-    {
-        Self::new(Config::from_args(Args::parse_from_args(args))).run()
     }
 }

@@ -11,15 +11,15 @@ pub struct GripReport {
 }
 
 impl GripReport {
-    pub fn score(&self) -> i64 {
-        self.overall.grip_score
-    }
-
     // A floor rather than a ceiling: grip measures how gripped the code is, so
     // a higher score is better and the gate fails below the line. The opposite
     // of every other threshold in stage 2.
     pub fn meets(&self, floor: i64) -> bool {
         self.score() >= floor
+    }
+
+    pub fn score(&self) -> i64 {
+        self.overall.grip_score
     }
 
     pub fn summary(&self, floor: i64) -> String {

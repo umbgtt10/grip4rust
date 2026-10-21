@@ -44,16 +44,16 @@ impl Cache {
         }
     }
 
-    fn mtime_secs(path: &Path) -> Option<u128> {
-        let metadata = fs::metadata(path).ok()?;
-        let mtime = metadata.modified().ok()?;
-        Some(mtime.duration_since(SystemTime::UNIX_EPOCH).ok()?.as_secs() as u128)
-    }
-
     fn load(cache_dir: &Path) -> Result<HashMap<PathBuf, CachedEntry>> {
         let path = cache_dir.join("cache.json");
         let json = fs::read_to_string(&path)?;
         Ok(from_str(&json)?)
+    }
+
+    fn mtime_secs(path: &Path) -> Option<u128> {
+        let metadata = fs::metadata(path).ok()?;
+        let mtime = metadata.modified().ok()?;
+        Some(mtime.duration_since(SystemTime::UNIX_EPOCH).ok()?.as_secs() as u128)
     }
 }
 

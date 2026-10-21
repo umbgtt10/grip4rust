@@ -35,6 +35,16 @@ impl VerboseFunctionsRenderer {
         lines
     }
 
+    fn contribution_marker(hidden_deps: usize) -> &'static str {
+        if hidden_deps == 0 {
+            "✅"
+        } else if hidden_deps == 1 {
+            "⚠️"
+        } else {
+            "❌"
+        }
+    }
+
     fn function_line(f: &FunctionInfo) -> String {
         let contr =
             ContributionSchedule::new().contribution(f.is_pure, f.has_trait_seam, f.dep_weight);
@@ -49,15 +59,5 @@ impl VerboseFunctionsRenderer {
             if labels.is_empty() { "-" } else { &labels },
             Self::contribution_marker(f.hidden_deps),
         )
-    }
-
-    fn contribution_marker(hidden_deps: usize) -> &'static str {
-        if hidden_deps == 0 {
-            "✅"
-        } else if hidden_deps == 1 {
-            "⚠️"
-        } else {
-            "❌"
-        }
     }
 }

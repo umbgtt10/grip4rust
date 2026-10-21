@@ -73,16 +73,6 @@ impl<'ast> Visit<'ast> for IoCallFinder {
 }
 
 impl IoCallFinder {
-    /// Returns whether the visitor should still recurse into `expr`'s children.
-    fn handle_expr(&mut self, expr: &Expr) -> bool {
-        match expr {
-            Expr::Call(expr_call) => self.handle_call_expr(expr_call),
-            Expr::MethodCall(expr_method) => self.handle_method_call_expr(expr_method),
-            Expr::Macro(expr_macro) => self.handle_macro_expr(expr_macro),
-            _ => true,
-        }
-    }
-
     fn handle_call_expr(&mut self, expr_call: &ExprCall) -> bool {
         let Expr::Path(expr_path) = &*expr_call.func else {
             return true;
@@ -103,12 +93,22 @@ impl IoCallFinder {
         true
     }
 
-    fn is_flagged_path(segments: &[String]) -> bool {
-        segments.len() >= 2
-            && matches!(
-                segments[0].as_str(),
-                "fs" | "net" | "io" | "TcpStream" | "UdpSocket" | "File" | "OpenOptions"
-            )
+    /// Returns whether the visitor should still recurse into `expr`'s children.
+    fn handle_expr(&mut self, expr: &Expr) -> bool {
+        match expr {
+            Expr::Call(expr_call) => self.handle_call_expr(expr_call),
+            Expr::MethodCall(expr_method) => self.handle_method_call_expr(expr_method),
+            Expr::Macro(expr_macro) => self.handle_macro_expr(expr_macro),
+            _ => true,
+        }
+    }
+
+    fn handle_macro_expr(&mut self, expr_macro: &ExprMacro) -> bool {
+        if Self::is_write_macro(&expr_macro.mac.path) {
+            self.found = true;
+            return false;
+        }
+        true
     }
 
     fn handle_method_call_expr(&mut self, expr_method: &ExprMethodCall) -> bool {
@@ -119,11 +119,11 @@ impl IoCallFinder {
         true
     }
 
-    fn handle_macro_expr(&mut self, expr_macro: &ExprMacro) -> bool {
-        if Self::is_write_macro(&expr_macro.mac.path) {
-            self.found = true;
-            return false;
-        }
-        true
+    fn is_flagged_path(segments: &[String]) -> bool {
+        segments.len() >= 2
+            && matches!(
+                segments[0].as_str(),
+                "fs" | "net" | "io" | "TcpStream" | "UdpSocket" | "File" | "OpenOptions"
+            )
     }
 }

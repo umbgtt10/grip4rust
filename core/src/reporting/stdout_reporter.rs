@@ -43,6 +43,25 @@ impl Reporter for StdoutReporter {
 }
 
 impl StdoutReporter {
+    fn module_marker(&self, score: Option<u32>) -> &'static str {
+        match score {
+            Some(score) if score < 40 => "❌",
+            Some(score) if score < 70 => "⚠️",
+            _ => "",
+        }
+    }
+
+    fn render_header(&self, report: &GripReport) -> String {
+        let target = &report.target;
+        let version = &report.version;
+        let header = if self.verbose {
+            format!("grip {version} — {target} — verbose")
+        } else {
+            format!("cargo-grip4rust {version} -- {target}")
+        };
+        format!("{header}\n══════════════════════════════════════════════════════\n")
+    }
+
     fn render_human(&self, report: &GripReport) -> String {
         let mut lines = vec![self.render_header(report)];
 
@@ -57,17 +76,6 @@ impl StdoutReporter {
         lines.extend(VerboseFunctionsRenderer::new(self.verbose).render(&report.functions));
 
         lines.join("\n")
-    }
-
-    fn render_header(&self, report: &GripReport) -> String {
-        let target = &report.target;
-        let version = &report.version;
-        let header = if self.verbose {
-            format!("grip {version} — {target} — verbose")
-        } else {
-            format!("cargo-grip4rust {version} -- {target}")
-        };
-        format!("{header}\n══════════════════════════════════════════════════════\n")
     }
 
     fn render_module_line(&self, module: &ModuleStats) -> String {
@@ -92,13 +100,5 @@ impl StdoutReporter {
             module.clean_fn_ratio * 100.0,
             marker,
         )
-    }
-
-    fn module_marker(&self, score: Option<u32>) -> &'static str {
-        match score {
-            Some(score) if score < 40 => "❌",
-            Some(score) if score < 70 => "⚠️",
-            _ => "",
-        }
     }
 }

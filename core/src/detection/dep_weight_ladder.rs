@@ -7,6 +7,15 @@ use syn::Path;
 pub struct DepWeightLadder;
 
 impl DepWeightLadder {
+    #[must_use]
+    pub fn label_of(path: &Path) -> String {
+        path.segments
+            .iter()
+            .map(|segment| segment.ident.to_string())
+            .collect::<Vec<_>>()
+            .join("::")
+    }
+
     // Labels come from `path_label`, which joins macro path segments, so a
     // print macro arrives as the bare name `print` with no `!`. Matching on
     // `print!` never fires and drops the call into the unknown-dependency
@@ -27,19 +36,6 @@ impl DepWeightLadder {
         }
     }
 
-    #[must_use]
-    pub fn label_of(path: &Path) -> String {
-        path.segments
-            .iter()
-            .map(|segment| segment.ident.to_string())
-            .collect::<Vec<_>>()
-            .join("::")
-    }
-
-    fn is_print(label: &str) -> bool {
-        label.starts_with("print") || label.starts_with("eprint")
-    }
-
     fn is_clock(label: &str) -> bool {
         label.starts_with("Instant")
             || label.starts_with("SystemTime")
@@ -50,5 +46,9 @@ impl DepWeightLadder {
 
     fn is_environment(label: &str) -> bool {
         label.starts_with("env::") || label.starts_with("process::")
+    }
+
+    fn is_print(label: &str) -> bool {
+        label.starts_with("print") || label.starts_with("eprint")
     }
 }

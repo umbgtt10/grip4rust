@@ -36,11 +36,6 @@ impl StructRegistry {
     }
 
     #[must_use]
-    pub fn is_transitive_value_type(&self, type_name: &str) -> bool {
-        TransitiveValueTypeResolver::new(&self.fields_by_struct).resolve(type_name)
-    }
-
-    #[must_use]
     pub fn concrete_fields_of(&self, type_name: &str) -> HashMap<String, String> {
         self.concrete_fields_by_struct
             .get(type_name)
@@ -50,10 +45,6 @@ impl StructRegistry {
 
     pub fn field_type_head(ty: &Type) -> String {
         TypePathSegments::new(ty).last_ident()
-    }
-
-    pub fn self_ty_name(ty: &Type) -> String {
-        TypePathSegments::new(ty).first_ident()
     }
 
     pub fn is_trait_object_type(ty: &Type) -> bool {
@@ -69,6 +60,15 @@ impl StructRegistry {
             }),
             _ => false,
         }
+    }
+
+    #[must_use]
+    pub fn is_transitive_value_type(&self, type_name: &str) -> bool {
+        TransitiveValueTypeResolver::new(&self.fields_by_struct).resolve(type_name)
+    }
+
+    pub fn self_ty_name(ty: &Type) -> String {
+        TypePathSegments::new(ty).first_ident()
     }
 }
 

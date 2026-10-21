@@ -36,25 +36,12 @@ impl MethodPurityRegistry {
             .contains(&(type_name.to_string(), method.to_string()))
     }
 
-    fn visit_top_level_item(
-        &mut self,
-        item: &Item,
-        struct_registry: &StructRegistry,
-        no_nested_trust: &MethodPurityRegistry,
-    ) {
-        match item {
-            Item::Impl(item_impl) => {
-                self.record_impl(item_impl, struct_registry, no_nested_trust);
-            }
-            Item::Mod(item_mod) => {
-                if let Some((_, items)) = &item_mod.content {
-                    for inner in items {
-                        self.visit_top_level_item(inner, struct_registry, no_nested_trust);
-                    }
-                }
-            }
-            _ => {}
-        }
+    fn has_pure_signature(method: &ImplItemFn) -> bool {
+        !FunctionPurity::has_mut_param(&method.sig)
+            && !FunctionPurity::is_unit_return(&method.sig)
+            && method.sig.unsafety.is_none()
+            && !FunctionPurity::has_unsafe_block(&method.block)
+            && !FunctionPurity::has_io_call(&method.block)
     }
 
     fn record_impl(
@@ -101,11 +88,24 @@ impl MethodPurityRegistry {
         }
     }
 
-    fn has_pure_signature(method: &ImplItemFn) -> bool {
-        !FunctionPurity::has_mut_param(&method.sig)
-            && !FunctionPurity::is_unit_return(&method.sig)
-            && method.sig.unsafety.is_none()
-            && !FunctionPurity::has_unsafe_block(&method.block)
-            && !FunctionPurity::has_io_call(&method.block)
+    fn visit_top_level_item(
+        &mut self,
+        item: &Item,
+        struct_registry: &StructRegistry,
+        no_nested_trust: &MethodPurityRegistry,
+    ) {
+        match item {
+            Item::Impl(item_impl) => {
+                self.record_impl(item_impl, struct_registry, no_nested_trust);
+            }
+            Item::Mod(item_mod) => {
+                if let Some((_, items)) = &item_mod.content {
+                    for inner in items {
+                        self.visit_top_level_item(inner, struct_registry, no_nested_trust);
+                    }
+                }
+            }
+            _ => {}
+        }
     }
 }

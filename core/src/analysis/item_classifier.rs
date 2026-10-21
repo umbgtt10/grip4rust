@@ -12,6 +12,47 @@ pub struct ItemClassifier;
 
 impl ItemClassifier {
     #[must_use]
+    pub fn classify_visibility(vis: &Visibility) -> VisibilityLevel {
+        match vis {
+            Visibility::Public(_) => VisibilityLevel::Pub,
+            Visibility::Restricted(_) => VisibilityLevel::PubCrate,
+            _ => VisibilityLevel::Private,
+        }
+    }
+
+    #[must_use]
+    pub fn has_test_attr(attrs: &[Attribute]) -> bool {
+        attrs.iter().any(|attr| {
+            let tokens = attr.to_token_stream().to_string();
+            let path = attr.path().get_ident().map(|i| i.to_string());
+            matches!(path.as_deref(), Some("cfg")) && tokens.contains("test")
+                || matches!(path.as_deref(), Some("test"))
+                || matches!(path.as_deref(), Some("cfg_attr")) && tokens.contains("test")
+        })
+    }
+
+    // A single-segment path relies on the known-foreign list, because without
+    // type resolution `impl Display for X` and a local `trait Display` are
+    // indistinguishable. A multi-segment path rooted at std, core or alloc is
+    // foreign whatever the trait is called.
+    #[must_use]
+    pub fn is_foreign_trait(path: &SynPath) -> bool {
+        if let Some(last) = path.segments.last() {
+            let name = last.ident.to_string();
+            if KNOWN_FOREIGN_TRAITS.contains(&name.as_str()) {
+                return true;
+            }
+        }
+        if path.segments.len() > 1 {
+            if let Some(first) = path.segments.first() {
+                let name = first.ident.to_string();
+                return name == "std" || name == "core" || name == "alloc";
+            }
+        }
+        false
+    }
+
+    #[must_use]
     pub fn is_impl_method_impure(method: &ImplItemFn) -> bool {
         if FunctionPurity::has_mut_param(&method.sig) {
             return true;
@@ -38,46 +79,5 @@ impl ItemClassifier {
             return false;
         }
         !FunctionPurity::has_unsafe_block(&item_fn.block)
-    }
-
-    // A single-segment path relies on the known-foreign list, because without
-    // type resolution `impl Display for X` and a local `trait Display` are
-    // indistinguishable. A multi-segment path rooted at std, core or alloc is
-    // foreign whatever the trait is called.
-    #[must_use]
-    pub fn is_foreign_trait(path: &SynPath) -> bool {
-        if let Some(last) = path.segments.last() {
-            let name = last.ident.to_string();
-            if KNOWN_FOREIGN_TRAITS.contains(&name.as_str()) {
-                return true;
-            }
-        }
-        if path.segments.len() > 1 {
-            if let Some(first) = path.segments.first() {
-                let name = first.ident.to_string();
-                return name == "std" || name == "core" || name == "alloc";
-            }
-        }
-        false
-    }
-
-    #[must_use]
-    pub fn classify_visibility(vis: &Visibility) -> VisibilityLevel {
-        match vis {
-            Visibility::Public(_) => VisibilityLevel::Pub,
-            Visibility::Restricted(_) => VisibilityLevel::PubCrate,
-            _ => VisibilityLevel::Private,
-        }
-    }
-
-    #[must_use]
-    pub fn has_test_attr(attrs: &[Attribute]) -> bool {
-        attrs.iter().any(|attr| {
-            let tokens = attr.to_token_stream().to_string();
-            let path = attr.path().get_ident().map(|i| i.to_string());
-            matches!(path.as_deref(), Some("cfg")) && tokens.contains("test")
-                || matches!(path.as_deref(), Some("test"))
-                || matches!(path.as_deref(), Some("cfg_attr")) && tokens.contains("test")
-        })
     }
 }
