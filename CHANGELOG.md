@@ -27,6 +27,10 @@ and `Scorer::score_counts` returns a struct where it returned a tuple.
   `(Option<u32>, f64, f64, f64, f64, f64)`, whose five ratios only their
   position told apart; stern4rust's coming `distinct-tuple-elements` rule asks
   for the names. The fields are named as in `OverallStats` and `ModuleStats`.
+- `StructRegistry::self_ty_name` and `is_trait_object_type` are `pub`, with tests
+  of their own, where they were `pub(crate)`: `collector.rs` and
+  `method_purity_registry.rs` call them, and stern4rust's coming
+  `public-or-private` rule asks that a method be `pub` or private.
 
 ## [0.9.1] — 2026-10-10
 

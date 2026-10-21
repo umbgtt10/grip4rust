@@ -52,11 +52,11 @@ impl StructRegistry {
         TypePathSegments::new(ty).last_ident()
     }
 
-    pub(crate) fn self_ty_name(ty: &Type) -> String {
+    pub fn self_ty_name(ty: &Type) -> String {
         TypePathSegments::new(ty).first_ident()
     }
 
-    pub(crate) fn is_trait_object_type(ty: &Type) -> bool {
+    pub fn is_trait_object_type(ty: &Type) -> bool {
         match ty {
             Type::TraitObject(_) => true,
             Type::Reference(r) => Self::is_trait_object_type(&r.elem),

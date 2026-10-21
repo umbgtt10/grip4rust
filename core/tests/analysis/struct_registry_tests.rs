@@ -58,6 +58,42 @@ fn field_type_head_on_a_type_that_is_not_a_path_returns_an_empty_string() {
 }
 
 #[test]
+fn is_trait_object_type_of_a_boxed_trait_object_returns_true() {
+    // Arrange
+    let ty: Type = parse_str("Box<dyn Walk>").unwrap();
+
+    // Act
+    let trait_object = StructRegistry::is_trait_object_type(&ty);
+
+    // Assert
+    assert!(trait_object);
+}
+
+#[test]
+fn is_trait_object_type_of_a_concrete_type_returns_false() {
+    // Arrange
+    let ty: Type = parse_str("Vec<u8>").unwrap();
+
+    // Act
+    let trait_object = StructRegistry::is_trait_object_type(&ty);
+
+    // Assert
+    assert!(!trait_object);
+}
+
+#[test]
+fn is_trait_object_type_of_a_reference_to_one_returns_true() {
+    // Arrange
+    let ty: Type = parse_str("&dyn Walk").unwrap();
+
+    // Act
+    let trait_object = StructRegistry::is_trait_object_type(&ty);
+
+    // Assert
+    assert!(trait_object);
+}
+
+#[test]
 fn is_transitive_value_type_cross_source_field_returns_true() {
     // Arrange: Members and its user come from two different files - this is
     // the whole point of the registry existing, since a single-file Collector
@@ -222,4 +258,16 @@ struct Bootstrapped {
 
     // Assert
     assert!(result, "recursion must clear a two-level wrapper chain");
+}
+
+#[test]
+fn self_ty_name_of_a_generic_type_returns_its_name() {
+    // Arrange
+    let ty: Type = parse_str("Store<u8>").unwrap();
+
+    // Act
+    let name = StructRegistry::self_ty_name(&ty);
+
+    // Assert
+    assert_eq!(name, "Store");
 }
