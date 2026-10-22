@@ -4,9 +4,57 @@
 
 use crate::analysis::function_purity::FunctionPurity;
 use crate::analysis::visibility_level::VisibilityLevel;
-use crate::detection::known_foreign_traits::KNOWN_FOREIGN_TRAITS;
 use quote::ToTokens;
 use syn::{Attribute, ImplItemFn, ItemFn, Path as SynPath, Visibility};
+
+const KNOWN_FOREIGN_TRAITS: &[&str] = &[
+    "Display",
+    "Debug",
+    "Clone",
+    "Default",
+    "PartialEq",
+    "Eq",
+    "PartialOrd",
+    "Ord",
+    "Hash",
+    "Into",
+    "From",
+    "TryFrom",
+    "Drop",
+    "Deref",
+    "DerefMut",
+    "Index",
+    "IndexMut",
+    "Add",
+    "Sub",
+    "Mul",
+    "Div",
+    "Rem",
+    "Neg",
+    "Not",
+    "Fn",
+    "FnMut",
+    "FnOnce",
+    "Send",
+    "Sync",
+    "Sized",
+    "ToString",
+    "AsRef",
+    "AsMut",
+    "Borrow",
+    "BorrowMut",
+    "Error",
+    "Read",
+    "Write",
+    "Seek",
+    "BufRead",
+    "Iterator",
+    "IntoIterator",
+    "Future",
+    "IntoFuture",
+    "Serialize",
+    "Deserialize",
+];
 
 pub struct ItemClassifier;
 

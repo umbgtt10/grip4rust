@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::analysis::struct_registry::KNOWN_STD_VALUE_TYPES;
+use crate::analysis::known_std_value_types::KNOWN_STD_VALUE_TYPES;
 use std::collections::{HashMap, HashSet};
 
 pub struct TransitiveValueTypeResolver<'fields> {

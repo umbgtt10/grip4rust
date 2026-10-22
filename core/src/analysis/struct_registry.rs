@@ -10,11 +10,6 @@ use std::path::PathBuf;
 use syn::visit::Visit;
 use syn::{GenericArgument, Item, ItemMod, ItemStruct, PathArguments, Type, parse_file};
 
-pub const KNOWN_STD_VALUE_TYPES: &[&str] = &[
-    "Vec", "HashMap", "HashSet", "BTreeMap", "BTreeSet", "VecDeque", "String", "Option", "Cell",
-    "RefCell",
-];
-
 #[derive(Debug, Default)]
 pub struct StructRegistry {
     fields_by_struct: HashMap<String, Vec<String>>,

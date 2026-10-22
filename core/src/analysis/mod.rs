@@ -9,6 +9,7 @@ pub mod function_purity;
 pub mod inline_module;
 pub mod item_classifier;
 pub mod item_counts;
+pub mod known_std_value_types;
 pub mod method_purity_registry;
 pub mod struct_registry;
 pub mod transitive_value_type_resolver;
