@@ -13,9 +13,7 @@ use xtask::process::launch_failure::LaunchFailure;
 #[test]
 fn from_a_grip_report_failure_is_grip_unreadable() {
     // Arrange
-    let report = GripReportFailure {
-        reason: String::from("EOF"),
-    };
+    let report = GripReportFailure::new(String::from("EOF"));
 
     // Act
     let failure = GateFailure::from(report.clone());
@@ -27,10 +25,7 @@ fn from_a_grip_report_failure_is_grip_unreadable() {
 #[test]
 fn from_a_launch_failure_is_not_launched() {
     // Arrange
-    let launch = LaunchFailure {
-        program: String::from("cargo"),
-        reason: String::from("denied"),
-    };
+    let launch = LaunchFailure::new(String::from("cargo"), String::from("denied"));
 
     // Act
     let failure = GateFailure::from(launch.clone());

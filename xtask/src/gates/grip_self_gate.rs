@@ -55,12 +55,12 @@ impl Gate for GripSelfGate<'_> {
 
         if !outcome.is_success() {
             return Err(GateFailure::ExitedWith {
-                exit_code: outcome.exit_code,
-                stderr: outcome.stderr,
+                exit_code: outcome.exit_code(),
+                stderr: outcome.stderr().to_string(),
             });
         }
 
-        let report = self.parser.parse(&outcome.stdout)?;
+        let report = self.parser.parse(outcome.stdout())?;
 
         println!("  {}", report.summary(self.floor));
 

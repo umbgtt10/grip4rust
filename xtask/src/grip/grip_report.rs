@@ -7,7 +7,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct GripReport {
-    pub overall: GripOverall,
+    overall: GripOverall,
 }
 
 impl GripReport {
@@ -18,8 +18,12 @@ impl GripReport {
         self.score() >= floor
     }
 
+    pub fn overall(&self) -> &GripOverall {
+        &self.overall
+    }
+
     pub fn score(&self) -> i64 {
-        self.overall.grip_score
+        self.overall.grip_score()
     }
 
     pub fn summary(&self, floor: i64) -> String {

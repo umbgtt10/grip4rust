@@ -6,5 +6,11 @@ use serde::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct GripOverall {
-    pub grip_score: i64,
+    grip_score: i64,
+}
+
+impl GripOverall {
+    pub fn grip_score(&self) -> i64 {
+        self.grip_score
+    }
 }
