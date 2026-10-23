@@ -10,28 +10,22 @@ use std::rc::Rc;
 use validation::capture_reporter::CaptureReporter;
 
 fn sample() -> GripReport {
-    GripReport {
-        version: "0.1.0".to_string(),
-        target: "sample".to_string(),
-        overall: OverallStats {
-            grip_score: Some(50),
-            public_items: 1,
-            total_functions: 2,
-            pure_functions: 1,
-            pure_ratio: 0.5,
-            public_ratio: 0.5,
-            inherent_methods: 0,
-            local_trait_methods: 0,
-            trait_ratio: 0.0,
-            avg_contribution: 0.0,
-            clean_fn_ratio: 0.0,
-            grip_absolute_total: 1.5,
-        },
-        modules: vec![],
-        offenders: vec![],
-        offender_threshold: 50,
-        functions: vec![],
-    }
+    GripReport::new(
+        "0.1.0".to_string(),
+        "sample".to_string(),
+        OverallStats::default()
+            .with_grip_score(Some(50))
+            .with_public_items(1)
+            .with_total_functions(2)
+            .with_pure_functions(1)
+            .with_pure_ratio(0.5)
+            .with_public_ratio(0.5)
+            .with_grip_absolute_total(1.5),
+        vec![],
+        vec![],
+        50,
+        vec![],
+    )
 }
 
 #[test]

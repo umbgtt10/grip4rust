@@ -8,10 +8,7 @@ use grip::traits::cache_store::CacheStore;
 use std::path::Path;
 
 fn counts(total_functions: usize) -> ItemCounts {
-    ItemCounts {
-        total_functions,
-        ..ItemCounts::default()
-    }
+    ItemCounts::default().with_total_functions(total_functions)
 }
 
 // The `default()` call is the subject here, not incidental construction, so

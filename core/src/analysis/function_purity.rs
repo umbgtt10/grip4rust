@@ -13,7 +13,7 @@ impl FunctionPurity {
     pub fn has_io_call(block: &Block) -> bool {
         let mut finder = IoCallFinder::new();
         finder.visit_block(block);
-        finder.found
+        finder.found()
     }
 
     pub fn has_mut_param(sig: &Signature) -> bool {
@@ -26,7 +26,7 @@ impl FunctionPurity {
     pub fn has_unsafe_block(block: &Block) -> bool {
         let mut finder = UnsafeFinder::new();
         finder.visit_block(block);
-        finder.found
+        finder.found()
     }
 
     pub fn is_unit_return(sig: &Signature) -> bool {

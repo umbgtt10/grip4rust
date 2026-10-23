@@ -18,24 +18,27 @@ impl OverallSummaryRenderer {
         vec![
             format!(
                 "Overall grip score:    {}",
-                Self::grip_score_display(overall.grip_score)
+                Self::grip_score_display(overall.grip_score())
             ),
-            format!("Absolute grip total:   {:.2}", overall.grip_absolute_total),
-            format!("Public surface:        {} items", overall.public_items),
-            format!("Total functions:       {}", overall.total_functions),
+            format!(
+                "Absolute grip total:   {:.2}",
+                overall.grip_absolute_total()
+            ),
+            format!("Public surface:        {} items", overall.public_items()),
+            format!("Total functions:       {}", overall.total_functions()),
             format!(
                 "Probably pure:         {} / {}  ({:.1}%)",
-                overall.pure_functions,
-                overall.total_functions,
-                overall.pure_ratio * 100.0
+                overall.pure_functions(),
+                overall.total_functions(),
+                overall.pure_ratio() * 100.0
             ),
             Self::trait_methods_line(overall),
             format!(
                 "Hidden deps:           avg {:.2}  — {:.1}% clean  ({:.1}% avg contribution)",
-                overall.total_functions as f64
-                    - overall.avg_contribution * overall.total_functions as f64,
-                overall.clean_fn_ratio * 100.0,
-                overall.avg_contribution * 100.0,
+                overall.total_functions() as f64
+                    - overall.avg_contribution() * overall.total_functions() as f64,
+                overall.clean_fn_ratio() * 100.0,
+                overall.avg_contribution() * 100.0,
             ),
         ]
     }
@@ -48,15 +51,15 @@ impl OverallSummaryRenderer {
     }
 
     fn trait_methods_line(overall: &OverallStats) -> String {
-        let total_impl = overall.inherent_methods + overall.local_trait_methods;
+        let total_impl = overall.inherent_methods() + overall.local_trait_methods();
         if total_impl == 0 {
             "Trait methods:         N/A    (no impl methods)".to_string()
         } else {
             format!(
                 "Trait methods:         {} / {} impl methods are trait-bound  ({:.1}%)",
-                overall.local_trait_methods,
+                overall.local_trait_methods(),
                 total_impl,
-                overall.trait_ratio * 100.0
+                overall.trait_ratio() * 100.0
             )
         }
     }

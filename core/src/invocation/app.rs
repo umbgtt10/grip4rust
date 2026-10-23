@@ -15,7 +15,6 @@ use crate::reporting::default_scorer::DefaultScorer;
 use crate::reporting::grip_report::GripReport;
 use crate::reporting::offender::Offender;
 use crate::reporting::overall_stats::OverallStats;
-use crate::reporting::scores::Scores;
 use crate::reporting::stdout_reporter::StdoutReporter;
 use crate::traits::cache_store::CacheStore;
 use crate::traits::reporter::Reporter;
@@ -40,10 +39,10 @@ impl App {
     #[must_use]
     pub fn new(config: Config) -> Self {
         Self {
-            walker: Box::new(FsWalk::new(&config.path)),
+            walker: Box::new(FsWalk::new(config.path())),
             scorer: Box::new(DefaultScorer::new()),
-            reporter: Box::new(StdoutReporter::new(config.json, config.verbose)),
-            cache: Box::new(Cache::new(&config.path)),
+            reporter: Box::new(StdoutReporter::new(config.json(), config.verbose())),
+            cache: Box::new(Cache::new(config.path())),
             config,
         }
     }
@@ -72,7 +71,7 @@ impl App {
         if indexed.is_empty() {
             return Err(anyhow!(
                 "no Rust source files found in {}",
-                self.config.path.display()
+                self.config.path().display()
             ));
         }
 
@@ -112,61 +111,50 @@ impl App {
         functions: Vec<FunctionInfo>,
     ) -> GripReport {
         let (overall_counts, modules) = self.scorer.agg_modules(indexed);
-        let Scores {
-            grip_score,
-            pure_ratio,
-            public_ratio,
-            trait_ratio,
-            avg_contribution,
-            clean_fn_ratio,
-        } = self.scorer.score_counts(&overall_counts);
-        let overall = OverallStats {
-            grip_score,
-            public_items: overall_counts.public_items,
-            total_functions: overall_counts.total_functions,
-            pure_functions: overall_counts.pure_functions,
-            pure_ratio,
-            public_ratio,
-            inherent_methods: overall_counts.inherent_methods,
-            local_trait_methods: overall_counts.local_trait_methods,
-            trait_ratio,
-            avg_contribution,
-            clean_fn_ratio,
-            grip_absolute_total: overall_counts.total_contribution,
-        };
+        let scores = self.scorer.score_counts(&overall_counts);
+        let overall = OverallStats::default()
+            .with_grip_score(scores.grip_score())
+            .with_public_items(overall_counts.public_items())
+            .with_total_functions(overall_counts.total_functions())
+            .with_pure_functions(overall_counts.pure_functions())
+            .with_pure_ratio(scores.pure_ratio())
+            .with_public_ratio(scores.public_ratio())
+            .with_inherent_methods(overall_counts.inherent_methods())
+            .with_local_trait_methods(overall_counts.local_trait_methods())
+            .with_trait_ratio(scores.trait_ratio())
+            .with_avg_contribution(scores.avg_contribution())
+            .with_clean_fn_ratio(scores.clean_fn_ratio())
+            .with_grip_absolute_total(overall_counts.total_contribution());
         let target = self
             .config
-            .path
+            .path()
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or(".")
             .to_string();
         let module_stats = self.scorer.module_stats(modules);
-        let offender_threshold = self.config.threshold.unwrap_or(50);
+        let offender_threshold = self.config.threshold().unwrap_or(50);
         let offenders = module_stats
             .iter()
             .filter_map(|m| {
-                let score = m.grip_score?;
-                (score < offender_threshold).then(|| Offender {
-                    path: m.path.clone(),
-                    grip_score: score,
-                })
+                let score = m.grip_score()?;
+                (score < offender_threshold).then(|| Offender::new(m.path().to_string(), score))
             })
             .collect();
-        GripReport {
-            version: env!("CARGO_PKG_VERSION").to_string(),
+        GripReport::new(
+            env!("CARGO_PKG_VERSION").to_string(),
             target,
             overall,
-            modules: module_stats,
+            module_stats,
             offenders,
             offender_threshold,
             functions,
-        }
+        )
     }
 
     fn handle_output(&self, report: &GripReport) -> Result<ExitCode> {
-        if let Some(min) = self.config.threshold {
-            return Ok(if report.overall.grip_score.is_none_or(|s| s >= min) {
+        if let Some(min) = self.config.threshold() {
+            return Ok(if report.overall().grip_score().is_none_or(|s| s >= min) {
                 ExitCode::SUCCESS
             } else {
                 ExitCode::FAILURE
@@ -177,7 +165,7 @@ impl App {
     }
 
     fn module_from_path(&self, path: &Path) -> String {
-        let relative = path.strip_prefix(&self.config.path).unwrap_or(path);
+        let relative = path.strip_prefix(self.config.path()).unwrap_or(path);
         let s = relative.to_string_lossy().replace('\\', "/");
         let without_src = s.strip_prefix("src/").map(|s| s.to_string()).unwrap_or(s);
         if let Some(pos) = without_src.rfind('/') {

@@ -17,23 +17,19 @@ fn agg_modules_over_two_files_sums_their_counts_and_keeps_both_modules() {
     let files = vec![
         (
             "a".to_string(),
-            ItemCounts {
-                total_functions: 1,
-                pure_functions: 1,
-                public_items: 1,
-                total_items: 1,
-                ..Default::default()
-            },
+            ItemCounts::default()
+                .with_total_functions(1)
+                .with_pure_functions(1)
+                .with_public_items(1)
+                .with_total_items(1),
         ),
         (
             "b".to_string(),
-            ItemCounts {
-                total_functions: 1,
-                pure_functions: 0,
-                public_items: 0,
-                total_items: 1,
-                ..Default::default()
-            },
+            ItemCounts::default()
+                .with_total_functions(1)
+                .with_pure_functions(0)
+                .with_public_items(0)
+                .with_total_items(1),
         ),
     ];
 
@@ -41,8 +37,8 @@ fn agg_modules_over_two_files_sums_their_counts_and_keeps_both_modules() {
     let (overall, modules) = scorer().agg_modules(files);
 
     // Assert
-    assert_eq!(overall.total_functions, 2);
-    assert_eq!(overall.pure_functions, 1);
+    assert_eq!(overall.total_functions(), 2);
+    assert_eq!(overall.pure_functions(), 1);
     assert_eq!(modules.len(), 2);
 }
 
@@ -55,9 +51,9 @@ fn empty_module_gives_no_score() {
     let scores = scorer().score_counts(&counts);
 
     // Assert
-    assert_eq!(scores.grip_score, None);
-    assert_eq!(scores.pure_ratio, 0.0);
-    assert_eq!(scores.public_ratio, 0.0);
+    assert_eq!(scores.grip_score(), None);
+    assert_eq!(scores.pure_ratio(), 0.0);
+    assert_eq!(scores.public_ratio(), 0.0);
 }
 
 #[test]
@@ -66,13 +62,11 @@ fn module_stats_sorted() {
     let mut map = BTreeMap::new();
     map.insert(
         "alpha".to_string(),
-        ItemCounts {
-            total_functions: 1,
-            pure_functions: 1,
-            public_items: 1,
-            total_items: 1,
-            ..Default::default()
-        },
+        ItemCounts::default()
+            .with_total_functions(1)
+            .with_pure_functions(1)
+            .with_public_items(1)
+            .with_total_items(1),
     );
 
     // Act
@@ -80,55 +74,51 @@ fn module_stats_sorted() {
 
     // Assert
     assert_eq!(stats.len(), 1);
-    assert_eq!(stats[0].path, "alpha");
-    assert_eq!(stats[0].grip_score, Some(75));
-    assert_eq!(stats[0].trait_ratio, 1.0);
-    assert_eq!(stats[0].avg_contribution, 0.0);
-    assert_eq!(stats[0].clean_fn_ratio, 0.0);
+    assert_eq!(stats[0].path(), "alpha");
+    assert_eq!(stats[0].grip_score(), Some(75));
+    assert_eq!(stats[0].trait_ratio(), 1.0);
+    assert_eq!(stats[0].avg_contribution(), 0.0);
+    assert_eq!(stats[0].clean_fn_ratio(), 0.0);
 }
 
 #[test]
 fn score_counts_with_everything_pure_and_public_returns_one_hundred() {
     // Arrange
-    let counts = ItemCounts {
-        total_functions: 2,
-        pure_functions: 2,
-        total_items: 3,
-        public_items: 3,
-        inherent_methods: 1,
-        inherent_impure: 0,
-        local_trait_methods: 1,
-        local_trait_impure: 1,
-        total_contribution: 2.0,
-        clean_functions: 2,
-    };
+    let counts = ItemCounts::default()
+        .with_total_functions(2)
+        .with_pure_functions(2)
+        .with_total_items(3)
+        .with_public_items(3)
+        .with_inherent_methods(1)
+        .with_local_trait_methods(1)
+        .with_local_trait_impure(1)
+        .with_total_contribution(2.0)
+        .with_clean_functions(2);
 
     // Act
     let scores = scorer().score_counts(&counts);
 
     // Assert
-    assert_eq!(scores.grip_score, Some(100));
-    assert_eq!(scores.pure_ratio, 1.0);
-    assert_eq!(scores.public_ratio, 1.0);
+    assert_eq!(scores.grip_score(), Some(100));
+    assert_eq!(scores.pure_ratio(), 1.0);
+    assert_eq!(scores.public_ratio(), 1.0);
 }
 
 #[test]
 fn score_counts_with_nothing_pure_or_public_returns_zero() {
     // Arrange
-    let counts = ItemCounts {
-        total_functions: 2,
-        pure_functions: 0,
-        total_items: 3,
-        public_items: 0,
-        inherent_impure: 1,
-        ..Default::default()
-    };
+    let counts = ItemCounts::default()
+        .with_total_functions(2)
+        .with_pure_functions(0)
+        .with_total_items(3)
+        .with_public_items(0)
+        .with_inherent_impure(1);
 
     // Act
     let scores = scorer().score_counts(&counts);
 
     // Assert
-    assert_eq!(scores.grip_score, Some(0));
-    assert_eq!(scores.pure_ratio, 0.0);
-    assert_eq!(scores.public_ratio, 0.0);
+    assert_eq!(scores.grip_score(), Some(0));
+    assert_eq!(scores.pure_ratio(), 0.0);
+    assert_eq!(scores.public_ratio(), 0.0);
 }

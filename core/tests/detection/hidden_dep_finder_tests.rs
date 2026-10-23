@@ -17,7 +17,7 @@ fn deps_of(body: &str) -> (usize, f64, Vec<String>) {
     let item: ItemFn = parse_str(body).expect("test fixture must be a valid fn");
     let mut finder = fixture.finder();
     finder.visit_block(&item.block);
-    (finder.count, finder.weight, finder.labels.clone())
+    (finder.count(), finder.weight(), finder.labels().to_vec())
 }
 
 struct Fixture {
@@ -100,7 +100,7 @@ fn a_method_on_a_concrete_field_of_a_known_pure_type_is_not_a_dependency() {
     finder.visit_block(&item.block);
 
     // Assert
-    assert_eq!(finder.count, 0);
+    assert_eq!(finder.count(), 0);
 }
 
 #[test]
@@ -115,7 +115,7 @@ fn a_method_on_an_unknown_field_is_not_a_dependency() {
     finder.visit_block(&item.block);
 
     // Assert
-    assert_eq!(finder.count, 0);
+    assert_eq!(finder.count(), 0);
 }
 
 #[test]
@@ -133,8 +133,8 @@ fn a_nonpure_method_on_a_concrete_field_is_a_dependency_labelled_by_the_field() 
     finder.visit_block(&item.block);
 
     // Assert
-    assert_eq!(finder.count, 1);
-    assert_eq!(finder.labels, vec!["self.store.write"]);
+    assert_eq!(finder.count(), 1);
+    assert_eq!(finder.labels(), vec!["self.store.write"]);
 }
 
 #[test]
@@ -183,7 +183,7 @@ impl Members {
     finder.visit_block(&item.block);
 
     // Assert
-    assert_eq!(finder.count, 0);
+    assert_eq!(finder.count(), 0);
 }
 
 #[test]

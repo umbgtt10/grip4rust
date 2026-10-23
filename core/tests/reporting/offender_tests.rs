@@ -15,17 +15,14 @@ fn offender_deserializes_from_json() {
     let offender: Offender = from_str(json).unwrap();
 
     // Assert
-    assert_eq!(offender.path, "worse_module");
-    assert_eq!(offender.grip_score, 10);
+    assert_eq!(offender.path(), "worse_module");
+    assert_eq!(offender.grip_score(), 10);
 }
 
 #[test]
 fn offender_serializes_to_json() {
     // Arrange
-    let offender = Offender {
-        path: "bad_module".to_string(),
-        grip_score: 30,
-    };
+    let offender = Offender::new("bad_module".to_string(), 30);
 
     // Act
     let json = to_string(&offender).unwrap();

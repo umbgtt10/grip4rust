@@ -48,9 +48,9 @@ const STD_MODULE_CALLS: &[&str] = &[
 ];
 
 pub struct HiddenDepFinder<'a> {
-    pub count: usize,
-    pub weight: f64,
-    pub labels: Vec<String>,
+    count: usize,
+    weight: f64,
+    labels: Vec<String>,
     concrete_fields: HashMap<String, String>,
     registry: &'a StructRegistry,
     method_purity: &'a MethodPurityRegistry,
@@ -68,8 +68,23 @@ impl<'a> HiddenDepFinder<'a> {
         }
     }
 
+    #[must_use]
+    pub fn count(&self) -> usize {
+        self.count
+    }
+
+    #[must_use]
+    pub fn labels(&self) -> &[String] {
+        &self.labels
+    }
+
     pub fn set_concrete_fields(&mut self, fields: HashMap<String, String>) {
         self.concrete_fields = fields;
+    }
+
+    #[must_use]
+    pub fn weight(&self) -> f64 {
+        self.weight
     }
 
     fn add_dep(&mut self, label: &str) {

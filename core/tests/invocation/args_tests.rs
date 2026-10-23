@@ -11,7 +11,7 @@ fn default_path_is_dot() {
     let args = Args::parse_from_args(vec!["cargo-grip4rust"]);
 
     // Assert
-    assert_eq!(args.path.to_string_lossy(), ".");
+    assert_eq!(args.path().to_string_lossy(), ".");
 }
 
 #[test]
@@ -20,7 +20,7 @@ fn json_flag_is_false_by_default() {
     let args = Args::parse_from_args(vec!["cargo-grip4rust"]);
 
     // Assert
-    assert!(!args.json);
+    assert!(!args.json());
 }
 
 #[test]
@@ -29,7 +29,7 @@ fn json_flag_is_parsed() {
     let args = Args::parse_from_args(vec!["cargo-grip4rust", "--json"]);
 
     // Assert
-    assert!(args.json);
+    assert!(args.json());
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn min_score_alias_still_works() {
     let args = Args::parse_from_args(vec!["cargo-grip4rust", "--min-score", "30"]);
 
     // Assert
-    assert_eq!(args.threshold, Some(30));
+    assert_eq!(args.threshold(), Some(30));
 }
 
 #[test]
@@ -47,7 +47,7 @@ fn path_arg_is_parsed() {
     let args = Args::parse_from_args(vec!["cargo-grip4rust", "some/path"]);
 
     // Assert
-    assert_eq!(args.path.to_string_lossy(), "some/path");
+    assert_eq!(args.path().to_string_lossy(), "some/path");
 }
 
 #[test]
@@ -56,7 +56,7 @@ fn threshold_is_none_by_default() {
     let args = Args::parse_from_args(vec!["cargo-grip4rust"]);
 
     // Assert
-    assert_eq!(args.threshold, None);
+    assert_eq!(args.threshold(), None);
 }
 
 #[test]
@@ -65,7 +65,25 @@ fn threshold_is_parsed() {
     let args = Args::parse_from_args(vec!["cargo-grip4rust", "--threshold", "50"]);
 
     // Assert
-    assert_eq!(args.threshold, Some(50));
+    assert_eq!(args.threshold(), Some(50));
+}
+
+#[test]
+fn verbose_flag_is_false_by_default() {
+    // Arrange & Act
+    let args = Args::parse_from_args(vec!["cargo-grip4rust"]);
+
+    // Assert
+    assert!(!args.verbose());
+}
+
+#[test]
+fn verbose_flag_is_parsed() {
+    // Arrange & Act
+    let args = Args::parse_from_args(vec!["cargo-grip4rust", "--verbose"]);
+
+    // Assert
+    assert!(args.verbose());
 }
 
 #[test]

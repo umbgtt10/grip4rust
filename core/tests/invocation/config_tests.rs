@@ -14,7 +14,7 @@ fn from_args_preserves_json() {
     let config = Config::from_args(args);
 
     // Assert
-    assert!(config.json);
+    assert!(config.json());
 }
 
 #[test]
@@ -26,7 +26,7 @@ fn from_args_preserves_path() {
     let config = Config::from_args(args);
 
     // Assert
-    assert_eq!(config.path.to_string_lossy(), "my-project");
+    assert_eq!(config.path().to_string_lossy(), "my-project");
 }
 
 #[test]
@@ -38,5 +38,17 @@ fn from_args_preserves_threshold() {
     let config = Config::from_args(args);
 
     // Assert
-    assert_eq!(config.threshold, Some(42));
+    assert_eq!(config.threshold(), Some(42));
+}
+
+#[test]
+fn from_args_preserves_verbose() {
+    // Arrange
+    let args = Args::parse_from_args(vec!["cargo-grip4rust", "--verbose"]);
+
+    // Act
+    let config = Config::from_args(args);
+
+    // Assert
+    assert!(config.verbose());
 }

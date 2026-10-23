@@ -6,12 +6,17 @@ use syn::ExprUnsafe;
 use syn::visit::Visit;
 
 pub struct UnsafeFinder {
-    pub found: bool,
+    found: bool,
 }
 
 impl UnsafeFinder {
     pub fn new() -> Self {
         Self { found: false }
+    }
+
+    #[must_use]
+    pub fn found(&self) -> bool {
+        self.found
     }
 }
 

@@ -4,6 +4,7 @@
 
 use clap::Parser;
 use std::ffi::OsString;
+use std::path::Path;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone, Parser)]
@@ -12,16 +13,16 @@ use std::path::PathBuf;
 #[command(about = "Measure Rust testability")]
 pub struct Args {
     #[arg(default_value = ".")]
-    pub path: PathBuf,
+    path: PathBuf,
 
     #[arg(long)]
-    pub json: bool,
+    json: bool,
 
     #[arg(long, alias = "min-score")]
-    pub threshold: Option<u32>,
+    threshold: Option<u32>,
 
     #[arg(long)]
-    pub verbose: bool,
+    verbose: bool,
 }
 
 impl Args {
@@ -31,6 +32,26 @@ impl Args {
         T: Into<OsString> + Clone,
     {
         Self::parse_from(args)
+    }
+
+    #[must_use]
+    pub fn json(&self) -> bool {
+        self.json
+    }
+
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    #[must_use]
+    pub fn threshold(&self) -> Option<u32> {
+        self.threshold
+    }
+
+    #[must_use]
+    pub fn verbose(&self) -> bool {
+        self.verbose
     }
 
     // Cargo runs `cargo grip4rust ...` as `cargo-grip4rust grip4rust ...`, so

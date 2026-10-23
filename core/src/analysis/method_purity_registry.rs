@@ -82,7 +82,7 @@ impl MethodPurityRegistry {
         let mut finder = HiddenDepFinder::new(struct_registry, no_nested_trust);
         finder.set_concrete_fields(concrete_fields.clone());
         finder.visit_block(&method.block);
-        if finder.count == 0 {
+        if finder.count() == 0 {
             self.pure_methods
                 .insert((type_name.to_string(), method.sig.ident.to_string()));
         }

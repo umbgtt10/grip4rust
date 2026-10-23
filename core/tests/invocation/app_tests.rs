@@ -16,12 +16,7 @@ use tempfile::TempDir;
 fn run_on_empty_dir_errors() {
     // Arrange
     let dir = TempDir::new().unwrap();
-    let config = Config {
-        path: dir.path().to_path_buf(),
-        json: false,
-        threshold: None,
-        verbose: false,
-    };
+    let config = Config::new(dir.path().to_path_buf(), false, None, false);
     let app = App::new(config);
 
     // Act
@@ -42,12 +37,7 @@ fn run_on_valid_dir_succeeds() {
         "pub fn greet() -> &'static str { \"hello\" }\n",
     )
     .unwrap();
-    let config = Config {
-        path: dir.path().to_path_buf(),
-        json: false,
-        threshold: None,
-        verbose: false,
-    };
+    let config = Config::new(dir.path().to_path_buf(), false, None, false);
     let app = App::new(config);
 
     // Act
@@ -68,16 +58,11 @@ fn with_deps_builds_an_app_that_runs_on_the_injected_dependencies() {
         "pub fn greet() -> &'static str { \"hello\" }\n",
     )
     .unwrap();
-    let config = Config {
-        path: dir.path().to_path_buf(),
-        json: true,
-        threshold: None,
-        verbose: false,
-    };
+    let config = Config::new(dir.path().to_path_buf(), true, None, false);
 
     // Act
     let app = App::with_deps(
-        Box::new(FsWalk::new(&config.path)),
+        Box::new(FsWalk::new(config.path())),
         Box::new(DefaultScorer::new()),
         Box::new(StdoutReporter::new(true, false)),
         Box::new(NoOpCacheStore::new()),

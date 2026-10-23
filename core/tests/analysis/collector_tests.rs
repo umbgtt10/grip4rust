@@ -34,9 +34,9 @@ fn by_value_mut_self_builder_method_is_pure() {
     );
 
     // Assert
-    assert_eq!(counts.pure_functions, 1);
+    assert_eq!(counts.pure_functions(), 1);
     assert!(
-        fns[0].is_pure,
+        fns[0].is_pure(),
         "mut self (by value) has no observable side effect and must not be treated the same as &mut self"
     );
 }
@@ -65,7 +65,8 @@ impl Service {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "self.db on Arc<dyn Database> should not be a hidden dep"
     );
 }
@@ -92,7 +93,8 @@ impl Service {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 1,
+        fns[0].hidden_deps(),
+        1,
         "MyDatabase::query should be a hidden dep"
     );
 }
@@ -118,7 +120,11 @@ impl Wrapper {
     );
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 0, "Box::new should not be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps(),
+        0,
+        "Box::new should not be a hidden dep"
+    );
 }
 
 #[test]
@@ -143,7 +149,8 @@ impl Service {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 1,
+        fns[0].hidden_deps(),
+        1,
         "MyDatabase::new constructs a concrete dependency"
     );
 }
@@ -169,7 +176,7 @@ impl Logger {
     );
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 1, "eprintln! should be a hidden dep");
+    assert_eq!(fns[0].hidden_deps(), 1, "eprintln! should be a hidden dep");
 }
 
 #[test]
@@ -189,7 +196,8 @@ fn hidden_dep_free_function_clean_not_flagged() {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "pure free function should have 0 hidden deps"
     );
 }
@@ -211,7 +219,8 @@ fn hidden_dep_free_function_is_detected() {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 1,
+        fns[0].hidden_deps(),
+        1,
         "free function with concrete call should be flagged"
     );
 }
@@ -233,7 +242,8 @@ fn hidden_dep_input_argument_not_counted() {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "db.query on input argument should not be a hidden dep"
     );
 }
@@ -256,12 +266,12 @@ fn hidden_dep_labels_are_recorded() {
     // Assert
     assert!(
         fns[0]
-            .hidden_dep_labels
+            .hidden_dep_labels()
             .contains(&"Database::new".to_string()),
         "should contain Database::new label"
     );
     assert!(
-        fns[0].hidden_dep_labels.contains(&"println".to_string()),
+        fns[0].hidden_dep_labels().contains(&"println".to_string()),
         "should contain println label"
     );
 }
@@ -284,10 +294,16 @@ fn heavy() { Database::new(\"prod\"); StripeGateway::charge(100.0); }\n";
 
     // Assert
     let schedule = ContributionSchedule::new();
-    let light_contr =
-        schedule.contribution(fns[0].is_pure, fns[0].has_trait_seam, fns[0].dep_weight);
-    let heavy_contr =
-        schedule.contribution(fns[1].is_pure, fns[1].has_trait_seam, fns[1].dep_weight);
+    let light_contr = schedule.contribution(
+        fns[0].is_pure(),
+        fns[0].has_trait_seam(),
+        fns[0].dep_weight(),
+    );
+    let heavy_contr = schedule.contribution(
+        fns[1].is_pure(),
+        fns[1].has_trait_seam(),
+        fns[1].dep_weight(),
+    );
     assert!(
         light_contr > 0.0,
         "light deps should have positive contribution, got {light_contr}"
@@ -319,7 +335,7 @@ impl Logger {
     );
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 1, "println! should be a hidden dep");
+    assert_eq!(fns[0].hidden_deps(), 1, "println! should be a hidden dep");
 }
 
 #[test]
@@ -348,7 +364,8 @@ impl Service {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 3,
+        fns[0].hidden_deps(),
+        3,
         "should detect all 3 concrete type calls"
     );
 }
@@ -369,7 +386,7 @@ fn hidden_dep_print_macro_is_detected() {
     );
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 1, "print! should be a hidden dep");
+    assert_eq!(fns[0].hidden_deps(), 1, "print! should be a hidden dep");
 }
 
 #[test]
@@ -395,7 +412,8 @@ impl Factory {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "Self::new should not be a hidden dep"
     );
 }
@@ -431,11 +449,13 @@ impl Service {
 
     // Assert
     assert_eq!(
-        fns[1].hidden_deps, 1,
+        fns[1].hidden_deps(),
+        1,
         "self.db on concrete DataStore should be flagged"
     );
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "DataStore::query is a free impl method"
     );
 }
@@ -469,9 +489,10 @@ impl Bootstrapped {
     );
 
     // Assert
-    let snapshot_fn = fns.iter().find(|f| f.name == "snapshot").unwrap();
+    let snapshot_fn = fns.iter().find(|f| f.name() == "snapshot").unwrap();
     assert_eq!(
-        snapshot_fn.hidden_deps, 1,
+        snapshot_fn.hidden_deps(),
+        1,
         "Members is not a known value type - still flagged, as designed"
     );
 }
@@ -509,9 +530,10 @@ impl Service {
     );
 
     // Assert
-    let lookup_fn = fns.iter().find(|f| f.name == "lookup").unwrap();
+    let lookup_fn = fns.iter().find(|f| f.name() == "lookup").unwrap();
     assert_eq!(
-        lookup_fn.hidden_deps, 1,
+        lookup_fn.hidden_deps(),
+        1,
         "DiskCache is not a known value type - .get() still flagged"
     );
 }
@@ -545,9 +567,10 @@ impl Bootstrapped {
     let (_counts, fns) = Collector::collect(source, &_file, &registry, &method_purity);
 
     // Assert
-    let snapshot_fn = fns.iter().find(|f| f.name == "snapshot").unwrap();
+    let snapshot_fn = fns.iter().find(|f| f.name() == "snapshot").unwrap();
     assert_eq!(
-        snapshot_fn.hidden_deps, 0,
+        snapshot_fn.hidden_deps(),
+        0,
         "the registry proves Members is transitively a value type - clone must clear"
     );
 }
@@ -586,9 +609,10 @@ impl Service {
     let (_counts, fns) = Collector::collect(source, &_file, &struct_registry, &method_purity);
 
     // Assert
-    let lookup_fn = fns.iter().find(|f| f.name == "lookup").unwrap();
+    let lookup_fn = fns.iter().find(|f| f.name() == "lookup").unwrap();
     assert_eq!(
-        lookup_fn.hidden_deps, 1,
+        lookup_fn.hidden_deps(),
+        1,
         "get() genuinely performs I/O - it must stay flagged regardless of its name"
     );
 }
@@ -623,9 +647,10 @@ impl Bootstrapped {
     let (_counts, fns) = Collector::collect(source, &_file, &struct_registry, &method_purity);
 
     // Assert
-    let member_count_fn = fns.iter().find(|f| f.name == "member_count").unwrap();
+    let member_count_fn = fns.iter().find(|f| f.name() == "member_count").unwrap();
     assert_eq!(
-        member_count_fn.hidden_deps, 0,
+        member_count_fn.hidden_deps(),
+        0,
         "Members::len is a provably pure delegation - the call site must clear"
     );
 }
@@ -663,9 +688,10 @@ impl Bootstrapped {
     let (_counts, fns) = Collector::collect(source, &_file, &struct_registry, &method_purity);
 
     // Assert
-    let member_count_fn = fns.iter().find(|f| f.name == "member_count").unwrap();
+    let member_count_fn = fns.iter().find(|f| f.name() == "member_count").unwrap();
     assert_eq!(
-        member_count_fn.hidden_deps, 1,
+        member_count_fn.hidden_deps(),
+        1,
         "Members::len performs real I/O - the call site must stay flagged"
     );
 }
@@ -696,7 +722,8 @@ impl Registry {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "HashMap::len is pure - not a hidden dependency"
     );
 }
@@ -725,7 +752,8 @@ impl Service<'_> {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "self.handler on &dyn Handler should not be a hidden dep"
     );
 }
@@ -754,7 +782,8 @@ impl Service {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "self.db on trait object should not be a hidden dep"
     );
 }
@@ -783,7 +812,8 @@ impl Tracker {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "Vec::clone is deterministic and side-effect-free - not a hidden dependency"
     );
 }
@@ -812,7 +842,8 @@ impl ConfirmedSet {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "Vec::get is a pure, bounds-checked read - not a hidden dependency"
     );
 }
@@ -842,7 +873,8 @@ impl Log {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 1,
+        fns[0].hidden_deps(),
+        1,
         "Vec::push mutates shared state - still a hidden dependency"
     );
 }
@@ -869,7 +901,8 @@ impl Builder {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "String::new should not be a hidden dep"
     );
 }
@@ -896,7 +929,8 @@ impl Service {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 1,
+        fns[0].hidden_deps(),
+        1,
         "StripeGateway::charge should be a hidden dep"
     );
 }
@@ -918,7 +952,8 @@ fn hidden_dep_thread_sleep_is_detected() {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 1,
+        fns[0].hidden_deps(),
+        1,
         "thread::sleep should be a hidden dep"
     );
 }
@@ -945,7 +980,8 @@ impl Handler {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 1,
+        fns[0].hidden_deps(),
+        1,
         "TcpStream::connect should be a hidden dep"
     );
 }
@@ -971,7 +1007,11 @@ impl Collector {
     );
 
     // Assert
-    assert_eq!(fns[0].hidden_deps, 0, "Vec::new should not be a hidden dep");
+    assert_eq!(
+        fns[0].hidden_deps(),
+        0,
+        "Vec::new should not be a hidden dep"
+    );
 }
 
 #[test]
@@ -996,7 +1036,8 @@ impl Calc {
 
     // Assert
     assert_eq!(
-        fns[0].hidden_deps, 0,
+        fns[0].hidden_deps(),
+        0,
         "pure function should have 0 hidden deps"
     );
 }
@@ -1017,8 +1058,8 @@ fn impure_function_is_not_counted_as_pure() {
     );
 
     // Assert
-    assert_eq!(counts.total_functions, 1);
-    assert_eq!(counts.pure_functions, 0);
+    assert_eq!(counts.total_functions(), 1);
+    assert_eq!(counts.pure_functions(), 0);
 }
 
 #[test]
@@ -1048,8 +1089,8 @@ impl Client {
     );
 
     // Assert
-    assert_eq!(counts.inherent_methods, 1);
-    assert_eq!(counts.inherent_impure, 1);
+    assert_eq!(counts.inherent_methods(), 1);
+    assert_eq!(counts.inherent_impure(), 1);
 }
 
 #[test]
@@ -1080,8 +1121,8 @@ impl Logger {
     );
 
     // Assert
-    assert_eq!(counts.inherent_methods, 1);
-    assert_eq!(counts.inherent_impure, 1);
+    assert_eq!(counts.inherent_methods(), 1);
+    assert_eq!(counts.inherent_impure(), 1);
 }
 
 #[test]
@@ -1108,8 +1149,8 @@ impl std::fmt::Display for MyStruct {
     );
 
     // Assert
-    assert_eq!(counts.local_trait_methods, 0);
-    assert_eq!(counts.inherent_methods, 0);
+    assert_eq!(counts.local_trait_methods(), 0);
+    assert_eq!(counts.inherent_methods(), 0);
 }
 
 #[test]
@@ -1140,8 +1181,8 @@ impl inner::MyTrait for MyStruct {
     );
 
     // Assert
-    assert_eq!(counts.local_trait_methods, 1);
-    assert_eq!(counts.inherent_methods, 0);
+    assert_eq!(counts.local_trait_methods(), 1);
+    assert_eq!(counts.inherent_methods(), 0);
 }
 
 #[test]
@@ -1167,10 +1208,10 @@ pub trait T {}
     );
 
     // Assert
-    assert_eq!(counts.total_functions, 3);
-    assert_eq!(counts.pure_functions, 2);
-    assert_eq!(counts.total_items, 6);
-    assert_eq!(counts.public_items, 5);
+    assert_eq!(counts.total_functions(), 3);
+    assert_eq!(counts.pure_functions(), 2);
+    assert_eq!(counts.total_items(), 6);
+    assert_eq!(counts.public_items(), 5);
 }
 
 #[test]
@@ -1189,8 +1230,8 @@ fn mut_self_reference_method_is_not_pure() {
     );
 
     // Assert
-    assert_eq!(counts.pure_functions, 0);
-    assert!(!fns[0].is_pure);
+    assert_eq!(counts.pure_functions(), 0);
+    assert!(!fns[0].is_pure());
 }
 
 #[test]
@@ -1209,8 +1250,8 @@ fn private_function_is_not_public() {
     );
 
     // Assert
-    assert_eq!(counts.total_functions, 1);
-    assert_eq!(counts.public_items, 0);
+    assert_eq!(counts.total_functions(), 1);
+    assert_eq!(counts.public_items(), 0);
 }
 
 #[test]
@@ -1229,8 +1270,8 @@ fn pubcrate_is_public_item() {
     );
 
     // Assert
-    assert_eq!(counts.total_functions, 1);
-    assert_eq!(counts.public_items, 1);
+    assert_eq!(counts.total_functions(), 1);
+    assert_eq!(counts.public_items(), 1);
 }
 
 #[test]
@@ -1249,10 +1290,10 @@ fn pure_function_is_counted() {
     );
 
     // Assert
-    assert_eq!(counts.total_functions, 1);
-    assert_eq!(counts.pure_functions, 1);
-    assert_eq!(counts.total_items, 1);
-    assert_eq!(counts.public_items, 1);
+    assert_eq!(counts.total_functions(), 1);
+    assert_eq!(counts.pure_functions(), 1);
+    assert_eq!(counts.total_items(), 1);
+    assert_eq!(counts.public_items(), 1);
 }
 
 #[test]
@@ -1285,10 +1326,15 @@ impl Helper for Impl {
 
     // Assert
     assert_eq!(
-        counts.local_trait_methods, 1,
+        counts.local_trait_methods(),
+        1,
         "test_helper should be skipped"
     );
-    assert_eq!(counts.total_functions, 1, "only do_thing should be counted");
+    assert_eq!(
+        counts.total_functions(),
+        1,
+        "only do_thing should be counted"
+    );
 }
 
 #[test]
@@ -1312,8 +1358,8 @@ mod tests {
     );
 
     // Assert
-    assert_eq!(counts.total_functions, 0);
-    assert_eq!(counts.public_items, 0);
+    assert_eq!(counts.total_functions(), 0);
+    assert_eq!(counts.public_items(), 0);
 }
 
 #[test]
@@ -1332,8 +1378,8 @@ fn unit_return_is_not_pure() {
     );
 
     // Assert
-    assert_eq!(counts.total_functions, 1);
-    assert_eq!(counts.pure_functions, 0);
+    assert_eq!(counts.total_functions(), 1);
+    assert_eq!(counts.pure_functions(), 0);
 }
 
 #[test]
@@ -1352,6 +1398,6 @@ fn unsafe_function_is_not_pure() {
     );
 
     // Assert
-    assert_eq!(counts.total_functions, 1);
-    assert_eq!(counts.pure_functions, 0);
+    assert_eq!(counts.total_functions(), 1);
+    assert_eq!(counts.pure_functions(), 0);
 }

@@ -10,7 +10,7 @@ fn finds_unsafe_in(source: &str) -> bool {
     let file = parse_file(source).expect("the source should parse");
     let mut finder = UnsafeFinder::new();
     finder.visit_file(&file);
-    finder.found
+    finder.found()
 }
 
 #[test]
@@ -19,7 +19,7 @@ fn new_starts_having_found_nothing() {
     let finder = UnsafeFinder::new();
 
     // Assert
-    assert!(!finder.found);
+    assert!(!finder.found());
 }
 
 #[test]

@@ -10,7 +10,7 @@ fn performs_io(body: &str) -> bool {
     let item: ItemFn = parse_str(body).expect("test fixture must be a valid fn");
     let mut finder = IoCallFinder::new();
     finder.visit_block(&item.block);
-    finder.found
+    finder.found()
 }
 
 #[test]
@@ -47,8 +47,8 @@ fn default_starts_in_the_same_state_as_new() {
     let from_new = IoCallFinder::new();
 
     // Assert
-    assert_eq!(from_default.found, from_new.found);
-    assert!(!from_default.found);
+    assert_eq!(from_default.found(), from_new.found());
+    assert!(!from_default.found());
 }
 
 #[test]
@@ -136,7 +136,7 @@ fn new_starts_having_found_nothing() {
     let finder = IoCallFinder::new();
 
     // Assert
-    assert!(!finder.found);
+    assert!(!finder.found());
 }
 
 #[test]

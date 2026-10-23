@@ -19,13 +19,18 @@ const IO_METHOD_NAMES: &[&str] = &[
 ];
 
 pub struct IoCallFinder {
-    pub found: bool,
+    found: bool,
 }
 
 impl IoCallFinder {
     #[must_use]
     pub fn new() -> Self {
         Self { found: false }
+    }
+
+    #[must_use]
+    pub fn found(&self) -> bool {
+        self.found
     }
 
     fn is_io_method(name: &str) -> bool {

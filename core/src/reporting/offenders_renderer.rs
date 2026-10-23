@@ -22,7 +22,8 @@ impl OffendersRenderer {
         for offender in offenders {
             lines.push(format!(
                 "  {:<30}  grip: {:>3}  ❌",
-                offender.path, offender.grip_score,
+                offender.path(),
+                offender.grip_score(),
             ));
         }
         lines

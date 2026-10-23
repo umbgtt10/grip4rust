@@ -35,7 +35,7 @@ fn cache_hit_returns_same_counts() {
 
     // Assert
     assert!(cached.is_some());
-    assert_eq!(cached.unwrap().total_functions, 1);
+    assert_eq!(cached.unwrap().total_functions(), 1);
 }
 
 #[test]
