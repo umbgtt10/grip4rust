@@ -11,6 +11,7 @@ use xtask::gates::dry_gate::DryGate;
 use xtask::gates::gate::Gate;
 use xtask::gates::grip_self_gate::GripSelfGate;
 use xtask::gates::iceberg_gate::IcebergGate;
+use xtask::gates::shear_gate::ShearGate;
 use xtask::gates::stage2::Stage2;
 use xtask::gates::stern_gate::SternGate;
 use xtask::gates::twin_gate::TwinGate;
@@ -60,14 +61,19 @@ fn run_stage2() -> ExitCode {
     // to core/ to stay off validation, and xtask lives outside that manifest.
     let stern = SternGate::new(
         &runner,
-        workspace_manifest,
+        workspace_manifest.clone(),
         vec![
             String::from(PACKAGE),
             String::from(VALIDATION_PACKAGE),
             String::from(XTASK_PACKAGE),
         ],
     );
-    // Second, for the same reason stern4rust is first: removing a duplicate
+    // Second: every declared dependency used, in the section that uses it. Its
+    // corrections edit manifests only, so they move nothing the gates behind it
+    // measure, and it costs a second.
+    let shear = ShearGate::new(&runner, workspace_manifest);
+
+    // Third, for the same reason stern4rust is first: removing a duplicate
     // moves code between files, which changes what every gate behind it
     // measures. The published crate's source only -- tests repeat their
     // arrangement by design -- against a baseline of what was already
@@ -102,7 +108,7 @@ fn run_stage2() -> ExitCode {
         String::from(ICEBERG_THRESHOLD),
     );
 
-    let gates: Vec<&dyn Gate> = vec![&stern, &dry, &grip, &crap, &twin, &iceberg];
+    let gates: Vec<&dyn Gate> = vec![&stern, &shear, &dry, &grip, &crap, &twin, &iceberg];
 
     match Stage2::new(gates).run() {
         Ok(()) => {

@@ -33,12 +33,13 @@ Both run identically on Windows, Linux and macOS, and the same two commands run
 in CI -- there is no second definition of the gates to drift out of step.
 
 Stage 1 is formatting, clippy and tests -- cargo built-ins only, so it works on
-a fresh checkout with none of the house tools installed. Stage 2 is six gates,
+a fresh checkout with none of the house tools installed. Stage 2 is seven gates,
 run in this order:
 
 | gate | asks |
 |---|---|
 | `cargo stern4rust` | do the house coding rules hold |
+| `cargo shear` | is every declared dependency used, in the section that uses it |
 | `cargo dry4rust` | did this change add duplicated code |
 | `cargo grip4rust` | does this tool still score itself above its floor |
 | `cargo crap4rust` | is any function complex and untested |
@@ -57,7 +58,18 @@ than the gate script, so a hand-run of `cargo stern4rust` checks exactly what
 the gate checks. The gate names all three members for the same reason: while it
 named two, `validation` broke `imported-paths` nine times with stage 2 green.
 
-dry4rust runs **second**, for the reason stern4rust runs first: removing a
+cargo-shear runs **second**: its corrections edit manifests only -- a
+dependency removed, or moved to the section that uses it -- so they change
+nothing the gates behind it measure, and it takes a second. It runs `--locked`,
+reading the lock file and never writing it, and `--deny-warnings`, so an
+optional dependency no feature's code uses fails as an unused one does. A
+dependency it cannot see used -- linked only for what it provides, declared
+only to switch on a feature, used only by generated code -- goes in
+`[package.metadata.cargo-shear] ignored`, and the gate refuses an entry without
+its reason in the same table's `reasons`; there are none today. Pinned at
+1.14.0, as CI installs it.
+
+dry4rust runs **third**, for the reason stern4rust runs first: removing a
 duplicate moves code between files, which changes what every gate behind it
 measures -- the grip score included. It scans `core/src` only -- tests repeat their arrangement by
 design -- and checks with zero ceilings against `dry4rust-baseline.json`, the
@@ -87,6 +99,7 @@ matches only at the floor it was recorded at:
 `cargo install cargo-crap4rust`
 `cargo install cargo-twin4rust`
 `cargo install cargo-iceberg4rust`
+`cargo install --locked cargo-shear --version 1.14.0`
 
 cargo-grip4rust is deliberately not in that list. The self-analysis gate builds
 it from this checkout, so the score it reports is the score of the tree being
