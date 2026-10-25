@@ -3,25 +3,19 @@
 // SPDX-License-Identifier: MIT
 
 use crate::analysis::collector::Collector;
-use crate::analysis::fs_walk::FsWalk;
 use crate::analysis::function_info::FunctionInfo;
 use crate::analysis::item_counts::ItemCounts;
 use crate::analysis::method_purity_registry::MethodPurityRegistry;
 use crate::analysis::struct_registry::StructRegistry;
-use crate::invocation::args::Args;
-use crate::invocation::cache::Cache;
 use crate::invocation::config::Config;
-use crate::reporting::default_scorer::DefaultScorer;
 use crate::reporting::grip_report::GripReport;
 use crate::reporting::offender::Offender;
 use crate::reporting::overall_stats::OverallStats;
-use crate::reporting::stdout_reporter::StdoutReporter;
 use crate::traits::cache_store::CacheStore;
 use crate::traits::reporter::Reporter;
 use crate::traits::scorer::Scorer;
 use crate::traits::walk::Walk;
 use anyhow::{Result, anyhow};
-use std::ffi::OsString;
 use std::path::Path;
 use std::process::ExitCode;
 
@@ -37,18 +31,7 @@ pub struct App {
 
 impl App {
     #[must_use]
-    pub fn new(config: Config) -> Self {
-        Self {
-            walker: Box::new(FsWalk::new(config.path())),
-            scorer: Box::new(DefaultScorer::new()),
-            reporter: Box::new(StdoutReporter::new(config.json(), config.verbose())),
-            cache: Box::new(Cache::new(config.path())),
-            config,
-        }
-    }
-
-    #[must_use]
-    pub fn with_deps(
+    pub fn new(
         walker: Box<dyn Walk>,
         scorer: Box<dyn Scorer>,
         reporter: Box<dyn Reporter>,
@@ -77,14 +60,6 @@ impl App {
 
         let report = self.compute_report(indexed, functions);
         self.handle_output(&report)
-    }
-
-    pub fn run_from_args<I, T>(args: I) -> Result<ExitCode>
-    where
-        I: IntoIterator<Item = T>,
-        T: Into<OsString> + Clone,
-    {
-        Self::new(Config::from_args(Args::parse_from_args(args))).run()
     }
 
     fn collect_files(&self) -> Result<CollectedFiles> {

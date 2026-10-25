@@ -33,7 +33,7 @@ impl FixtureAnalysis {
     pub fn report(&self) -> Value {
         let config = Config::new(self.path.clone(), true, None, false);
         let captured = Rc::new(RefCell::new(String::new()));
-        let app = App::with_deps(
+        let app = App::new(
             Box::new(FsWalk::new(config.path())),
             Box::new(DefaultScorer::new()),
             Box::new(CaptureReporter::new(Rc::clone(&captured))),

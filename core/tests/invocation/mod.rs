@@ -6,4 +6,5 @@ pub mod app_tests;
 pub mod args_tests;
 pub mod cache_tests;
 pub mod config_tests;
+pub mod entry_point_tests;
 pub mod no_op_cache_store_tests;

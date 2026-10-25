@@ -13,42 +13,7 @@ use std::process::ExitCode;
 use tempfile::TempDir;
 
 #[test]
-fn run_on_empty_dir_errors() {
-    // Arrange
-    let dir = TempDir::new().unwrap();
-    let config = Config::new(dir.path().to_path_buf(), false, None, false);
-    let app = App::new(config);
-
-    // Act
-    let result = app.run();
-
-    // Assert
-    assert!(result.is_err());
-}
-
-#[test]
-fn run_on_valid_dir_succeeds() {
-    // Arrange
-    let dir = TempDir::new().unwrap();
-    let src = dir.path().join("src");
-    fs::create_dir_all(&src).unwrap();
-    fs::write(
-        src.join("lib.rs"),
-        "pub fn greet() -> &'static str { \"hello\" }\n",
-    )
-    .unwrap();
-    let config = Config::new(dir.path().to_path_buf(), false, None, false);
-    let app = App::new(config);
-
-    // Act
-    let exit_code = app.run().unwrap();
-
-    // Assert
-    assert_eq!(exit_code, ExitCode::SUCCESS);
-}
-
-#[test]
-fn with_deps_builds_an_app_that_runs_on_the_injected_dependencies() {
+fn new_builds_an_app_that_runs_on_the_injected_dependencies() {
     // Arrange
     let dir = TempDir::new().unwrap();
     let src = dir.path().join("src");
@@ -61,7 +26,7 @@ fn with_deps_builds_an_app_that_runs_on_the_injected_dependencies() {
     let config = Config::new(dir.path().to_path_buf(), true, None, false);
 
     // Act
-    let app = App::with_deps(
+    let app = App::new(
         Box::new(FsWalk::new(config.path())),
         Box::new(DefaultScorer::new()),
         Box::new(StdoutReporter::new(true, false)),
