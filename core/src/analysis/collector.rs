@@ -145,19 +145,18 @@ impl<'a> Collector<'a> {
         self.counts.record_function(contr, is_pure);
         self.counts.record_item(is_pub);
 
-        self.functions.push(
-            FunctionInfo::default()
-                .with_name(name)
-                .with_file(self.current_file.clone())
-                .with_is_pure(is_pure)
-                .with_is_public(is_pub)
-                .with_hidden_deps(finder.count())
-                .with_has_trait_seam(has_trait_seam)
-                .with_dep_weight(finder.weight())
-                .with_hidden_dep_labels(finder.labels().to_vec())
-                .with_grip_absolute(contr)
-                .with_grip_normalized((contr * 100.0).round() as u32),
-        );
+        self.functions.push(FunctionInfo {
+            name,
+            file: self.current_file.clone(),
+            is_pure,
+            is_public: is_pub,
+            hidden_deps: finder.count(),
+            has_trait_seam,
+            dep_weight: finder.weight(),
+            hidden_dep_labels: finder.labels().to_vec(),
+            grip_absolute: contr,
+            grip_normalized: (contr * 100.0).round() as u32,
+        });
     }
 
     fn visit_impl(&mut self, item_impl: &ItemImpl) {
@@ -197,19 +196,18 @@ impl<'a> Collector<'a> {
             VisibilityLevel::Pub | VisibilityLevel::PubCrate
         );
 
-        self.functions.push(
-            FunctionInfo::default()
-                .with_name(method.sig.ident.to_string())
-                .with_file(self.current_file.clone())
-                .with_is_pure(is_pure)
-                .with_is_public(is_pub)
-                .with_hidden_deps(finder.count())
-                .with_has_trait_seam(is_trait_impl)
-                .with_dep_weight(finder.weight())
-                .with_hidden_dep_labels(finder.labels().to_vec())
-                .with_grip_absolute(contr)
-                .with_grip_normalized((contr * 100.0).round() as u32),
-        );
+        self.functions.push(FunctionInfo {
+            name: method.sig.ident.to_string(),
+            file: self.current_file.clone(),
+            is_pure,
+            is_public: is_pub,
+            hidden_deps: finder.count(),
+            has_trait_seam: is_trait_impl,
+            dep_weight: finder.weight(),
+            hidden_dep_labels: finder.labels().to_vec(),
+            grip_absolute: contr,
+            grip_normalized: (contr * 100.0).round() as u32,
+        });
     }
 
     fn visit_mod(&mut self, item_mod: &ItemMod) {

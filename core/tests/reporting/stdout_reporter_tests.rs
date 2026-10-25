@@ -14,24 +14,28 @@ use serde_json::from_str;
 
 fn dummy_modules() -> Vec<ModuleStats> {
     vec![
-        ModuleStats::default()
-            .with_path("alpha".to_string())
-            .with_grip_score(Some(80))
-            .with_pure_ratio(0.8)
-            .with_public_items(5)
-            .with_total_functions(10)
-            .with_pure_functions(8)
-            .with_public_ratio(0.5)
-            .with_grip_absolute_total(7.0),
-        ModuleStats::default()
-            .with_path("beta".to_string())
-            .with_grip_score(Some(50))
-            .with_pure_ratio(0.4)
-            .with_public_items(5)
-            .with_total_functions(10)
-            .with_pure_functions(4)
-            .with_public_ratio(0.5)
-            .with_grip_absolute_total(5.0),
+        ModuleStats {
+            path: "alpha".to_string(),
+            grip_score: Some(80),
+            pure_ratio: 0.8,
+            public_items: 5,
+            total_functions: 10,
+            pure_functions: 8,
+            public_ratio: 0.5,
+            grip_absolute_total: 7.0,
+            ..Default::default()
+        },
+        ModuleStats {
+            path: "beta".to_string(),
+            grip_score: Some(50),
+            pure_ratio: 0.4,
+            public_items: 5,
+            total_functions: 10,
+            pure_functions: 4,
+            public_ratio: 0.5,
+            grip_absolute_total: 5.0,
+            ..Default::default()
+        },
     ]
 }
 
@@ -44,22 +48,24 @@ fn report_with(
     offenders: Vec<Offender>,
     functions: Vec<FunctionInfo>,
 ) -> GripReport {
-    GripReport::new(
-        "0.1.0".to_string(),
-        "my-crate".to_string(),
-        OverallStats::default()
-            .with_grip_score(Some(71))
-            .with_public_items(10)
-            .with_total_functions(20)
-            .with_pure_functions(12)
-            .with_pure_ratio(0.6)
-            .with_public_ratio(0.5)
-            .with_grip_absolute_total(12.0),
+    GripReport {
+        version: "0.1.0".to_string(),
+        target: "my-crate".to_string(),
+        overall: OverallStats {
+            grip_score: Some(71),
+            public_items: 10,
+            total_functions: 20,
+            pure_functions: 12,
+            pure_ratio: 0.6,
+            public_ratio: 0.5,
+            grip_absolute_total: 12.0,
+            ..Default::default()
+        },
         modules,
         offenders,
-        50,
+        offender_threshold: 50,
         functions,
-    )
+    }
 }
 
 fn reporter(json: bool) -> StdoutReporter {
@@ -99,15 +105,15 @@ fn human_output_non_verbose_hides_per_function_detail() {
     let report = report_with(
         dummy_modules(),
         vec![],
-        vec![
-            FunctionInfo::default()
-                .with_name("compute".to_string())
-                .with_file("src/lib.rs".to_string())
-                .with_is_pure(true)
-                .with_is_public(true)
-                .with_grip_absolute(0.95)
-                .with_grip_normalized(95),
-        ],
+        vec![FunctionInfo {
+            name: "compute".to_string(),
+            file: "src/lib.rs".to_string(),
+            is_pure: true,
+            is_public: true,
+            grip_absolute: 0.95,
+            grip_normalized: 95,
+            ..Default::default()
+        }],
     );
     let reporter = reporter(false);
 
@@ -122,18 +128,21 @@ fn human_output_non_verbose_hides_per_function_detail() {
 fn human_output_shows_offenders_section() {
     // Arrange
     let report = report_with(
-        vec![
-            ModuleStats::default()
-                .with_path("bad_mod".to_string())
-                .with_grip_score(Some(30))
-                .with_pure_ratio(0.3)
-                .with_public_items(1)
-                .with_total_functions(5)
-                .with_pure_functions(1)
-                .with_public_ratio(0.2)
-                .with_grip_absolute_total(2.0),
-        ],
-        vec![Offender::new("bad_mod".to_string(), 30)],
+        vec![ModuleStats {
+            path: "bad_mod".to_string(),
+            grip_score: Some(30),
+            pure_ratio: 0.3,
+            public_items: 1,
+            total_functions: 5,
+            pure_functions: 1,
+            public_ratio: 0.2,
+            grip_absolute_total: 2.0,
+            ..Default::default()
+        }],
+        vec![Offender {
+            path: "bad_mod".to_string(),
+            grip_score: 30,
+        }],
         vec![],
     );
     let reporter = reporter(false);
@@ -152,15 +161,15 @@ fn human_output_verbose_shows_per_function_detail() {
     let report = report_with(
         dummy_modules(),
         vec![],
-        vec![
-            FunctionInfo::default()
-                .with_name("compute".to_string())
-                .with_file("src/lib.rs".to_string())
-                .with_is_pure(true)
-                .with_is_public(true)
-                .with_grip_absolute(0.95)
-                .with_grip_normalized(95),
-        ],
+        vec![FunctionInfo {
+            name: "compute".to_string(),
+            file: "src/lib.rs".to_string(),
+            is_pure: true,
+            is_public: true,
+            grip_absolute: 0.95,
+            grip_normalized: 95,
+            ..Default::default()
+        }],
     );
     let reporter = StdoutReporter::new(false, true);
 

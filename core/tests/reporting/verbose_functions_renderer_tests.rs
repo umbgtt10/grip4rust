@@ -6,15 +6,17 @@ use grip::analysis::function_info::FunctionInfo;
 use grip::reporting::verbose_functions_renderer::VerboseFunctionsRenderer;
 
 fn function(name: &str, file: &str, hidden_deps: usize, labels: Vec<&str>) -> FunctionInfo {
-    FunctionInfo::default()
-        .with_name(name.to_string())
-        .with_file(file.to_string())
-        .with_is_pure(true)
-        .with_is_public(true)
-        .with_hidden_deps(hidden_deps)
-        .with_hidden_dep_labels(labels.into_iter().map(str::to_string).collect())
-        .with_grip_absolute(0.95)
-        .with_grip_normalized(95)
+    FunctionInfo {
+        name: name.to_string(),
+        file: file.to_string(),
+        is_pure: true,
+        is_public: true,
+        hidden_deps,
+        hidden_dep_labels: labels.into_iter().map(str::to_string).collect(),
+        grip_absolute: 0.95,
+        grip_normalized: 95,
+        ..Default::default()
+    }
 }
 
 #[test]

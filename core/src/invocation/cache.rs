@@ -23,9 +23,9 @@ pub struct Cache {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct CachedEntry {
-    mtime_secs: u128,
-    len: u64,
-    counts: ItemCounts,
+    pub mtime_secs: u128,
+    pub len: u64,
+    pub counts: ItemCounts,
 }
 
 impl Cache {

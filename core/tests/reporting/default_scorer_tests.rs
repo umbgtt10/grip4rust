@@ -51,9 +51,9 @@ fn empty_module_gives_no_score() {
     let scores = scorer().score_counts(&counts);
 
     // Assert
-    assert_eq!(scores.grip_score(), None);
-    assert_eq!(scores.pure_ratio(), 0.0);
-    assert_eq!(scores.public_ratio(), 0.0);
+    assert_eq!(scores.grip_score, None);
+    assert_eq!(scores.pure_ratio, 0.0);
+    assert_eq!(scores.public_ratio, 0.0);
 }
 
 #[test]
@@ -74,11 +74,11 @@ fn module_stats_sorted() {
 
     // Assert
     assert_eq!(stats.len(), 1);
-    assert_eq!(stats[0].path(), "alpha");
-    assert_eq!(stats[0].grip_score(), Some(75));
-    assert_eq!(stats[0].trait_ratio(), 1.0);
-    assert_eq!(stats[0].avg_contribution(), 0.0);
-    assert_eq!(stats[0].clean_fn_ratio(), 0.0);
+    assert_eq!(stats[0].path, "alpha");
+    assert_eq!(stats[0].grip_score, Some(75));
+    assert_eq!(stats[0].trait_ratio, 1.0);
+    assert_eq!(stats[0].avg_contribution, 0.0);
+    assert_eq!(stats[0].clean_fn_ratio, 0.0);
 }
 
 #[test]
@@ -99,9 +99,9 @@ fn score_counts_with_everything_pure_and_public_returns_one_hundred() {
     let scores = scorer().score_counts(&counts);
 
     // Assert
-    assert_eq!(scores.grip_score(), Some(100));
-    assert_eq!(scores.pure_ratio(), 1.0);
-    assert_eq!(scores.public_ratio(), 1.0);
+    assert_eq!(scores.grip_score, Some(100));
+    assert_eq!(scores.pure_ratio, 1.0);
+    assert_eq!(scores.public_ratio, 1.0);
 }
 
 #[test]
@@ -118,7 +118,7 @@ fn score_counts_with_nothing_pure_or_public_returns_zero() {
     let scores = scorer().score_counts(&counts);
 
     // Assert
-    assert_eq!(scores.grip_score(), Some(0));
-    assert_eq!(scores.pure_ratio(), 0.0);
-    assert_eq!(scores.public_ratio(), 0.0);
+    assert_eq!(scores.grip_score, Some(0));
+    assert_eq!(scores.pure_ratio, 0.0);
+    assert_eq!(scores.public_ratio, 0.0);
 }

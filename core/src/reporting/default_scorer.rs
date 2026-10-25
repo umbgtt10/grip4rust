@@ -58,14 +58,14 @@ impl Scorer for DefaultScorer {
         } else {
             None
         };
-        Scores::new(
+        Scores {
             grip_score,
             pure_ratio,
             public_ratio,
             trait_ratio,
             avg_contribution,
             clean_fn_ratio,
-        )
+        }
     }
 
     fn agg_modules(
@@ -89,20 +89,21 @@ impl Scorer for DefaultScorer {
             .into_iter()
             .map(|(path, counts)| {
                 let scores = self.score_counts(&counts);
-                ModuleStats::default()
-                    .with_path(path)
-                    .with_grip_score(scores.grip_score())
-                    .with_pure_ratio(scores.pure_ratio())
-                    .with_public_items(counts.public_items())
-                    .with_total_functions(counts.total_functions())
-                    .with_pure_functions(counts.pure_functions())
-                    .with_public_ratio(scores.public_ratio())
-                    .with_inherent_methods(counts.inherent_methods())
-                    .with_local_trait_methods(counts.local_trait_methods())
-                    .with_trait_ratio(scores.trait_ratio())
-                    .with_avg_contribution(scores.avg_contribution())
-                    .with_clean_fn_ratio(scores.clean_fn_ratio())
-                    .with_grip_absolute_total(counts.total_contribution())
+                ModuleStats {
+                    path,
+                    grip_score: scores.grip_score,
+                    pure_ratio: scores.pure_ratio,
+                    public_items: counts.public_items(),
+                    total_functions: counts.total_functions(),
+                    pure_functions: counts.pure_functions(),
+                    public_ratio: scores.public_ratio,
+                    inherent_methods: counts.inherent_methods(),
+                    local_trait_methods: counts.local_trait_methods(),
+                    trait_ratio: scores.trait_ratio,
+                    avg_contribution: scores.avg_contribution,
+                    clean_fn_ratio: scores.clean_fn_ratio,
+                    grip_absolute_total: counts.total_contribution(),
+                }
             })
             .collect()
     }

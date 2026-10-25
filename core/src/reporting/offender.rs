@@ -6,23 +6,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Offender {
-    path: String,
-    grip_score: u32,
-}
-
-impl Offender {
-    #[must_use]
-    pub fn new(path: String, grip_score: u32) -> Self {
-        Self { path, grip_score }
-    }
-
-    #[must_use]
-    pub fn grip_score(&self) -> u32 {
-        self.grip_score
-    }
-
-    #[must_use]
-    pub fn path(&self) -> &str {
-        &self.path
-    }
+    pub path: String,
+    pub grip_score: u32,
 }

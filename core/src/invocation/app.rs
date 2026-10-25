@@ -112,19 +112,20 @@ impl App {
     ) -> GripReport {
         let (overall_counts, modules) = self.scorer.agg_modules(indexed);
         let scores = self.scorer.score_counts(&overall_counts);
-        let overall = OverallStats::default()
-            .with_grip_score(scores.grip_score())
-            .with_public_items(overall_counts.public_items())
-            .with_total_functions(overall_counts.total_functions())
-            .with_pure_functions(overall_counts.pure_functions())
-            .with_pure_ratio(scores.pure_ratio())
-            .with_public_ratio(scores.public_ratio())
-            .with_inherent_methods(overall_counts.inherent_methods())
-            .with_local_trait_methods(overall_counts.local_trait_methods())
-            .with_trait_ratio(scores.trait_ratio())
-            .with_avg_contribution(scores.avg_contribution())
-            .with_clean_fn_ratio(scores.clean_fn_ratio())
-            .with_grip_absolute_total(overall_counts.total_contribution());
+        let overall = OverallStats {
+            grip_score: scores.grip_score,
+            public_items: overall_counts.public_items(),
+            total_functions: overall_counts.total_functions(),
+            pure_functions: overall_counts.pure_functions(),
+            pure_ratio: scores.pure_ratio,
+            public_ratio: scores.public_ratio,
+            inherent_methods: overall_counts.inherent_methods(),
+            local_trait_methods: overall_counts.local_trait_methods(),
+            trait_ratio: scores.trait_ratio,
+            avg_contribution: scores.avg_contribution,
+            clean_fn_ratio: scores.clean_fn_ratio,
+            grip_absolute_total: overall_counts.total_contribution(),
+        };
         let target = self
             .config
             .path()
@@ -137,24 +138,27 @@ impl App {
         let offenders = module_stats
             .iter()
             .filter_map(|m| {
-                let score = m.grip_score()?;
-                (score < offender_threshold).then(|| Offender::new(m.path().to_string(), score))
+                let score = m.grip_score?;
+                (score < offender_threshold).then(|| Offender {
+                    path: m.path.clone(),
+                    grip_score: score,
+                })
             })
             .collect();
-        GripReport::new(
-            env!("CARGO_PKG_VERSION").to_string(),
+        GripReport {
+            version: env!("CARGO_PKG_VERSION").to_string(),
             target,
             overall,
-            module_stats,
+            modules: module_stats,
             offenders,
             offender_threshold,
             functions,
-        )
+        }
     }
 
     fn handle_output(&self, report: &GripReport) -> Result<ExitCode> {
         if let Some(min) = self.config.threshold() {
-            return Ok(if report.overall().grip_score().is_none_or(|s| s >= min) {
+            return Ok(if report.overall.grip_score.is_none_or(|s| s >= min) {
                 ExitCode::SUCCESS
             } else {
                 ExitCode::FAILURE

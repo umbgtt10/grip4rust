@@ -22,8 +22,14 @@ fn render_with_offenders_shows_each_path_and_score() {
     // Arrange
     let renderer = OffendersRenderer::new();
     let offenders = vec![
-        Offender::new("bad_mod".to_string(), 30),
-        Offender::new("worse_mod".to_string(), 12),
+        Offender {
+            path: "bad_mod".to_string(),
+            grip_score: 30,
+        },
+        Offender {
+            path: "worse_mod".to_string(),
+            grip_score: 12,
+        },
     ];
 
     // Act
@@ -46,7 +52,10 @@ fn render_with_offenders_shows_each_path_and_score() {
 fn render_with_offenders_shows_threshold_in_header() {
     // Arrange
     let renderer = OffendersRenderer::new();
-    let offenders = vec![Offender::new("bad_mod".to_string(), 30)];
+    let offenders = vec![Offender {
+        path: "bad_mod".to_string(),
+        grip_score: 30,
+    }];
 
     // Act
     let lines = renderer.render(&offenders, 50);
