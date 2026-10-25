@@ -13,7 +13,7 @@ fn grip_score_is_carried_through_from_the_report() {
     let report = GripReportParser::new().parse(json).expect("parses");
 
     // Assert
-    assert_eq!(report.overall().grip_score(), 74);
+    assert_eq!(report.overall().grip_score, 74);
 }
 
 #[test]
@@ -25,5 +25,5 @@ fn grip_score_of_zero_is_carried_rather_than_treated_as_absent() {
     let report = GripReportParser::new().parse(json).expect("parses");
 
     // Assert
-    assert_eq!(report.overall().grip_score(), 0);
+    assert_eq!(report.overall().grip_score, 0);
 }

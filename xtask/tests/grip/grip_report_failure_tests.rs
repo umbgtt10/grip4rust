@@ -9,7 +9,9 @@ use xtask::grip::grip_report_failure::GripReportFailure;
 #[test]
 fn to_string_carries_the_reason() {
     // Arrange
-    let failure = GripReportFailure::new(String::from("EOF while parsing"));
+    let failure = GripReportFailure {
+        reason: String::from("EOF while parsing"),
+    };
 
     // Act
     let text = failure.to_string();

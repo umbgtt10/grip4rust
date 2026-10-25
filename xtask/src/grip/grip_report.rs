@@ -23,7 +23,7 @@ impl GripReport {
     }
 
     pub fn score(&self) -> i64 {
-        self.overall.grip_score()
+        self.overall.grip_score
     }
 
     pub fn summary(&self, floor: i64) -> String {

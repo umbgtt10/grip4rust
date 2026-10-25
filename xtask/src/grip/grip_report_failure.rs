@@ -7,13 +7,7 @@ use std::fmt;
 // Why grip4rust's output yielded no report: what it wrote did not parse.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GripReportFailure {
-    reason: String,
-}
-
-impl GripReportFailure {
-    pub fn new(reason: String) -> Self {
-        Self { reason }
-    }
+    pub reason: String,
 }
 
 impl fmt::Display for GripReportFailure {
