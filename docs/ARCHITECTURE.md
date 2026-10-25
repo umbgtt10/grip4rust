@@ -10,8 +10,10 @@ how the scores themselves are computed.
 ## Pipeline
 
 ```
-Args (clap)
+EntryPoint::run(args) — strips the repeated cargo subcommand
+  → Args (clap)
   → Config
+  → EntryPoint::compose(config) — builds the parts, hands them to App::new
     → App
         walker:   Box<dyn Walk>      — finds .rs files
         scorer:   Box<dyn Scorer>    — aggregates + scores
@@ -39,16 +41,18 @@ Args (clap)
 Steps (b) and (c) are why `collect_files` reads every file into memory
 before scoring any of them, rather than streaming one file at a time: a
 field's type, or a method's purity, can only be resolved once every file
-in scope has been seen — a struct commonly gets its own file (`one struct
+in scope has been seen — an object commonly gets its own file (`one object
 per file`) while its `impl` block sits in the same file, but nothing
 requires that, and the two registries exist specifically to not depend on
 it. See `docs/ADRs/ADR-TwoPassProjectWideRegistries.md` for why this is
 two lightweight project-wide passes rather than one deeper one, and why
 neither pass follows a call chain across type boundaries.
 
-`App` (`app.rs`) is the only place that wires concrete types to trait
-objects — everywhere else in the codebase depends on the `traits/`
-interfaces, never on `FsWalk`/`DefaultScorer`/`StdoutReporter`/`Cache`
+`EntryPoint::compose` (`entry_point.rs`) is the only place that wires
+concrete types to trait objects: it builds `FsWalk`/`DefaultScorer`/
+`StdoutReporter`/`Cache` and hands them to `App::new`, `App`'s only
+constructor, which takes every dependency and builds none. Everywhere else
+in the codebase depends on the `traits/` interfaces, never on those four
 directly. See `docs/ADRs/ADR-DynDispatchAppOverGenerics.md` for why these
 are `Box<dyn Trait>` fields rather than generic parameters.
 
@@ -61,7 +65,7 @@ are `Box<dyn Trait>` fields rather than generic parameters.
 | `Reporter` | `StdoutReporter` | Render a `GripReport` as human-readable text or JSON. |
 | `CacheStore` | `Cache` (real) / `NoOpCacheStore` (always-miss fake) | Skip re-parsing a file whose mtime+size haven't changed since the last run. |
 
-Every fixture tree under `fixture/` exercises `App::with_deps()`
+Every fixture tree under `fixture/` exercises `App::new()`
 with a mix of real and fake implementations of these four traits — that's
 the seam the whole test suite is built around.
 
@@ -130,9 +134,12 @@ both output modes are projections of.
 ## CLI layer
 
 `Args` (`args.rs`, `clap::Parser`) parses argv into flags; `Config`
-(`config.rs`) is the plain-data form `App` actually consumes, built once
-via `Config::from_args(args)`. `main.rs` and `lib.rs::run()`/`run_from_args()`
-are thin entry points — all real logic lives in `App` and below.
+(`config.rs`) is the form `App` actually consumes, built once via
+`Config::from_args(args)`. `main.rs` is one call to `EntryPoint::run`, and
+`EntryPoint` (`entry_point.rs`) is the composition root: `run` strips the
+repeated cargo subcommand and turns an error into a failing exit code,
+`run_from_args` parses the arguments into a `Config`, and `compose` wires the
+concrete parts into an `App` — all real logic lives in `App` and below.
 
 ## Related
 

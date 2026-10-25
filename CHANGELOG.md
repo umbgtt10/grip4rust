@@ -12,16 +12,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 The command line, output and exit codes are unchanged. The library is not:
 four `pub` free functions became associated functions, for stern4rust 0.17.0's
 new `owned-functions` rule -- a file with a subject holds no free function --
-and `Scorer::score_counts` returns a struct where it returned a tuple.
+`Scorer::score_counts` returns a struct where it returned a tuple, `App` is
+built from parts composed outside it, and six types with behaviour keep their
+fields private behind getters.
 
 ### Changed
 - `analysis::struct_registry`'s `field_type_head`, `self_ty_name` and
   `is_trait_object_type` are associated functions of `StructRegistry`;
   `HiddenDepFinder` and `IoCallFinder` own their private helpers.
-- `invocation::app::run_from_args` is `App::run_from_args`, and the free `run`
-  is gone: `main.rs` reads the process's arguments and hands them, with the
-  cargo subcommand stripped, to `App::run_from_args`. `Args::parse_cargo`,
-  which only `run` used, goes with it.
+- `App::new(config)`, which built its own parts, is gone: `App::with_deps` is
+  renamed `App::new` and is the only constructor, taking every dependency, for
+  stern4rust's coming `injected-dependencies` rule -- a field declared as a
+  trait holds only what the caller passed in. The concrete parts are built by
+  the new composition root `invocation::entry_point::EntryPoint` (`compose`,
+  `run`, `run_from_args`); `invocation::app::run_from_args` is
+  `EntryPoint::run_from_args`, and `main.rs` calls `EntryPoint::run`.
+- The free `invocation::app::run` is gone: `main.rs` hands the process's
+  arguments to `EntryPoint::run`, which strips the cargo subcommand.
+  `Args::parse_cargo`, which only `run` used, goes with it.
+- `ItemCounts`, `HiddenDepFinder`, `IoCallFinder`, `UnsafeFinder`, `Args` and
+  `Config` keep their fields private behind getters: they have behaviour, and
+  stern4rust's coming `records-and-objects` rule asks an object to hide its
+  fields. Every field that was `pub` is read through a getter named after it --
+  `ItemCounts`' ten, `HiddenDepFinder`'s `count`, `weight` and `labels`, the
+  two finders' `found`, and `Args`' and `Config`'s `path`, `json`, `threshold`
+  and `verbose`. An `ItemCounts` is built from `ItemCounts::default()` by a
+  `with_<field>` step per field, and records a function and an item itself,
+  `record_function` and `record_item` beside `record_impl_method`; a `Config`
+  is built by the new `Config::new(path, json, threshold, verbose)` or by
+  `Config::from_args`.
 - All twenty-four stern4rust rules apply to every workspace member.
 - `Scorer::score_counts` returns a `reporting::scores::Scores` instead of
   `(Option<u32>, f64, f64, f64, f64, f64)`, whose five ratios only their

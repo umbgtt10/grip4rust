@@ -76,6 +76,24 @@ inspecting a moved object's side effects through a shared handle.
 N/A — structural; enforced only by the type signature of `App` itself
 (there is no generic parameter left to reintroduce accidentally).
 
+## Amendment — 2026-10-25
+
+`App::new()`, which built the real `FsWalk`/`DefaultScorer`/
+`StdoutReporter`/`Cache` itself, is gone, and `with_deps()` is renamed
+`App::new()`: `App`'s only constructor, taking the four boxes and the
+`Config` directly. stern4rust's `injected-dependencies` rule (R038, in its
+next release) holds that a field declared as a trait receives only what the
+caller passed in — a constructor that builds its own parts closes the seam to
+every one of its callers. The real parts are built by
+`invocation::entry_point::EntryPoint::compose`, the composition root that
+`main.rs` reaches through `EntryPoint::run`.
+
+The decision above stands: `App` is still non-generic, holding
+`Box<dyn Trait>` fields, and its constructor still takes the boxes as they
+are. Read the text above with the names of its time: its `with_deps()` is
+today's `App::new()`, and its `App::new()` is today's
+`EntryPoint::compose()`.
+
 ## Related
 
 - `braintax`'s own `ADR-DynDispatchAppOverGenerics.md` — the identical
