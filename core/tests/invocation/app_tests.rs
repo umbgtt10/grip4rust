@@ -3,11 +3,9 @@
 // SPDX-License-Identifier: MIT
 
 use crate::support::in_memory_walk::InMemoryWalk;
-use crate::support::recording_cache_store::RecordingCacheStore;
 use crate::support::recording_report_renderer::RecordingReportRenderer;
 use grip::invocation::app::App;
 use grip::invocation::config::Config;
-use grip::invocation::no_op_cache_store::NoOpCacheStore;
 use grip::invocation::run_outcome::RunOutcome;
 use grip::reporting::default_scorer::DefaultScorer;
 use grip::reporting::grip_report::GripReport;
@@ -22,7 +20,6 @@ fn app(walk: InMemoryWalk, handed: &Rc<RefCell<Vec<GripReport>>>, threshold: Opt
         Box::new(walk),
         Box::new(DefaultScorer::new()),
         Box::new(RecordingReportRenderer::new(Rc::clone(handed))),
-        Box::new(NoOpCacheStore::new()),
         config(threshold),
     )
 }
@@ -51,41 +48,6 @@ fn new_builds_an_app_that_runs_on_the_injected_dependencies() {
             output: String::from("rendered\n"),
             below_threshold: false,
         }
-    );
-}
-
-#[test]
-fn run_asks_the_cache_for_each_file_and_stores_only_the_ones_it_misses() {
-    // Arrange
-    let calls = Rc::new(RefCell::new(Vec::new()));
-    let handed = Rc::new(RefCell::new(Vec::new()));
-    let app = App::new(
-        Box::new(
-            InMemoryWalk::new()
-                .with_file("src/a.rs", GREET)
-                .with_file("src/b.rs", GREET),
-        ),
-        Box::new(DefaultScorer::new()),
-        Box::new(RecordingReportRenderer::new(Rc::clone(&handed))),
-        Box::new(RecordingCacheStore::new(
-            vec![String::from("root/src/a.rs")],
-            Rc::clone(&calls),
-        )),
-        config(None),
-    );
-
-    // Act
-    app.run().unwrap();
-
-    // Assert
-    assert_eq!(
-        *calls.borrow(),
-        [
-            "get root/src/a.rs",
-            "get root/src/b.rs",
-            "set root/src/b.rs",
-            "flush"
-        ]
     );
 }
 
@@ -166,7 +128,6 @@ fn run_with_a_failing_renderer_fails_with_its_failure() {
         Box::new(InMemoryWalk::new().with_file("src/lib.rs", GREET)),
         Box::new(DefaultScorer::new()),
         Box::new(RecordingReportRenderer::failing(Rc::clone(&handed))),
-        Box::new(NoOpCacheStore::new()),
         config(None),
     );
 

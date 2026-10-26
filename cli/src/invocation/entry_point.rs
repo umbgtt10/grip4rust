@@ -7,7 +7,6 @@ use crate::system::fs_walk::FsWalk;
 use crate::system::json_report_renderer::JsonReportRenderer;
 use anyhow::Result;
 use grip::invocation::app::App;
-use grip::invocation::no_op_cache_store::NoOpCacheStore;
 use grip::invocation::run_outcome::RunOutcome;
 use grip::reporting::default_scorer::DefaultScorer;
 use grip::reporting::text_report_renderer::TextReportRenderer;
@@ -33,7 +32,6 @@ impl EntryPoint {
             Box::new(FsWalk::new(args.path())),
             Box::new(DefaultScorer::new()),
             renderer,
-            Box::new(NoOpCacheStore::new()),
             args.config(),
         )
     }

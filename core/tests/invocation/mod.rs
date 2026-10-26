@@ -3,5 +3,4 @@
 // SPDX-License-Identifier: MIT
 
 pub mod app_tests;
-pub mod no_op_cache_store_tests;
 pub mod run_failure_tests;

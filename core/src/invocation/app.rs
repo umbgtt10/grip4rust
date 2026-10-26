@@ -13,7 +13,6 @@ use crate::invocation::run_outcome::RunOutcome;
 use crate::reporting::grip_report::GripReport;
 use crate::reporting::offender::Offender;
 use crate::reporting::overall_stats::OverallStats;
-use crate::traits::cache_store::CacheStore;
 use crate::traits::report_renderer::ReportRenderer;
 use crate::traits::scorer::Scorer;
 use crate::traits::walk::Walk;
@@ -27,7 +26,6 @@ pub struct App {
     walker: Box<dyn Walk>,
     scorer: Box<dyn Scorer>,
     renderer: Box<dyn ReportRenderer>,
-    cache: Box<dyn CacheStore>,
     config: Config,
 }
 
@@ -37,21 +35,18 @@ impl App {
         walker: Box<dyn Walk>,
         scorer: Box<dyn Scorer>,
         renderer: Box<dyn ReportRenderer>,
-        cache: Box<dyn CacheStore>,
         config: Config,
     ) -> Self {
         Self {
             walker,
             scorer,
             renderer,
-            cache,
             config,
         }
     }
 
     pub fn run(&self) -> Result<RunOutcome, RunFailure> {
         let (indexed, functions) = self.collect_files()?;
-        self.cache.flush();
 
         if indexed.is_empty() {
             return Err(RunFailure::NoSourceFiles(self.config.path.clone()));
@@ -72,9 +67,6 @@ impl App {
             let (counts, functions) =
                 Collector::collect(&file.source, &file.path, &registry, &method_purity);
             all_functions.extend(functions);
-            if self.cache.get(&file.path).is_none() {
-                self.cache.set(&file.path, &file.source, &counts);
-            }
             indexed.push((module, counts));
         }
         Ok((indexed, all_functions))

@@ -4,7 +4,6 @@
 
 use crate::capture_reporter::CaptureReporter;
 use grip::invocation::app::App;
-use grip::invocation::no_op_cache_store::NoOpCacheStore;
 use grip::reporting::default_scorer::DefaultScorer;
 use grip_cli::invocation::args::Args;
 use grip_cli::system::fs_walk::FsWalk;
@@ -41,7 +40,6 @@ impl FixtureAnalysis {
             Box::new(FsWalk::new(args.path())),
             Box::new(DefaultScorer::new()),
             Box::new(CaptureReporter::new(Rc::clone(&captured))),
-            Box::new(NoOpCacheStore::new()),
             args.config(),
         );
         app.run().expect("app run failed");

@@ -36,8 +36,7 @@ is packaged and much of its API.
   `&[SourceFile]`; `Collector::collect` takes the path as `&str`.
 - `Config.path` is the analysed root as text and `Config` gains `target`, the
   name the report gives it; `EntryPoint::compose` takes `&Args`.
-- `traits::cache_store::CacheStore`'s `get` and `set` take the file's path as
-  `&str`; `ItemCounts` no longer implements `Serialize` or `Deserialize`.
+- `ItemCounts` no longer implements `Serialize` or `Deserialize`.
 - `traits::reporter::Reporter { render, write }` is
   `traits::report_renderer::ReportRenderer`, which only renders:
   `render(&self, &GripReport) -> Result<String, RenderFailure>`, with the new
@@ -76,7 +75,10 @@ is packaged and much of its API.
   analysed directory, nor writes it there: the cache never served a hit -- the
   run parsed every file every time and only asked the cache whether to store
   it -- so nothing it held ever changed a result. `invocation::cache::Cache`
-  goes with it.
+  goes with it, and so do the port it implemented,
+  `traits::cache_store::CacheStore`, and its always-miss stand-in,
+  `invocation::no_op_cache_store::NoOpCacheStore`: `App::new` takes the walk,
+  the scorer, the renderer and the `Config`, without a cache.
 
 The command line, output and exit codes are unchanged. The library is not:
 four `pub` free functions became associated functions, for stern4rust 0.17.0's
