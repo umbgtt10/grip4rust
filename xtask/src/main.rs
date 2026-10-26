@@ -83,6 +83,7 @@ fn run_stage2() -> ExitCode {
     let dry = DryGate::new(
         &runner,
         path_from_root(DRY_PATH),
+        vec![],
         path_from_root(&[DRY_BASELINE]),
         String::from(DRY_MIN_NODES),
     );

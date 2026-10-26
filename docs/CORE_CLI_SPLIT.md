@@ -69,7 +69,7 @@ core's tests only.
 | # | slice | status |
 |---|---|---|
 | S0 | this record | done |
-| S1 | `DryGate`: excludes by full path, so one run can cover the workspace | |
+| S1 | `DryGate`: excludes by full path, so one run can cover the workspace | done |
 | S2 | the split: `cli` takes `main.rs`, `Args` and `EntryPoint`; core is renamed; one workspace version; `[workspace.lints]` forbids unsafe code; `Config` becomes a record built by `Args::config` | |
 | S3 | the `Walk` port on `SourceFile` records; the walker becomes cli's `FsWalk` | |
 | S4 | the `CacheStore` port on text paths; the cache becomes cli's `Cache` | |
