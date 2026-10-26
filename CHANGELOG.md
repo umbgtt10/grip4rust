@@ -63,6 +63,14 @@ which changes how the library is packaged and much of its API.
   take are `BTreeMap`s instead of `HashMap`s. Scores round with `libm::round`,
   which agrees with the standard library's to the bit.
 
+### Changed (development)
+- Stage 2 gains a first gate, "Technology-free core": `grip4rust-core`'s
+  manifest may name only `libm`, `quote` and `syn` in any section, its crate
+  root must carry `#![no_std]` and `#![forbid(unsafe_code)]`, and no file under
+  `core/src` or `core/tests` may reach `std::{env,fs,io,net,os,process}`, the
+  printing macros or the file-system methods. dry4rust runs once from the root
+  over both published crates; the measuring gates cover both.
+
 The command line, output and exit codes are unchanged. The library is not:
 four `pub` free functions became associated functions, for stern4rust 0.17.0's
 new `owned-functions` rule -- a file with a subject holds no free function --

@@ -75,7 +75,7 @@ core's tests only.
 | S4 | the `CacheStore` port on text paths; the cache becomes cli's `Cache` | done |
 | S5 | the `ReportRenderer` port and `RunOutcome`: the text report in core, JSON, writing and the exit code in cli | done |
 | S6 | `#![no_std]`: alloc imports, ordered maps, `libm`, typed errors; anyhow leaves core | done |
-| S7 | the technology-free gate, first in stage 2 | |
+| S7 | the technology-free gate, first in stage 2 | done |
 | S8 | `.cargo/mutants.toml` | |
 | S9 | docs, and this record moves to `docs/history/` | |
 
