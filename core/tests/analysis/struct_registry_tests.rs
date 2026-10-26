@@ -2,8 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use grip::analysis::source_file::SourceFile;
 use grip::analysis::struct_registry::StructRegistry;
-use std::path::PathBuf;
 use syn::Type;
 use syn::parse_str;
 
@@ -11,7 +11,11 @@ use syn::parse_str;
 fn concrete_fields_of_a_struct_returns_each_field_against_its_type_head() {
     // Arrange
     let source = String::from("pub struct Holder { pub inner: Inner, pub count: u32 }");
-    let registry = StructRegistry::build(&[(PathBuf::from("lib.rs"), source)]);
+    let registry = StructRegistry::build(&[SourceFile {
+        path: String::from("lib.rs"),
+        source,
+        ..Default::default()
+    }]);
 
     // Act
     let fields = registry.concrete_fields_of("Holder");
@@ -101,8 +105,16 @@ fn is_transitive_value_type_cross_source_field_returns_true() {
     let members_source = "struct Members { ids: Vec<i32> }";
     let user_source = "struct Bootstrapped { members: Members }";
     let files = vec![
-        (PathBuf::from("members.rs"), members_source.to_string()),
-        (PathBuf::from("bootstrapped.rs"), user_source.to_string()),
+        SourceFile {
+            path: String::from("members.rs"),
+            source: members_source.to_string(),
+            ..Default::default()
+        },
+        SourceFile {
+            path: String::from("bootstrapped.rs"),
+            source: user_source.to_string(),
+            ..Default::default()
+        },
     ];
     let registry = StructRegistry::build(&files);
 
@@ -130,7 +142,11 @@ struct Bootstrapped {
     members: Members,
 }
 "#;
-    let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("lib.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let registry = StructRegistry::build(&files);
 
     // Act
@@ -167,7 +183,11 @@ struct B {
     a: A,
 }
 "#;
-    let files = vec![(PathBuf::from("cyclic.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("cyclic.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let registry = StructRegistry::build(&files);
 
     // Act
@@ -188,7 +208,11 @@ struct Members {
     ids: Vec<i32>,
 }
 "#;
-    let files = vec![(PathBuf::from("members.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("members.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let registry = StructRegistry::build(&files);
 
     // Act
@@ -210,7 +234,11 @@ struct Cache {
     conn: DbConnection,
 }
 "#;
-    let files = vec![(PathBuf::from("cache.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("cache.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let registry = StructRegistry::build(&files);
 
     // Act
@@ -250,7 +278,11 @@ struct Bootstrapped {
     members: Members,
 }
 "#;
-    let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("lib.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let registry = StructRegistry::build(&files);
 
     // Act

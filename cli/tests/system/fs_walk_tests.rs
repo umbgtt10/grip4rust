@@ -2,9 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use grip::analysis::fs_walk::FsWalk;
 use grip::traits::walk::Walk;
+use grip_cli::system::fs_walk::FsWalk;
 use std::fs;
+use std::path::Path;
 use tempfile::TempDir;
 
 #[test]
@@ -71,5 +72,5 @@ fn skips_tests_directory() {
 
     // Assert
     assert_eq!(files.len(), 1);
-    assert!(files[0].0.ends_with("lib.rs"));
+    assert!(Path::new(&files[0].path).ends_with("lib.rs"));
 }

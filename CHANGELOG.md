@@ -25,6 +25,15 @@ which changes how the library is packaged and much of its API.
   `grip_cli::invocation::entry_point::EntryPoint`, unchanged.
 - `Config::from_args` is gone: `Args::config()` builds the `Config`, which
   keeps its `pub` fields and is otherwise built by literal.
+- `traits::walk::Walk::rust_files()` returns `Result<Vec<SourceFile>,
+  WalkFailure>` -- the new `analysis::source_file::SourceFile { path,
+  relative, source }` and `analysis::walk_failure::WalkFailure { path, cause }`
+  -- instead of `anyhow::Result<Vec<(PathBuf, String)>>`.
+  `analysis::fs_walk::FsWalk` moves to `grip_cli::system::fs_walk::FsWalk`.
+  `StructRegistry::build` and `MethodPurityRegistry::build` take
+  `&[SourceFile]`; `Collector::collect` takes the path as `&str`.
+- `Config.path` is the analysed root as text and `Config` gains `target`, the
+  name the report gives it; `EntryPoint::compose` takes `&Args`.
 
 The command line, output and exit codes are unchanged. The library is not:
 four `pub` free functions became associated functions, for stern4rust 0.17.0's

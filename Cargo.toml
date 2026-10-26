@@ -15,6 +15,7 @@ repository = "https://github.com/umbgtt10/grip4rust"
 # Declared once here; every member takes them with `.workspace = true`, so a
 # version is bumped in one place and no two members can disagree.
 [workspace.dependencies]
+cargo-grip4rust = { path = "cli", version = "0.9.1" }
 grip4rust-core = { path = "core", version = "0.9.1" }
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }

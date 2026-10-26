@@ -6,6 +6,30 @@ use grip_cli::invocation::args::Args;
 use std::ffi::OsString;
 
 #[test]
+fn config_names_a_path_without_a_last_directory_dot() {
+    // Arrange
+    let args = Args::parse_from_args(vec!["cargo-grip4rust", ".."]);
+
+    // Act
+    let config = args.config();
+
+    // Assert
+    assert_eq!(config.target, ".");
+}
+
+#[test]
+fn config_names_the_target_after_the_last_directory() {
+    // Arrange
+    let args = Args::parse_from_args(vec!["cargo-grip4rust", "some/my-project/"]);
+
+    // Act
+    let config = args.config();
+
+    // Assert
+    assert_eq!(config.target, "my-project");
+}
+
+#[test]
 fn config_preserves_json() {
     // Arrange
     let args = Args::parse_from_args(vec!["cargo-grip4rust", "--json"]);
@@ -26,7 +50,7 @@ fn config_preserves_path() {
     let config = args.config();
 
     // Assert
-    assert_eq!(config.path.to_string_lossy(), "my-project");
+    assert_eq!(config.path, "my-project");
 }
 
 #[test]

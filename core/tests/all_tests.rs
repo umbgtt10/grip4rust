@@ -6,3 +6,4 @@ pub mod analysis;
 pub mod detection;
 pub mod invocation;
 pub mod reporting;
+pub mod support;

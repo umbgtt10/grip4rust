@@ -38,7 +38,13 @@ impl Args {
     #[must_use]
     pub fn config(&self) -> Config {
         Config {
-            path: self.path.clone(),
+            path: self.path.display().to_string(),
+            target: self
+                .path
+                .file_name()
+                .and_then(|n| n.to_str())
+                .unwrap_or(".")
+                .to_string(),
             json: self.json,
             threshold: self.threshold,
             verbose: self.verbose,

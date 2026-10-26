@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 use crate::analysis::inline_module::InlineModule;
+use crate::analysis::source_file::SourceFile;
 use crate::analysis::transitive_value_type_resolver::TransitiveValueTypeResolver;
 use crate::analysis::type_path_segments::TypePathSegments;
 use std::collections::HashMap;
-use std::path::PathBuf;
 use syn::visit::Visit;
 use syn::{GenericArgument, Item, ItemMod, ItemStruct, PathArguments, Type, parse_file};
 
@@ -18,10 +18,10 @@ pub struct StructRegistry {
 
 impl StructRegistry {
     #[must_use]
-    pub fn build(files: &[(PathBuf, String)]) -> Self {
+    pub fn build(files: &[SourceFile]) -> Self {
         let mut registry = Self::default();
-        for (_, source) in files {
-            if let Ok(syntax) = parse_file(source) {
+        for file in files {
+            if let Ok(syntax) = parse_file(&file.source) {
                 for item in &syntax.items {
                     registry.visit_item(item);
                 }

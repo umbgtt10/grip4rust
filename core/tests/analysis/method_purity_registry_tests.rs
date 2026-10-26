@@ -3,8 +3,8 @@
 // SPDX-License-Identifier: MIT
 
 use grip::analysis::method_purity_registry::MethodPurityRegistry;
+use grip::analysis::source_file::SourceFile;
 use grip::analysis::struct_registry::StructRegistry;
-use std::path::PathBuf;
 
 #[test]
 fn is_known_pure_method_body_with_hidden_dep_returns_false() {
@@ -21,7 +21,11 @@ impl Members {
     }
 }
 "#;
-    let files = vec![(PathBuf::from("members.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("members.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
 
@@ -47,8 +51,16 @@ impl Members {
 }
 "#;
     let files = vec![
-        (PathBuf::from("members.rs"), struct_source.to_string()),
-        (PathBuf::from("members_impl.rs"), impl_source.to_string()),
+        SourceFile {
+            path: String::from("members.rs"),
+            source: struct_source.to_string(),
+            ..Default::default()
+        },
+        SourceFile {
+            path: String::from("members_impl.rs"),
+            source: impl_source.to_string(),
+            ..Default::default()
+        },
     ];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
@@ -77,7 +89,11 @@ impl DiskCache {
     }
 }
 "#;
-    let files = vec![(PathBuf::from("disk_cache.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("disk_cache.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
 
@@ -109,7 +125,11 @@ impl Lengthy for Members {
     fn len(&self) -> usize { self.ids.len() }
 }
 "#;
-    let files = vec![(PathBuf::from("members.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("members.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
 
@@ -136,7 +156,11 @@ impl Counter {
     }
 }
 "#;
-    let files = vec![(PathBuf::from("counter.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("counter.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
 
@@ -161,7 +185,11 @@ impl Members {
     pub fn len(&self) -> usize { self.ids.len() }
 }
 "#;
-    let files = vec![(PathBuf::from("members.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("members.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
 

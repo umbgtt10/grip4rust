@@ -12,7 +12,6 @@ use crate::analysis::visibility_level::VisibilityLevel;
 use crate::detection::contribution_schedule::ContributionSchedule;
 use crate::detection::hidden_dep_finder::HiddenDepFinder;
 use std::collections::HashMap;
-use std::path::Path;
 use syn::visit::Visit;
 use syn::{
     Block, ImplItem, ImplItemFn, Item, ItemEnum, ItemFn, ItemImpl, ItemMod, ItemStruct, ItemTrait,
@@ -49,11 +48,11 @@ impl<'a> Collector<'a> {
 
     pub fn collect(
         source: &str,
-        path: &Path,
+        path: &str,
         registry: &'a StructRegistry,
         method_purity: &'a MethodPurityRegistry,
     ) -> (ItemCounts, Vec<FunctionInfo>) {
-        let file = path.to_string_lossy().replace('\\', "/");
+        let file = path.replace('\\', "/");
         let syntax = match parse_file(source) {
             Ok(s) => s,
             Err(_) => return (ItemCounts::default(), Vec::new()),

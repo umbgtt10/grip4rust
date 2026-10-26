@@ -54,7 +54,7 @@ impl App {
         if indexed.is_empty() {
             return Err(anyhow!(
                 "no Rust source files found in {}",
-                self.config.path.display()
+                self.config.path
             ));
         }
 
@@ -68,12 +68,14 @@ impl App {
         let method_purity = MethodPurityRegistry::build(&files, &registry);
         let mut indexed = Vec::with_capacity(files.len());
         let mut all_functions = Vec::new();
-        for (path, source) in files {
-            let module = self.module_from_path(&path);
-            let (counts, functions) = Collector::collect(&source, &path, &registry, &method_purity);
+        for file in files {
+            let module = Self::module_of(&file.relative);
+            let (counts, functions) =
+                Collector::collect(&file.source, &file.path, &registry, &method_purity);
             all_functions.extend(functions);
-            if self.cache.get(&path).is_none() {
-                self.cache.set(&path, &source, &counts);
+            let path = Path::new(&file.path);
+            if self.cache.get(path).is_none() {
+                self.cache.set(path, &file.source, &counts);
             }
             indexed.push((module, counts));
         }
@@ -101,13 +103,6 @@ impl App {
             clean_fn_ratio: scores.clean_fn_ratio,
             grip_absolute_total: overall_counts.total_contribution(),
         };
-        let target = self
-            .config
-            .path
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or(".")
-            .to_string();
         let module_stats = self.scorer.module_stats(modules);
         let offender_threshold = self.config.threshold.unwrap_or(50);
         let offenders = module_stats
@@ -122,7 +117,7 @@ impl App {
             .collect();
         GripReport {
             version: env!("CARGO_PKG_VERSION").to_string(),
-            target,
+            target: self.config.target.clone(),
             overall,
             modules: module_stats,
             offenders,
@@ -143,9 +138,8 @@ impl App {
         Ok(ExitCode::SUCCESS)
     }
 
-    fn module_from_path(&self, path: &Path) -> String {
-        let relative = path.strip_prefix(&self.config.path).unwrap_or(path);
-        let s = relative.to_string_lossy().replace('\\', "/");
+    fn module_of(relative: &str) -> String {
+        let s = relative.replace('\\', "/");
         let without_src = s.strip_prefix("src/").map(|s| s.to_string()).unwrap_or(s);
         if let Some(pos) = without_src.rfind('/') {
             without_src[..pos].to_string()

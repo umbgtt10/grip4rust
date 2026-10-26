@@ -24,7 +24,7 @@ fn cache_hit_returns_same_counts() {
     let source = fs::read_to_string(&file).unwrap();
     let (initial, _fns) = Collector::collect(
         &source,
-        &file,
+        &file.to_string_lossy(),
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -51,7 +51,7 @@ fn cache_miss_after_change() {
     let source = fs::read_to_string(&file).unwrap();
     let (initial, _fns) = Collector::collect(
         &source,
-        &file,
+        &file.to_string_lossy(),
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );

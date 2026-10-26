@@ -2,13 +2,22 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use grip::invocation::config::Config;
+use grip_cli::invocation::args::Args;
 use grip_cli::invocation::entry_point::EntryPoint;
 use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
 use std::process::ExitCode;
 use tempfile::TempDir;
+
+fn args_for(dir: &TempDir, flags: &[&str]) -> Args {
+    let mut argv = vec![
+        OsString::from("cargo-grip4rust"),
+        dir.path().as_os_str().to_os_string(),
+    ];
+    argv.extend(flags.iter().map(OsString::from));
+    Args::parse_from_args(argv)
+}
 
 fn fixture_path(name: &str) -> String {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -30,15 +39,10 @@ fn compose_on_a_valid_dir_builds_an_app_whose_run_succeeds() {
     // Arrange
     let dir = TempDir::new().unwrap();
     write_project(&dir, "pub fn greet() -> &'static str { \"hello\" }\n");
-    let config = Config {
-        path: dir.path().to_path_buf(),
-        json: false,
-        threshold: None,
-        verbose: false,
-    };
+    let args = args_for(&dir, &[]);
 
     // Act
-    let exit_code = EntryPoint::compose(config).run().unwrap();
+    let exit_code = EntryPoint::compose(&args).run().unwrap();
 
     // Assert
     assert_eq!(exit_code, ExitCode::SUCCESS);
@@ -48,15 +52,10 @@ fn compose_on_a_valid_dir_builds_an_app_whose_run_succeeds() {
 fn compose_on_an_empty_dir_builds_an_app_whose_run_errors() {
     // Arrange
     let dir = TempDir::new().unwrap();
-    let config = Config {
-        path: dir.path().to_path_buf(),
-        json: false,
-        threshold: None,
-        verbose: false,
-    };
+    let args = args_for(&dir, &[]);
 
     // Act
-    let result = EntryPoint::compose(config).run();
+    let result = EntryPoint::compose(&args).run();
 
     // Assert
     assert!(result.is_err());

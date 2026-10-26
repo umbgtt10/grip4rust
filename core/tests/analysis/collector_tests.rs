@@ -4,31 +4,19 @@
 
 use grip::analysis::collector::Collector;
 use grip::analysis::method_purity_registry::MethodPurityRegistry;
+use grip::analysis::source_file::SourceFile;
 use grip::analysis::struct_registry::StructRegistry;
 use grip::detection::contribution_schedule::ContributionSchedule;
-use std::fs::File;
-use std::io::Write;
-use std::path::PathBuf;
-use tempfile::{TempDir, tempdir};
-
-fn write_file(dir: &TempDir, name: &str, contents: &str) -> PathBuf {
-    let path = dir.path().join(name);
-    let mut fh = File::create(&path).unwrap();
-    fh.write_all(contents.as_bytes()).unwrap();
-    path
-}
 
 #[test]
 fn by_value_mut_self_builder_method_is_pure() {
     // Arrange
     let source = "pub struct Builder { x: i32 }\nimpl Builder {\n    pub fn with_x(mut self, x: i32) -> Self { self.x = x; self }\n}\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -52,13 +40,11 @@ impl Service {
     pub fn query(&self, sql: &str) { self.db.query(sql); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -79,13 +65,11 @@ impl Service {
     pub fn process() { MyDatabase::query("SELECT 1"); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -106,13 +90,11 @@ impl Wrapper {
     pub fn wrap(x: i32) -> Box<i32> { Box::new(x) }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -130,13 +112,11 @@ impl Service {
     pub fn process() { MyDatabase::new("prod:5432"); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -157,13 +137,11 @@ impl Logger {
     pub fn log() { eprintln!("error"); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -176,13 +154,11 @@ impl Logger {
 fn hidden_dep_free_function_clean_not_flagged() {
     // Arrange
     let source = "fn add(a: i32, b: i32) -> i32 { a + b }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -198,13 +174,11 @@ fn hidden_dep_free_function_clean_not_flagged() {
 fn hidden_dep_free_function_is_detected() {
     // Arrange
     let source = "fn query_db() { Database::query(\"SELECT 1\"); }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -220,13 +194,11 @@ fn hidden_dep_free_function_is_detected() {
 fn hidden_dep_input_argument_not_counted() {
     // Arrange
     let source = "struct Service;\nimpl Service {\n    pub fn run(&self, db: &Database) { db.query(\"SELECT 1\"); }\n}\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -242,13 +214,11 @@ fn hidden_dep_input_argument_not_counted() {
 fn hidden_dep_labels_are_recorded() {
     // Arrange
     let source = "fn run() { Database::new(\"prod\"); println!(\"done\"); }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -271,13 +241,11 @@ fn hidden_dep_light_weight_vs_heavy() {
     // Arrange
     let source = "fn light() { println!(\"start\"); Instant::now(); }\n\
 fn heavy() { Database::new(\"prod\"); StripeGateway::charge(100.0); }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -307,13 +275,11 @@ impl Logger {
     pub fn log() { println!("hello"); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -335,13 +301,11 @@ impl Service {
     }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -357,13 +321,11 @@ impl Service {
 fn hidden_dep_print_macro_is_detected() {
     // Arrange
     let source = "struct Logger;\nimpl Logger {\n    pub fn log() { print!(\"hello\"); }\n}\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -382,13 +344,11 @@ impl Factory {
     pub fn new() -> Self { Self }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -418,13 +378,11 @@ impl Service {
     pub fn run(&self) { self.db.query("SELECT 1"); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -457,13 +415,11 @@ impl Bootstrapped {
     pub fn snapshot(&self) -> Members { self.members.clone() }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -497,13 +453,11 @@ impl Service {
     pub fn lookup(&self, key: &str) -> String { self.cache.get(key) }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -522,8 +476,11 @@ fn hidden_dep_self_field_custom_wrapper_clone_not_counted_when_registry_resolves
     // the registry has actually seen Members's definition (as it would after
     // a real multi-file project scan) - the clone must clear.
     let members_source = "struct Members { ids: Vec<i32> }";
-    let registry =
-        StructRegistry::build(&[(PathBuf::from("members.rs"), members_source.to_string())]);
+    let registry = StructRegistry::build(&[SourceFile {
+        path: String::from("members.rs"),
+        source: members_source.to_string(),
+        ..Default::default()
+    }]);
     let method_purity = MethodPurityRegistry::default();
 
     let source = r#"
@@ -538,11 +495,9 @@ impl Bootstrapped {
     pub fn snapshot(&self) -> Members { self.members.clone() }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &registry, &method_purity);
+    let (_counts, fns) = Collector::collect(source, "lib.rs", &registry, &method_purity);
 
     // Assert
     let snapshot_fn = fns.iter().find(|f| f.name == "snapshot").unwrap();
@@ -576,14 +531,16 @@ impl Service {
     pub fn lookup(&self, key: &str) -> String { self.cache.get(key) }
 }
 "#;
-    let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("lib.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &struct_registry, &method_purity);
+    let (_counts, fns) = Collector::collect(source, "lib.rs", &struct_registry, &method_purity);
 
     // Assert
     let lookup_fn = fns.iter().find(|f| f.name == "lookup").unwrap();
@@ -613,14 +570,16 @@ impl Bootstrapped {
     pub fn member_count(&self) -> usize { self.members.len() }
 }
 "#;
-    let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("lib.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &struct_registry, &method_purity);
+    let (_counts, fns) = Collector::collect(source, "lib.rs", &struct_registry, &method_purity);
 
     // Assert
     let member_count_fn = fns.iter().find(|f| f.name == "member_count").unwrap();
@@ -653,14 +612,16 @@ impl Bootstrapped {
     pub fn member_count(&self) -> usize { self.members.len() }
 }
 "#;
-    let files = vec![(PathBuf::from("lib.rs"), source.to_string())];
+    let files = vec![SourceFile {
+        path: String::from("lib.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
     let struct_registry = StructRegistry::build(&files);
     let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
-    let (_counts, fns) = Collector::collect(source, &_file, &struct_registry, &method_purity);
+    let (_counts, fns) = Collector::collect(source, "lib.rs", &struct_registry, &method_purity);
 
     // Assert
     let member_count_fn = fns.iter().find(|f| f.name == "member_count").unwrap();
@@ -683,13 +644,11 @@ impl Registry {
     pub fn count(&self) -> usize { self.entries.len() }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -712,13 +671,11 @@ impl Service<'_> {
     pub fn handle(&self) { self.handler.process(); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -741,13 +698,11 @@ impl Service {
     pub fn query(&self, sql: &str) { self.db.query(sql); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -770,13 +725,11 @@ impl Tracker {
     pub fn snapshot(&self) -> Vec<i32> { self.peers.clone() }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -799,13 +752,11 @@ impl ConfirmedSet {
     pub fn is_confirmed(&self, i: usize) -> bool { self.flags.get(i).copied().unwrap_or(false) }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -829,13 +780,11 @@ impl Log {
     pub fn record(&mut self, entry: i32) { self.entries.push(entry); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -856,13 +805,11 @@ impl Builder {
     pub fn build() -> String { String::new() }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -883,13 +830,11 @@ impl Service {
     pub fn charge() { StripeGateway::charge(100); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -905,13 +850,11 @@ impl Service {
 fn hidden_dep_thread_sleep_is_detected() {
     // Arrange
     let source = "fn pause() { std::thread::sleep(std::time::Duration::from_secs(1)); }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -932,13 +875,11 @@ impl Handler {
     pub fn handle() { TcpStream::connect("127.0.0.1:8080").unwrap(); }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -959,13 +900,11 @@ impl Collector {
     pub fn collect() -> Vec<i32> { Vec::new() }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -983,13 +922,11 @@ impl Calc {
     pub fn add(a: i32, b: i32) -> i32 { a + b }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (_counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1005,13 +942,11 @@ impl Calc {
 fn impure_function_is_not_counted_as_pure() {
     // Arrange
     let source = "pub fn impure(x: &mut i32) { *x += 1; }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1036,13 +971,11 @@ impl Client {
     }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1068,13 +1001,11 @@ impl Logger {
     }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1096,13 +1027,11 @@ impl std::fmt::Display for MyStruct {
     }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1128,13 +1057,11 @@ impl inner::MyTrait for MyStruct {
     fn do_thing(&self) -> i32 { 42 }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1155,13 +1082,11 @@ pub struct S;
 pub enum E {}
 pub trait T {}
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1177,13 +1102,11 @@ pub trait T {}
 fn mut_self_reference_method_is_not_pure() {
     // Arrange
     let source = "pub struct Builder { x: i32 }\nimpl Builder {\n    pub fn set_x(&mut self, x: i32) { self.x = x; }\n}\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1197,13 +1120,11 @@ fn mut_self_reference_method_is_not_pure() {
 fn private_function_is_not_public() {
     // Arrange
     let source = "fn private() -> i32 { 42 }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1217,13 +1138,11 @@ fn private_function_is_not_public() {
 fn pubcrate_is_public_item() {
     // Arrange
     let source = "pub(crate) fn internal() -> i32 { 42 }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1237,13 +1156,11 @@ fn pubcrate_is_public_item() {
 fn pure_function_is_counted() {
     // Arrange
     let source = "pub fn add(a: i32, b: i32) -> i32 { a + b }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1272,13 +1189,11 @@ impl Helper for Impl {
     fn test_helper(&self) -> i32 { 99 }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1305,13 +1220,11 @@ mod tests {
     pub fn test_helper() -> i32 { 42 }
 }
 "#;
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1325,13 +1238,11 @@ mod tests {
 fn unit_return_is_not_pure() {
     // Arrange
     let source = "pub fn side_effect() { println!(\"hello\"); }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
@@ -1345,13 +1256,11 @@ fn unit_return_is_not_pure() {
 fn unsafe_function_is_not_pure() {
     // Arrange
     let source = "pub fn raw() -> i32 { unsafe { 42 } }\n";
-    let dir = tempdir().unwrap();
-    let _file = write_file(&dir, "lib.rs", source);
 
     // Act
     let (counts, _fns) = Collector::collect(
         source,
-        &_file,
+        "lib.rs",
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );

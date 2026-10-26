@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 use grip::analysis::method_purity_registry::MethodPurityRegistry;
+use grip::analysis::source_file::SourceFile;
 use grip::analysis::struct_registry::StructRegistry;
 use grip::detection::hidden_dep_finder::HiddenDepFinder;
 use std::collections::HashMap;
-use std::path::PathBuf;
 use syn::visit::Visit;
 use syn::{ItemFn, parse_str};
 
@@ -27,10 +27,14 @@ struct Fixture {
 
 impl Fixture {
     fn new(sources: &[&str]) -> Self {
-        let files: Vec<(PathBuf, String)> = sources
+        let files: Vec<SourceFile> = sources
             .iter()
             .enumerate()
-            .map(|(i, s)| (PathBuf::from(format!("f{i}.rs")), (*s).to_string()))
+            .map(|(i, s)| SourceFile {
+                path: format!("f{i}.rs"),
+                source: (*s).to_string(),
+                ..Default::default()
+            })
             .collect();
         let struct_registry = StructRegistry::build(&files);
         let method_purity = MethodPurityRegistry::build(&files, &struct_registry);

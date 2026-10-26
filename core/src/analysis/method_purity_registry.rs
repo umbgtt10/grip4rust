@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 use crate::analysis::function_purity::FunctionPurity;
+use crate::analysis::source_file::SourceFile;
 use crate::analysis::struct_registry::StructRegistry;
 use crate::detection::hidden_dep_finder::HiddenDepFinder;
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
 use syn::visit::Visit;
 use syn::{ImplItem, ImplItemFn, Item, ItemImpl, parse_file};
 
@@ -17,11 +17,11 @@ pub struct MethodPurityRegistry {
 
 impl MethodPurityRegistry {
     #[must_use]
-    pub fn build(files: &[(PathBuf, String)], struct_registry: &StructRegistry) -> Self {
+    pub fn build(files: &[SourceFile], struct_registry: &StructRegistry) -> Self {
         let mut registry = Self::default();
         let no_nested_trust = Self::default();
-        for (_, source) in files {
-            if let Ok(syntax) = parse_file(source) {
+        for file in files {
+            if let Ok(syntax) = parse_file(&file.source) {
                 for item in &syntax.items {
                     registry.visit_top_level_item(item, struct_registry, &no_nested_trust);
                 }

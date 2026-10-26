@@ -2,10 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use std::path::PathBuf;
-
-use anyhow::Result;
+use crate::analysis::source_file::SourceFile;
+use crate::analysis::walk_failure::WalkFailure;
 
 pub trait Walk {
-    fn rust_files(&self) -> Result<Vec<(PathBuf, String)>>;
+    fn rust_files(&self) -> Result<Vec<SourceFile>, WalkFailure>;
 }

@@ -115,6 +115,7 @@ dependencies = [
  "grip4rust-core",
  "predicates",
  "tempfile",
+ "walkdir",
 ]
 
 [[package]]
@@ -221,7 +222,6 @@ dependencies = [
  "serde_json",
  "syn 2.0.119",
  "tempfile",
- "walkdir",
 ]
 
 [[package]]
@@ -499,6 +499,7 @@ name = "validation"
 version = "0.9.1"
 dependencies = [
  "anyhow",
+ "cargo-grip4rust",
  "grip4rust-core",
  "serde_json",
 ]

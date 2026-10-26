@@ -40,8 +40,9 @@ path = "tests/all_tests.rs"
 workspace = true
 
 [dependencies]
-# The package is grip4rust-core; its [lib] target is `grip`, which is the name
-# the harness and the tests import.
+# The packages are grip4rust-core and cargo-grip4rust; their [lib] targets are
+# `grip` and `grip_cli`, the names the harness and the tests import.
+cargo-grip4rust = { workspace = true }
 grip4rust-core = { workspace = true }
 anyhow = { workspace = true }
 serde_json = { workspace = true }

@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 pub mod collector;
-pub mod fs_walk;
 pub mod function_info;
 pub mod function_purity;
 pub mod inline_module;
@@ -11,7 +10,9 @@ pub mod item_classifier;
 pub mod item_counts;
 pub mod known_std_value_types;
 pub mod method_purity_registry;
+pub mod source_file;
 pub mod struct_registry;
 pub mod transitive_value_type_resolver;
 pub mod type_path_segments;
 pub mod visibility_level;
+pub mod walk_failure;

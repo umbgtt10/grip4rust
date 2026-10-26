@@ -3,11 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 use crate::invocation::args::Args;
+use crate::system::fs_walk::FsWalk;
 use anyhow::Result;
-use grip::analysis::fs_walk::FsWalk;
 use grip::invocation::app::App;
 use grip::invocation::cache::Cache;
-use grip::invocation::config::Config;
 use grip::reporting::default_scorer::DefaultScorer;
 use grip::reporting::stdout_reporter::StdoutReporter;
 use std::ffi::OsString;
@@ -17,12 +16,13 @@ pub struct EntryPoint;
 
 impl EntryPoint {
     #[must_use]
-    pub fn compose(config: Config) -> App {
+    pub fn compose(args: &Args) -> App {
+        let config = args.config();
         App::new(
-            Box::new(FsWalk::new(&config.path)),
+            Box::new(FsWalk::new(args.path())),
             Box::new(DefaultScorer::new()),
             Box::new(StdoutReporter::new(config.json, config.verbose)),
-            Box::new(Cache::new(&config.path)),
+            Box::new(Cache::new(args.path())),
             config,
         )
     }
@@ -43,6 +43,6 @@ impl EntryPoint {
         I: IntoIterator<Item = T>,
         T: Into<OsString> + Clone,
     {
-        Self::compose(Args::parse_from_args(args).config()).run()
+        Self::compose(&Args::parse_from_args(args)).run()
     }
 }

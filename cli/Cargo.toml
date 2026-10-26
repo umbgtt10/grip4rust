@@ -31,6 +31,7 @@ workspace = true
 anyhow = { workspace = true }
 clap = { workspace = true }
 grip4rust-core = { workspace = true }
+walkdir = { workspace = true }
 
 [dev-dependencies]
 assert_cmd = { workspace = true }

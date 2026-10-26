@@ -2,8 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::traits::walk::Walk;
-use anyhow::{Context, Result};
+use grip::analysis::source_file::SourceFile;
+use grip::analysis::walk_failure::WalkFailure;
+use grip::traits::walk::Walk;
 use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -21,7 +22,7 @@ impl FsWalk {
 }
 
 impl Walk for FsWalk {
-    fn rust_files(&self) -> Result<Vec<(PathBuf, String)>> {
+    fn rust_files(&self) -> Result<Vec<SourceFile>, WalkFailure> {
         let mut files = Vec::new();
         for entry in WalkDir::new(&self.root)
             .into_iter()
@@ -33,9 +34,16 @@ impl Walk for FsWalk {
             if self.is_excluded(path) {
                 continue;
             }
-            let source = fs::read_to_string(path)
-                .with_context(|| format!("failed to read {}", path.display()))?;
-            files.push((path.to_path_buf(), source));
+            let source = fs::read_to_string(path).map_err(|cause| WalkFailure {
+                path: path.display().to_string(),
+                cause: Box::new(cause),
+            })?;
+            let relative = path.strip_prefix(&self.root).unwrap_or(path);
+            files.push(SourceFile {
+                path: path.to_string_lossy().into_owned(),
+                relative: relative.to_string_lossy().into_owned(),
+                source,
+            });
         }
         Ok(files)
     }
