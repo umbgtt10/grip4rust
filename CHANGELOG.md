@@ -38,6 +38,23 @@ which changes how the library is packaged and much of its API.
   `&str`. `invocation::cache::Cache` moves to `grip_cli::system::cache::Cache`,
   its file unchanged; `ItemCounts` no longer implements `Serialize` or
   `Deserialize`.
+- `traits::reporter::Reporter { render, write }` is
+  `traits::report_renderer::ReportRenderer`, which only renders:
+  `render(&self, &GripReport) -> Result<String, RenderFailure>`, with the new
+  `reporting::render_failure::RenderFailure`.
+  `reporting::stdout_reporter::StdoutReporter::new(json, verbose)` is
+  `reporting::text_report_renderer::TextReportRenderer::new(verbose)`, the text
+  report only; the JSON report is
+  `grip_cli::system::json_report_renderer::JsonReportRenderer`.
+- `App::new` takes a `Box<dyn ReportRenderer>`, and `App::run` returns the new
+  `invocation::run_outcome::RunOutcome { output, below_threshold }` instead of
+  an `ExitCode`; writing the output and the exit code are `EntryPoint`'s, whose
+  new `finish` does both.
+- `Config` loses `json` and `verbose`: `EntryPoint::compose` reads them from
+  `Args` to choose the renderer.
+- `FunctionInfo`, `GripReport`, `ModuleStats`, `OverallStats` and `Offender`
+  no longer implement `Serialize` or `Deserialize`; the JSON document keeps its
+  shape, written down in cli.
 
 The command line, output and exit codes are unchanged. The library is not:
 four `pub` free functions became associated functions, for stern4rust 0.17.0's

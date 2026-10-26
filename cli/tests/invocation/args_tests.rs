@@ -30,18 +30,6 @@ fn config_names_the_target_after_the_last_directory() {
 }
 
 #[test]
-fn config_preserves_json() {
-    // Arrange
-    let args = Args::parse_from_args(vec!["cargo-grip4rust", "--json"]);
-
-    // Act
-    let config = args.config();
-
-    // Assert
-    assert!(config.json);
-}
-
-#[test]
 fn config_preserves_path() {
     // Arrange
     let args = Args::parse_from_args(vec!["cargo-grip4rust", "my-project"]);
@@ -63,18 +51,6 @@ fn config_preserves_threshold() {
 
     // Assert
     assert_eq!(config.threshold, Some(42));
-}
-
-#[test]
-fn config_preserves_verbose() {
-    // Arrange
-    let args = Args::parse_from_args(vec!["cargo-grip4rust", "--verbose"]);
-
-    // Act
-    let config = args.config();
-
-    // Assert
-    assert!(config.verbose);
 }
 
 #[test]

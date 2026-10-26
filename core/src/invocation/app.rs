@@ -8,22 +8,22 @@ use crate::analysis::item_counts::ItemCounts;
 use crate::analysis::method_purity_registry::MethodPurityRegistry;
 use crate::analysis::struct_registry::StructRegistry;
 use crate::invocation::config::Config;
+use crate::invocation::run_outcome::RunOutcome;
 use crate::reporting::grip_report::GripReport;
 use crate::reporting::offender::Offender;
 use crate::reporting::overall_stats::OverallStats;
 use crate::traits::cache_store::CacheStore;
-use crate::traits::reporter::Reporter;
+use crate::traits::report_renderer::ReportRenderer;
 use crate::traits::scorer::Scorer;
 use crate::traits::walk::Walk;
 use anyhow::{Result, anyhow};
-use std::process::ExitCode;
 
 type CollectedFiles = (Vec<(String, ItemCounts)>, Vec<FunctionInfo>);
 
 pub struct App {
     walker: Box<dyn Walk>,
     scorer: Box<dyn Scorer>,
-    reporter: Box<dyn Reporter>,
+    renderer: Box<dyn ReportRenderer>,
     cache: Box<dyn CacheStore>,
     config: Config,
 }
@@ -33,20 +33,20 @@ impl App {
     pub fn new(
         walker: Box<dyn Walk>,
         scorer: Box<dyn Scorer>,
-        reporter: Box<dyn Reporter>,
+        renderer: Box<dyn ReportRenderer>,
         cache: Box<dyn CacheStore>,
         config: Config,
     ) -> Self {
         Self {
             walker,
             scorer,
-            reporter,
+            renderer,
             cache,
             config,
         }
     }
 
-    pub fn run(&self) -> Result<ExitCode> {
+    pub fn run(&self) -> Result<RunOutcome> {
         let (indexed, functions) = self.collect_files()?;
         self.cache.flush();
 
@@ -124,16 +124,19 @@ impl App {
         }
     }
 
-    fn handle_output(&self, report: &GripReport) -> Result<ExitCode> {
+    fn handle_output(&self, report: &GripReport) -> Result<RunOutcome> {
         if let Some(min) = self.config.threshold {
-            return Ok(if report.overall.grip_score.is_none_or(|s| s >= min) {
-                ExitCode::SUCCESS
-            } else {
-                ExitCode::FAILURE
+            return Ok(RunOutcome {
+                output: String::new(),
+                below_threshold: !report.overall.grip_score.is_none_or(|s| s >= min),
             });
         }
-        self.reporter.write(report)?;
-        Ok(ExitCode::SUCCESS)
+        let mut output = self.renderer.render(report)?;
+        output.push('\n');
+        Ok(RunOutcome {
+            output,
+            below_threshold: false,
+        })
     }
 
     fn module_of(relative: &str) -> String {

@@ -220,8 +220,6 @@ version = "0.9.1"
 dependencies = [
  "anyhow",
  "quote",
- "serde",
- "serde_json",
  "syn 2.0.119",
 ]
 
@@ -499,7 +497,6 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 name = "validation"
 version = "0.9.1"
 dependencies = [
- "anyhow",
  "cargo-grip4rust",
  "grip4rust-core",
  "serde_json",

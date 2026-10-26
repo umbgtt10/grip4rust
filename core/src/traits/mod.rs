@@ -3,6 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 pub mod cache_store;
-pub mod reporter;
+pub mod report_renderer;
 pub mod scorer;
 pub mod walk;

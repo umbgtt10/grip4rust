@@ -4,3 +4,4 @@
 
 pub mod cache;
 pub mod fs_walk;
+pub mod json_report_renderer;

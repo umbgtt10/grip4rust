@@ -5,26 +5,47 @@
 use crate::invocation::args::Args;
 use crate::system::cache::Cache;
 use crate::system::fs_walk::FsWalk;
+use crate::system::json_report_renderer::JsonReportRenderer;
 use anyhow::Result;
 use grip::invocation::app::App;
+use grip::invocation::run_outcome::RunOutcome;
 use grip::reporting::default_scorer::DefaultScorer;
-use grip::reporting::stdout_reporter::StdoutReporter;
+use grip::reporting::text_report_renderer::TextReportRenderer;
+use grip::traits::report_renderer::ReportRenderer;
 use std::ffi::OsString;
+use std::io::{Write, stdout};
 use std::process::ExitCode;
 
+// The composition root: the command line in, the report out on stdout, an exit
+// code back. The one place the file system, the cache on disk, the report's
+// format and stdout are chosen; everything it composes is the core's, tested
+// without them.
 pub struct EntryPoint;
 
 impl EntryPoint {
     #[must_use]
     pub fn compose(args: &Args) -> App {
-        let config = args.config();
+        let renderer: Box<dyn ReportRenderer> = if args.json() {
+            Box::new(JsonReportRenderer::new())
+        } else {
+            Box::new(TextReportRenderer::new(args.verbose()))
+        };
         App::new(
             Box::new(FsWalk::new(args.path())),
             Box::new(DefaultScorer::new()),
-            Box::new(StdoutReporter::new(config.json, config.verbose)),
+            renderer,
             Box::new(Cache::new(args.path())),
-            config,
+            args.config(),
         )
+    }
+
+    pub fn finish(outcome: RunOutcome) -> Result<ExitCode> {
+        stdout().write_all(outcome.output.as_bytes())?;
+        Ok(if outcome.below_threshold {
+            ExitCode::FAILURE
+        } else {
+            ExitCode::SUCCESS
+        })
     }
 
     #[must_use]
@@ -43,6 +64,7 @@ impl EntryPoint {
         I: IntoIterator<Item = T>,
         T: Into<OsString> + Clone,
     {
-        Self::compose(&Args::parse_from_args(args)).run()
+        let outcome = Self::compose(&Args::parse_from_args(args)).run()?;
+        Self::finish(outcome)
     }
 }

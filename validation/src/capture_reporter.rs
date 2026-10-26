@@ -2,10 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Result;
 use grip::reporting::grip_report::GripReport;
-use grip::traits::reporter::Reporter;
-use serde_json::to_string_pretty;
+use grip::reporting::render_failure::RenderFailure;
+use grip::traits::report_renderer::ReportRenderer;
+use grip_cli::system::json_report_renderer::JsonReportRenderer;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -20,16 +20,10 @@ impl CaptureReporter {
     }
 }
 
-impl Reporter for CaptureReporter {
-    fn render(&self, report: &GripReport) -> Result<String> {
-        let json = to_string_pretty(report)?;
+impl ReportRenderer for CaptureReporter {
+    fn render(&self, report: &GripReport) -> Result<String, RenderFailure> {
+        let json = JsonReportRenderer::new().render(report)?;
         *self.captured.borrow_mut() = json.clone();
         Ok(json)
-    }
-
-    fn write(&self, report: &GripReport) -> Result<()> {
-        let json = self.render(report)?;
-        print!("{json}");
-        Ok(())
     }
 }

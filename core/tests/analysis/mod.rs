@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 pub mod collector_tests;
-pub mod function_info_tests;
 pub mod function_purity_tests;
 pub mod inline_module_tests;
 pub mod item_classifier_tests;

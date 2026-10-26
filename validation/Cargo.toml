@@ -44,5 +44,4 @@ workspace = true
 # `grip` and `grip_cli`, the names the harness and the tests import.
 cargo-grip4rust = { workspace = true }
 grip4rust-core = { workspace = true }
-anyhow = { workspace = true }
 serde_json = { workspace = true }

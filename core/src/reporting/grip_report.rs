@@ -6,9 +6,8 @@ use crate::analysis::function_info::FunctionInfo;
 use crate::reporting::module_stats::ModuleStats;
 use crate::reporting::offender::Offender;
 use crate::reporting::overall_stats::OverallStats;
-use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct GripReport {
     pub version: String,
     pub target: String,

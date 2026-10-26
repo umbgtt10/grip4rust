@@ -5,3 +5,4 @@
 pub mod app;
 pub mod config;
 pub mod no_op_cache_store;
+pub mod run_outcome;

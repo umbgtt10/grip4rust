@@ -2,11 +2,9 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use anyhow::Result;
-
 use crate::reporting::grip_report::GripReport;
+use crate::reporting::render_failure::RenderFailure;
 
-pub trait Reporter {
-    fn render(&self, report: &GripReport) -> Result<String>;
-    fn write(&self, report: &GripReport) -> Result<()>;
+pub trait ReportRenderer {
+    fn render(&self, report: &GripReport) -> Result<String, RenderFailure>;
 }

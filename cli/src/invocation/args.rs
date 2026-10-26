@@ -45,9 +45,7 @@ impl Args {
                 .and_then(|n| n.to_str())
                 .unwrap_or(".")
                 .to_string(),
-            json: self.json,
             threshold: self.threshold,
-            verbose: self.verbose,
         }
     }
 

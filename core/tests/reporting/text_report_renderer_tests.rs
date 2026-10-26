@@ -7,10 +7,8 @@ use grip::reporting::grip_report::GripReport;
 use grip::reporting::module_stats::ModuleStats;
 use grip::reporting::offender::Offender;
 use grip::reporting::overall_stats::OverallStats;
-use grip::reporting::stdout_reporter::StdoutReporter;
-use grip::traits::reporter::Reporter;
-use serde_json::Value;
-use serde_json::from_str;
+use grip::reporting::text_report_renderer::TextReportRenderer;
+use grip::traits::report_renderer::ReportRenderer;
 
 fn dummy_modules() -> Vec<ModuleStats> {
     vec![
@@ -68,15 +66,15 @@ fn report_with(
     }
 }
 
-fn reporter(json: bool) -> StdoutReporter {
-    StdoutReporter::new(json, false)
+fn reporter() -> TextReportRenderer {
+    TextReportRenderer::new(false)
 }
 
 #[test]
 fn human_output_contains_module_lines() {
     // Arrange
     let report = dummy_report();
-    let reporter = reporter(false);
+    let reporter = reporter();
 
     // Act
     let out = reporter.render(&report).unwrap();
@@ -90,7 +88,7 @@ fn human_output_contains_module_lines() {
 fn human_output_contains_score() {
     // Arrange
     let report = dummy_report();
-    let reporter = reporter(false);
+    let reporter = reporter();
 
     // Act
     let out = reporter.render(&report).unwrap();
@@ -115,7 +113,7 @@ fn human_output_non_verbose_hides_per_function_detail() {
             ..Default::default()
         }],
     );
-    let reporter = reporter(false);
+    let reporter = reporter();
 
     // Act
     let out = reporter.render(&report).unwrap();
@@ -145,7 +143,7 @@ fn human_output_shows_offenders_section() {
         }],
         vec![],
     );
-    let reporter = reporter(false);
+    let reporter = reporter();
 
     // Act
     let out = reporter.render(&report).unwrap();
@@ -171,7 +169,7 @@ fn human_output_verbose_shows_per_function_detail() {
             ..Default::default()
         }],
     );
-    let reporter = StdoutReporter::new(false, true);
+    let reporter = TextReportRenderer::new(true);
 
     // Act
     let out = reporter.render(&report).unwrap();
@@ -179,33 +177,4 @@ fn human_output_verbose_shows_per_function_detail() {
     // Assert
     assert!(out.contains("Per-function detail"));
     assert!(out.contains("compute"));
-}
-
-#[test]
-fn json_output_has_version() {
-    // Arrange
-    let report = dummy_report();
-    let reporter = reporter(true);
-
-    // Act
-    let out = reporter.render(&report).unwrap();
-
-    // Assert
-    let parsed: Value = from_str(&out).unwrap();
-    assert_eq!(parsed["version"], "0.1.0");
-}
-
-#[test]
-fn json_output_is_valid() {
-    // Arrange
-    let report = dummy_report();
-    let reporter = reporter(true);
-
-    // Act
-    let out = reporter.render(&report).unwrap();
-
-    // Assert
-    let parsed: Value = from_str(&out).unwrap();
-    assert_eq!(parsed["overall"]["grip_score"], 71);
-    assert!(parsed.get("modules").is_some());
 }

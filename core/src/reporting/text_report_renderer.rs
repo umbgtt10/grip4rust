@@ -6,43 +6,29 @@ use crate::reporting::grip_report::GripReport;
 use crate::reporting::module_stats::ModuleStats;
 use crate::reporting::offenders_renderer::OffendersRenderer;
 use crate::reporting::overall_summary_renderer::OverallSummaryRenderer;
+use crate::reporting::render_failure::RenderFailure;
 use crate::reporting::verbose_functions_renderer::VerboseFunctionsRenderer;
-use crate::traits::reporter::Reporter;
-use anyhow::Result;
-use serde_json::to_string_pretty;
-use std::io::{Write, stdout};
+use crate::traits::report_renderer::ReportRenderer;
 
-#[derive(Debug, Clone)]
-pub struct StdoutReporter {
-    json: bool,
+#[derive(Debug, Clone, Copy)]
+pub struct TextReportRenderer {
     verbose: bool,
 }
 
-impl StdoutReporter {
+impl TextReportRenderer {
     #[must_use]
-    pub fn new(json: bool, verbose: bool) -> Self {
-        Self { json, verbose }
+    pub const fn new(verbose: bool) -> Self {
+        Self { verbose }
     }
 }
 
-impl Reporter for StdoutReporter {
-    fn render(&self, report: &GripReport) -> Result<String> {
-        if self.json {
-            Ok(to_string_pretty(report)?)
-        } else {
-            Ok(self.render_human(report))
-        }
-    }
-
-    fn write(&self, report: &GripReport) -> Result<()> {
-        let out = self.render(report)?;
-        stdout().write_all(out.as_bytes())?;
-        stdout().write_all(b"\n")?;
-        Ok(())
+impl ReportRenderer for TextReportRenderer {
+    fn render(&self, report: &GripReport) -> Result<String, RenderFailure> {
+        Ok(self.render_human(report))
     }
 }
 
-impl StdoutReporter {
+impl TextReportRenderer {
     fn module_marker(&self, score: Option<u32>) -> &'static str {
         match score {
             Some(score) if score < 40 => "❌",
