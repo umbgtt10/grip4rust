@@ -95,21 +95,11 @@ still narrower than it could be:
 All fail *safe* (conservatively still flagged). See `CHANGELOG.md` for what's already
 fixed.
 
-## The cache never serves a hit
+## The cache never served a hit -- closed: removed
 
-`App::collect_files` asks the `CacheStore` for each file only to decide
-whether to store it: the counts it returns are never used, and every file is
-parsed and collected on every run. The cache is therefore write-only. Each run
-still reads the old `.grip_cache/cache.json`, stats every file for its mtime,
-and writes the file back whenever one is new or changed -- into the analysed
-directory, beside the code being measured. `ARCHITECTURE.md`'s seams table now
-says so; it used to say the cache skips unchanged files.
-
-Kept exactly as it is through the core/cli split, which changed no behaviour.
-Two ways out, either a change of its own: use a hit -- skip collecting a file
-whose mtime and size match, which also needs the cached file's `FunctionInfo`s,
-since the report lists them per function -- or drop the feature, which removes
-`Cache`, `CacheStore`, `NoOpCacheStore` and their tests and stops the tool
-writing into the directory it analyses.
-
-Not started.
+`App::collect_files` asked the `CacheStore` about each file only to decide
+whether to store it; every file was parsed on every run, and each run wrote
+`.grip_cache/cache.json` into the directory it analysed. Closed by removing the
+feature rather than fixing it: `Cache`, the `CacheStore` port and
+`NoOpCacheStore` are gone, and a run reads and writes no `.grip_cache/`
+(CHANGELOG, `[Unreleased]`, Removed).

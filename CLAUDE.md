@@ -166,7 +166,7 @@ every member.
 | member | package | library | what it holds |
 |---|---|---|---|
 | `core/` | `grip4rust-core` | `grip` | the analysis: collector, registries, detectors, scorer, offenders, the text report. `#![no_std]`, `#![forbid(unsafe_code)]`; depends on `libm`, `quote` and `syn` only |
-| `cli/` | `cargo-grip4rust` | `grip_cli` | the binary, `Args` (clap), the composition root `EntryPoint`, and the adapters in `system/`: `FsWalk`, `Cache`, `JsonReportRenderer` |
+| `cli/` | `cargo-grip4rust` | `grip_cli` | the binary, `Args` (clap), the composition root `EntryPoint`, and the adapters in `system/`: `FsWalk`, `JsonReportRenderer` |
 | `validation/` | `validation` | `validation` | the fixture scenarios, end to end (not published) |
 | `xtask/` | `xtask` | `xtask` | the gates (not published) |
 

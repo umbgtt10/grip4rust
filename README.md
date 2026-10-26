@@ -64,8 +64,8 @@ just stage2
 
 The workspace has four members: `core/` (`grip4rust-core`, the library `grip`
 -- the analysis, `no_std`, with no technology in it), `cli/`
-(`cargo-grip4rust`, the binary and its adapters: the file system, the cache,
-the JSON report), `validation/` (the fixture scenarios, end to end) and
+(`cargo-grip4rust`, the binary and its adapters: the file system and the JSON
+report), `validation/` (the fixture scenarios, end to end) and
 `xtask/` (the gates). A program that wants the analysis without the command
 depends on `grip4rust-core`.
 

@@ -102,7 +102,8 @@ moves its parts: `App` and its four traits are in `grip4rust-core`; `FsWalk`,
 `Cache` and the JSON renderer, with `EntryPoint`, are in `cargo-grip4rust`.
 `Reporter` is `ReportRenderer`, which only renders -- `StdoutReporter`'s text
 half is core's `TextReportRenderer`, and writing to stdout is
-`EntryPoint::finish`'s.
+`EntryPoint::finish`'s. Later the same day the cache was removed: `App` holds
+three boxes -- `Walk`, `Scorer`, `ReportRenderer` -- and its `Config`.
 
 ## Related
 

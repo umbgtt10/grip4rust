@@ -16,7 +16,6 @@ cli/src/main.rs -> EntryPoint::run(args) -- strips the repeated cargo subcommand
         walker:   Box<dyn Walk>           -- FsWalk (cli): every .rs file, read
         scorer:   Box<dyn Scorer>         -- DefaultScorer (core)
         renderer: Box<dyn ReportRenderer> -- TextReportRenderer (core) or JsonReportRenderer (cli)
-        cache:    Box<dyn CacheStore>     -- Cache (cli)
         config:   Config                  -- Args::config(): root, target, threshold
       -> App::run() -> Result<RunOutcome, RunFailure>
           1. collect_files():
@@ -28,8 +27,7 @@ cli/src/main.rs -> EntryPoint::run(args) -- strips the repeated cargo subcommand
                 project-wide pass, over every inherent impl this time:
                 which (type, method) accessors are provably pure?
              d. Collector::collect(source, path, &registry, &method_purity)
-                per file, into (ItemCounts, Vec<FunctionInfo>); the cache is
-                asked for each file and given the counts of the ones it misses
+                per file, into (ItemCounts, Vec<FunctionInfo>)
           2. compute_report(): scorer aggregates every file's ItemCounts
              into OverallStats + per-module ModuleStats, assembles a
              GripReport
@@ -50,20 +48,19 @@ neither pass follows a call chain across type boundaries.
 
 `EntryPoint::compose` (`cli/src/invocation/entry_point.rs`) is the only place
 that wires concrete types to trait objects: it builds `FsWalk`,
-`DefaultScorer`, the renderer `--json` asks for and `Cache`, and hands them to
+`DefaultScorer` and the renderer `--json` asks for, and hands them to
 `App::new`, `App`'s only constructor, which takes every dependency and builds
 none. Everywhere else in the codebase depends on the `traits/` interfaces,
 never on those parts directly. See `docs/ADRs/ADR-DynDispatchAppOverGenerics.md` for why these
 are `Box<dyn Trait>` fields rather than generic parameters.
 
-## The four injected seams (`traits/`)
+## The three injected seams (`traits/`)
 
 | Trait | Concrete impl | Responsibility |
 |---|---|---|
 | `Walk` | `FsWalk` (cli) | Recursively find `.rs` files under the target path, excluding `build.rs`, `target/`, `.git/`, `tests/`, `examples/`, `benches/` by path component, and read each into a `SourceFile`. |
 | `Scorer` | `DefaultScorer` (core) | Turn `ItemCounts` into ratios and a `grip_score`; aggregate per-file counts into per-module and overall stats. |
 | `ReportRenderer` | `TextReportRenderer` (core) / `JsonReportRenderer` (cli) | Render a `GripReport` as human-readable text or JSON. |
-| `CacheStore` | `Cache` (cli) / `NoOpCacheStore` (core, always-miss) | Remember each file's counts by mtime and size in `.grip_cache/cache.json`. Written on every run, but a hit is never used -- see `OPEN_POINTS.md`. |
 
 The traits live in the technology-free `core/` (`grip4rust-core`, `no_std`);
 the adapters that touch the disk, serde and stdout live in `cli/`
@@ -71,7 +68,7 @@ the adapters that touch the disk, serde and stdout live in `cli/`
 `core/tests/support/`.
 
 Every fixture tree under `fixture/` exercises `App::new()`
-with a mix of real and fake implementations of these four traits — that's
+with a mix of real and fake implementations of these three traits — that's
 the seam the whole test suite is built around.
 
 ## Two project-wide pre-passes: `StructRegistry`, `MethodPurityRegistry`
@@ -148,7 +145,7 @@ threshold). `main.rs` is one call to `EntryPoint::run`, and `EntryPoint`
 subcommand and turns an error into `error: ...` on stderr and a failing exit
 code, `run_from_args` parses the arguments, `compose` wires the concrete parts
 into an `App`, and `finish` writes the outcome's output and maps its verdict to
-the exit code. `system/` holds the adapters: `FsWalk`, `Cache` and
+the exit code. `system/` holds the adapters: `FsWalk` and
 `JsonReportRenderer`, whose private records write the JSON document down field
 for field. All real logic lives in `App` and below, in core.
 

@@ -81,6 +81,14 @@ The "Technology-free core" gate, first in stage 2: core's manifest names only
 file-system method or `extern crate std`. `.cargo/mutants.toml` scopes
 cargo-mutants to `core/src`, each mutant tested by core's tests only.
 
+## Amendment — 2026-10-26
+
+The on-disk cache is gone: it never served a hit, and it wrote
+`.grip_cache/cache.json` into the directory being analysed. With it went the
+`CacheStore` port and its stand-in; the core's ports are `Walk` and
+`ReportRenderer`, beside the `Scorer` strategy, and the tool reads no file
+times and writes nothing to disk.
+
 ## Related
 
 - [ADR-DynDispatchAppOverGenerics](ADR-DynDispatchAppOverGenerics.md)
