@@ -2,4 +2,5 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+pub mod cache;
 pub mod fs_walk;

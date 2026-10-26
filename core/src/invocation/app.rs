@@ -16,7 +16,6 @@ use crate::traits::reporter::Reporter;
 use crate::traits::scorer::Scorer;
 use crate::traits::walk::Walk;
 use anyhow::{Result, anyhow};
-use std::path::Path;
 use std::process::ExitCode;
 
 type CollectedFiles = (Vec<(String, ItemCounts)>, Vec<FunctionInfo>);
@@ -73,9 +72,8 @@ impl App {
             let (counts, functions) =
                 Collector::collect(&file.source, &file.path, &registry, &method_purity);
             all_functions.extend(functions);
-            let path = Path::new(&file.path);
-            if self.cache.get(path).is_none() {
-                self.cache.set(path, &file.source, &counts);
+            if self.cache.get(&file.path).is_none() {
+                self.cache.set(&file.path, &file.source, &counts);
             }
             indexed.push((module, counts));
         }

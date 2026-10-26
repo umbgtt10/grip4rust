@@ -34,6 +34,10 @@ which changes how the library is packaged and much of its API.
   `&[SourceFile]`; `Collector::collect` takes the path as `&str`.
 - `Config.path` is the analysed root as text and `Config` gains `target`, the
   name the report gives it; `EntryPoint::compose` takes `&Args`.
+- `traits::cache_store::CacheStore`'s `get` and `set` take the file's path as
+  `&str`. `invocation::cache::Cache` moves to `grip_cli::system::cache::Cache`,
+  its file unchanged; `ItemCounts` no longer implements `Serialize` or
+  `Deserialize`.
 
 The command line, output and exit codes are unchanged. The library is not:
 four `pub` free functions became associated functions, for stern4rust 0.17.0's

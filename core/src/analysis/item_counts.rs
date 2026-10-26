@@ -2,9 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default)]
 pub struct ItemCounts {
     total_functions: usize,
     pure_functions: usize,

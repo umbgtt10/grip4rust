@@ -5,8 +5,8 @@
 use grip::analysis::collector::Collector;
 use grip::analysis::method_purity_registry::MethodPurityRegistry;
 use grip::analysis::struct_registry::StructRegistry;
-use grip::invocation::cache::Cache;
 use grip::traits::cache_store::CacheStore;
+use grip_cli::system::cache::Cache;
 use std::fs;
 use tempfile::TempDir;
 
@@ -22,16 +22,17 @@ fn cache_hit_returns_same_counts() {
     let cache = Cache::new(dir.path());
 
     let source = fs::read_to_string(&file).unwrap();
+    let path = file.to_string_lossy().into_owned();
     let (initial, _fns) = Collector::collect(
         &source,
-        &file.to_string_lossy(),
+        &path,
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
-    cache.set(&file, &source, &initial);
+    cache.set(&path, &source, &initial);
 
     // Act
-    let cached = cache.get(&file);
+    let cached = cache.get(&path);
 
     // Assert
     assert!(cached.is_some());
@@ -49,18 +50,19 @@ fn cache_miss_after_change() {
 
     let cache = Cache::new(dir.path());
     let source = fs::read_to_string(&file).unwrap();
+    let path = file.to_string_lossy().into_owned();
     let (initial, _fns) = Collector::collect(
         &source,
-        &file.to_string_lossy(),
+        &path,
         &StructRegistry::default(),
         &MethodPurityRegistry::default(),
     );
-    cache.set(&file, &source, &initial);
+    cache.set(&path, &source, &initial);
 
     fs::write(&file, "fn hidden() -> i32 { 0 }").unwrap();
 
     // Act
-    let cached = cache.get(&file);
+    let cached = cache.get(&path);
 
     // Assert
     assert!(cached.is_none());

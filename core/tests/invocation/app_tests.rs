@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use crate::support::in_memory_walk::InMemoryWalk;
+use crate::support::recording_cache_store::RecordingCacheStore;
 use crate::support::recording_report_renderer::RecordingReportRenderer;
 use grip::invocation::app::App;
 use grip::invocation::config::Config;
@@ -49,6 +50,41 @@ fn new_builds_an_app_that_runs_on_the_injected_dependencies() {
     assert_eq!(
         format!("{:?}", app.run().unwrap()),
         format!("{:?}", ExitCode::SUCCESS)
+    );
+}
+
+#[test]
+fn run_asks_the_cache_for_each_file_and_stores_only_the_ones_it_misses() {
+    // Arrange
+    let calls = Rc::new(RefCell::new(Vec::new()));
+    let handed = Rc::new(RefCell::new(Vec::new()));
+    let app = App::new(
+        Box::new(
+            InMemoryWalk::new()
+                .with_file("src/a.rs", GREET)
+                .with_file("src/b.rs", GREET),
+        ),
+        Box::new(DefaultScorer::new()),
+        Box::new(RecordingReportRenderer::new(Rc::clone(&handed))),
+        Box::new(RecordingCacheStore::new(
+            vec![String::from("root/src/a.rs")],
+            Rc::clone(&calls),
+        )),
+        config(None),
+    );
+
+    // Act
+    app.run().unwrap();
+
+    // Assert
+    assert_eq!(
+        *calls.borrow(),
+        [
+            "get root/src/a.rs",
+            "get root/src/b.rs",
+            "set root/src/b.rs",
+            "flush"
+        ]
     );
 }
 

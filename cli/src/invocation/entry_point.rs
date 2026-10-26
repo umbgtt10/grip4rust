@@ -3,10 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 use crate::invocation::args::Args;
+use crate::system::cache::Cache;
 use crate::system::fs_walk::FsWalk;
 use anyhow::Result;
 use grip::invocation::app::App;
-use grip::invocation::cache::Cache;
 use grip::reporting::default_scorer::DefaultScorer;
 use grip::reporting::stdout_reporter::StdoutReporter;
 use std::ffi::OsString;

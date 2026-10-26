@@ -114,6 +114,8 @@ dependencies = [
  "clap",
  "grip4rust-core",
  "predicates",
+ "serde",
+ "serde_json",
  "tempfile",
  "walkdir",
 ]
@@ -221,7 +223,6 @@ dependencies = [
  "serde",
  "serde_json",
  "syn 2.0.119",
- "tempfile",
 ]
 
 [[package]]

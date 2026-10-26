@@ -5,7 +5,6 @@
 use grip::analysis::item_counts::ItemCounts;
 use grip::invocation::no_op_cache_store::NoOpCacheStore;
 use grip::traits::cache_store::CacheStore;
-use std::path::Path;
 
 fn counts(total_functions: usize) -> ItemCounts {
     ItemCounts::default().with_total_functions(total_functions)
@@ -21,10 +20,10 @@ fn default_behaves_the_same_as_new() {
     let store = NoOpCacheStore::default();
 
     // Act
-    store.set(Path::new("src/lib.rs"), "pub fn f() {}", &counts(1));
+    store.set("src/lib.rs", "pub fn f() {}", &counts(1));
 
     // Assert
-    assert!(store.get(Path::new("src/lib.rs")).is_none());
+    assert!(store.get("src/lib.rs").is_none());
 }
 
 #[test]
@@ -34,11 +33,8 @@ fn distinct_paths_are_all_misses() {
 
     // Act & Assert
     for path in ["src/lib.rs", "src/main.rs", "src/a/b/c.rs", ""] {
-        store.set(Path::new(path), "pub fn f() {}", &counts(1));
-        assert!(
-            store.get(Path::new(path)).is_none(),
-            "path {path} must not be cached"
-        );
+        store.set(path, "pub fn f() {}", &counts(1));
+        assert!(store.get(path).is_none(), "path {path} must not be cached");
     }
 }
 
@@ -47,13 +43,13 @@ fn flush_is_inert_and_leaves_the_store_a_miss() {
     // Arrange -- flush is called once at the end of every run. It must neither
     // fail nor turn the store into something that answers.
     let store = NoOpCacheStore::new();
-    store.set(Path::new("src/lib.rs"), "pub fn f() {}", &counts(1));
+    store.set("src/lib.rs", "pub fn f() {}", &counts(1));
 
     // Act
     store.flush();
 
     // Assert
-    assert!(store.get(Path::new("src/lib.rs")).is_none());
+    assert!(store.get("src/lib.rs").is_none());
 }
 
 #[test]
@@ -64,8 +60,8 @@ fn get_after_set_still_returns_nothing() {
     let store = NoOpCacheStore::new();
 
     // Act
-    store.set(Path::new("src/lib.rs"), "pub fn f() {}", &counts(1));
-    let result = store.get(Path::new("src/lib.rs"));
+    store.set("src/lib.rs", "pub fn f() {}", &counts(1));
+    let result = store.get("src/lib.rs");
 
     // Assert
     assert!(result.is_none());
@@ -79,7 +75,7 @@ fn get_on_a_fresh_store_returns_nothing() {
     let store = NoOpCacheStore::new();
 
     // Act
-    let result = store.get(Path::new("src/lib.rs"));
+    let result = store.get("src/lib.rs");
 
     // Assert
     assert!(result.is_none());
@@ -94,7 +90,7 @@ fn get_returns_nothing_however_many_times_set_is_called() {
 
     // Act & Assert
     for i in 0..32 {
-        store.set(Path::new("src/lib.rs"), "pub fn f() {}", &counts(i));
-        assert!(store.get(Path::new("src/lib.rs")).is_none());
+        store.set("src/lib.rs", "pub fn f() {}", &counts(i));
+        assert!(store.get("src/lib.rs").is_none());
     }
 }
