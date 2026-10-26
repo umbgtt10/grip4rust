@@ -6,13 +6,14 @@ use crate::analysis::function_purity::FunctionPurity;
 use crate::analysis::source_file::SourceFile;
 use crate::analysis::struct_registry::StructRegistry;
 use crate::detection::hidden_dep_finder::HiddenDepFinder;
-use std::collections::{HashMap, HashSet};
+use alloc::collections::{BTreeMap, BTreeSet};
+use alloc::string::{String, ToString};
 use syn::visit::Visit;
 use syn::{ImplItem, ImplItemFn, Item, ItemImpl, parse_file};
 
 #[derive(Debug, Default)]
 pub struct MethodPurityRegistry {
-    pure_methods: HashSet<(String, String)>,
+    pure_methods: BTreeSet<(String, String)>,
 }
 
 impl MethodPurityRegistry {
@@ -74,7 +75,7 @@ impl MethodPurityRegistry {
         method: &ImplItemFn,
         struct_registry: &StructRegistry,
         no_nested_trust: &MethodPurityRegistry,
-        concrete_fields: &HashMap<String, String>,
+        concrete_fields: &BTreeMap<String, String>,
     ) {
         if !Self::has_pure_signature(method) {
             return;

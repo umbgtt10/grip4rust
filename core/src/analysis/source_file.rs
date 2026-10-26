@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+
 // One Rust source file a walk found: its path as the walk wrote it, the same path
 // beneath the analysed root, and what the file holds.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]

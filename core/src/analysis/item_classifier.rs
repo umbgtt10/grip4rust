@@ -4,6 +4,7 @@
 
 use crate::analysis::function_purity::FunctionPurity;
 use crate::analysis::visibility_level::VisibilityLevel;
+use alloc::string::ToString;
 use quote::ToTokens;
 use syn::{Attribute, ImplItemFn, ItemFn, Path as SynPath, Visibility};
 

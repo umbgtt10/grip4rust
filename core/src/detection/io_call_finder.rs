@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use syn::visit::{Visit, visit_expr, visit_stmt};
 use syn::{Expr, ExprCall, ExprMacro, ExprMethodCall, Path, Stmt};
 

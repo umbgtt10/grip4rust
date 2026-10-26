@@ -2,6 +2,8 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::String;
+
 use crate::reporting::grip_report::GripReport;
 use crate::reporting::render_failure::RenderFailure;
 

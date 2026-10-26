@@ -11,7 +11,10 @@ use crate::analysis::struct_registry::StructRegistry;
 use crate::analysis::visibility_level::VisibilityLevel;
 use crate::detection::contribution_schedule::ContributionSchedule;
 use crate::detection::hidden_dep_finder::HiddenDepFinder;
-use std::collections::HashMap;
+use alloc::collections::BTreeMap;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use libm::round;
 use syn::visit::Visit;
 use syn::{
     Block, ImplItem, ImplItemFn, Item, ItemEnum, ItemFn, ItemImpl, ItemMod, ItemStruct, ItemTrait,
@@ -23,7 +26,7 @@ pub struct Collector<'a> {
     counts: ItemCounts,
     functions: Vec<FunctionInfo>,
     current_file: String,
-    struct_concrete_fields: HashMap<String, HashMap<String, String>>,
+    struct_concrete_fields: BTreeMap<String, BTreeMap<String, String>>,
     contribution_schedule: ContributionSchedule,
     registry: &'a StructRegistry,
     method_purity: &'a MethodPurityRegistry,
@@ -39,7 +42,7 @@ impl<'a> Collector<'a> {
             counts: ItemCounts::default(),
             functions: Vec::new(),
             current_file: file,
-            struct_concrete_fields: HashMap::new(),
+            struct_concrete_fields: BTreeMap::new(),
             contribution_schedule: ContributionSchedule::new(),
             registry,
             method_purity,
@@ -102,7 +105,7 @@ impl<'a> Collector<'a> {
     fn count_hidden_deps_in_impl_method(
         &self,
         method: &ImplItemFn,
-        concrete_fields: HashMap<String, String>,
+        concrete_fields: BTreeMap<String, String>,
     ) -> HiddenDepFinder<'a> {
         let mut finder = HiddenDepFinder::new(self.registry, self.method_purity);
         finder.set_concrete_fields(concrete_fields);
@@ -154,7 +157,7 @@ impl<'a> Collector<'a> {
             dep_weight: finder.weight(),
             hidden_dep_labels: finder.labels().to_vec(),
             grip_absolute: contr,
-            grip_normalized: (contr * 100.0).round() as u32,
+            grip_normalized: round(contr * 100.0) as u32,
         });
     }
 
@@ -205,7 +208,7 @@ impl<'a> Collector<'a> {
             dep_weight: finder.weight(),
             hidden_dep_labels: finder.labels().to_vec(),
             grip_absolute: contr,
-            grip_normalized: (contr * 100.0).round() as u32,
+            grip_normalized: round(contr * 100.0) as u32,
         });
     }
 
@@ -218,7 +221,7 @@ impl<'a> Collector<'a> {
     fn visit_struct(&mut self, item_struct: &ItemStruct) {
         self.record_item(&item_struct.vis);
         let name = item_struct.ident.to_string();
-        let concrete: HashMap<String, String> = item_struct
+        let concrete: BTreeMap<String, String> = item_struct
             .fields
             .iter()
             .filter(|f| !StructRegistry::is_trait_object_type(&f.ty))

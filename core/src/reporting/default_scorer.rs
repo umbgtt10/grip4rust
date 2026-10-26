@@ -6,7 +6,10 @@ use crate::analysis::item_counts::ItemCounts;
 use crate::reporting::module_stats::ModuleStats;
 use crate::reporting::scores::Scores;
 use crate::traits::scorer::Scorer;
-use std::collections::BTreeMap;
+use alloc::collections::BTreeMap;
+use alloc::string::String;
+use alloc::vec::Vec;
+use libm::round;
 
 #[derive(Debug, Clone, Default)]
 pub struct DefaultScorer;
@@ -47,14 +50,13 @@ impl Scorer for DefaultScorer {
             0.0
         };
         let grip_score = if counts.total_functions() > 0 {
-            Some(
-                ((pure_ratio * 0.30
+            Some(round(
+                (pure_ratio * 0.30
                     + public_ratio * 0.20
                     + trait_ratio * 0.25
                     + avg_contribution * 0.25)
-                    * 100.0)
-                    .round() as u32,
-            )
+                    * 100.0,
+            ) as u32)
         } else {
             None
         };

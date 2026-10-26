@@ -9,6 +9,9 @@ use crate::reporting::overall_summary_renderer::OverallSummaryRenderer;
 use crate::reporting::render_failure::RenderFailure;
 use crate::reporting::verbose_functions_renderer::VerboseFunctionsRenderer;
 use crate::traits::report_renderer::ReportRenderer;
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec;
 
 #[derive(Debug, Clone, Copy)]
 pub struct TextReportRenderer {

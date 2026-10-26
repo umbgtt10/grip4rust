@@ -4,6 +4,11 @@
 
 use crate::analysis::function_info::FunctionInfo;
 use crate::detection::contribution_schedule::ContributionSchedule;
+use alloc::borrow::ToOwned;
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec;
+use alloc::vec::Vec;
 
 #[derive(Debug, Clone, Copy)]
 pub struct VerboseFunctionsRenderer {

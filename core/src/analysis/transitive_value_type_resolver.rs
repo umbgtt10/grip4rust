@@ -3,19 +3,21 @@
 // SPDX-License-Identifier: MIT
 
 use crate::analysis::known_std_value_types::KNOWN_STD_VALUE_TYPES;
-use std::collections::{HashMap, HashSet};
+use alloc::collections::{BTreeMap, BTreeSet};
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 
 pub struct TransitiveValueTypeResolver<'fields> {
-    fields_by_struct: &'fields HashMap<String, Vec<String>>,
-    visiting: HashSet<String>,
+    fields_by_struct: &'fields BTreeMap<String, Vec<String>>,
+    visiting: BTreeSet<String>,
 }
 
 impl<'fields> TransitiveValueTypeResolver<'fields> {
     #[must_use]
-    pub fn new(fields_by_struct: &'fields HashMap<String, Vec<String>>) -> Self {
+    pub fn new(fields_by_struct: &'fields BTreeMap<String, Vec<String>>) -> Self {
         Self {
             fields_by_struct,
-            visiting: HashSet::new(),
+            visiting: BTreeSet::new(),
         }
     }
 

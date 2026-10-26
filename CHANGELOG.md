@@ -55,6 +55,13 @@ which changes how the library is packaged and much of its API.
 - `FunctionInfo`, `GripReport`, `ModuleStats`, `OverallStats` and `Offender`
   no longer implement `Serialize` or `Deserialize`; the JSON document keeps its
   shape, written down in cli.
+- `grip` is `#![no_std]` (with `alloc`) and depends on `libm`, `quote` and
+  `syn` only -- no anyhow. `App::run` fails with the new
+  `invocation::run_failure::RunFailure` instead of `anyhow::Error`. The maps
+  `StructRegistry::concrete_fields_of` returns and
+  `HiddenDepFinder::set_concrete_fields` and `TransitiveValueTypeResolver::new`
+  take are `BTreeMap`s instead of `HashMap`s. Scores round with `libm::round`,
+  which agrees with the standard library's to the bit.
 
 The command line, output and exit codes are unchanged. The library is not:
 four `pub` free functions became associated functions, for stern4rust 0.17.0's

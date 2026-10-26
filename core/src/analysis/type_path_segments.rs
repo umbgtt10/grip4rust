@@ -2,6 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
+use alloc::string::{String, ToString};
 use syn::punctuated::Punctuated;
 use syn::token::PathSep;
 use syn::{PathSegment, Type};

@@ -8,6 +8,7 @@ use crate::analysis::item_counts::ItemCounts;
 use crate::analysis::method_purity_registry::MethodPurityRegistry;
 use crate::analysis::struct_registry::StructRegistry;
 use crate::invocation::config::Config;
+use crate::invocation::run_failure::RunFailure;
 use crate::invocation::run_outcome::RunOutcome;
 use crate::reporting::grip_report::GripReport;
 use crate::reporting::offender::Offender;
@@ -16,7 +17,9 @@ use crate::traits::cache_store::CacheStore;
 use crate::traits::report_renderer::ReportRenderer;
 use crate::traits::scorer::Scorer;
 use crate::traits::walk::Walk;
-use anyhow::{Result, anyhow};
+use alloc::boxed::Box;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 
 type CollectedFiles = (Vec<(String, ItemCounts)>, Vec<FunctionInfo>);
 
@@ -46,22 +49,19 @@ impl App {
         }
     }
 
-    pub fn run(&self) -> Result<RunOutcome> {
+    pub fn run(&self) -> Result<RunOutcome, RunFailure> {
         let (indexed, functions) = self.collect_files()?;
         self.cache.flush();
 
         if indexed.is_empty() {
-            return Err(anyhow!(
-                "no Rust source files found in {}",
-                self.config.path
-            ));
+            return Err(RunFailure::NoSourceFiles(self.config.path.clone()));
         }
 
         let report = self.compute_report(indexed, functions);
         self.handle_output(&report)
     }
 
-    fn collect_files(&self) -> Result<CollectedFiles> {
+    fn collect_files(&self) -> Result<CollectedFiles, RunFailure> {
         let files = self.walker.rust_files()?;
         let registry = StructRegistry::build(&files);
         let method_purity = MethodPurityRegistry::build(&files, &registry);
@@ -124,7 +124,7 @@ impl App {
         }
     }
 
-    fn handle_output(&self, report: &GripReport) -> Result<RunOutcome> {
+    fn handle_output(&self, report: &GripReport) -> Result<RunOutcome, RunFailure> {
         if let Some(min) = self.config.threshold {
             return Ok(RunOutcome {
                 output: String::new(),

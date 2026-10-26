@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 use crate::reporting::offender::Offender;
+use alloc::format;
+use alloc::string::String;
+use alloc::vec;
+use alloc::vec::Vec;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct OffendersRenderer;

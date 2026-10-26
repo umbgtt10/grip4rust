@@ -6,14 +6,16 @@ use crate::analysis::inline_module::InlineModule;
 use crate::analysis::source_file::SourceFile;
 use crate::analysis::transitive_value_type_resolver::TransitiveValueTypeResolver;
 use crate::analysis::type_path_segments::TypePathSegments;
-use std::collections::HashMap;
+use alloc::collections::BTreeMap;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use syn::visit::Visit;
 use syn::{GenericArgument, Item, ItemMod, ItemStruct, PathArguments, Type, parse_file};
 
 #[derive(Debug, Default)]
 pub struct StructRegistry {
-    fields_by_struct: HashMap<String, Vec<String>>,
-    concrete_fields_by_struct: HashMap<String, HashMap<String, String>>,
+    fields_by_struct: BTreeMap<String, Vec<String>>,
+    concrete_fields_by_struct: BTreeMap<String, BTreeMap<String, String>>,
 }
 
 impl StructRegistry {
@@ -31,7 +33,7 @@ impl StructRegistry {
     }
 
     #[must_use]
-    pub fn concrete_fields_of(&self, type_name: &str) -> HashMap<String, String> {
+    pub fn concrete_fields_of(&self, type_name: &str) -> BTreeMap<String, String> {
         self.concrete_fields_by_struct
             .get(type_name)
             .cloned()
@@ -81,7 +83,7 @@ impl StructRegistry {
     fn record_struct(&mut self, item_struct: &ItemStruct) {
         let name = item_struct.ident.to_string();
         let mut all_field_types = Vec::new();
-        let mut concrete_fields = HashMap::new();
+        let mut concrete_fields = BTreeMap::new();
         for f in &item_struct.fields {
             let type_head = Self::field_type_head(&f.ty);
             all_field_types.push(type_head.clone());

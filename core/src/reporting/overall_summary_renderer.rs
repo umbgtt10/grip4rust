@@ -3,6 +3,10 @@
 // SPDX-License-Identifier: MIT
 
 use crate::reporting::overall_stats::OverallStats;
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec;
+use alloc::vec::Vec;
 
 #[derive(Debug, Clone, Copy, Default)]
 pub struct OverallSummaryRenderer;

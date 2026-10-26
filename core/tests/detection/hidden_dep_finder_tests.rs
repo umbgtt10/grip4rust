@@ -6,7 +6,7 @@ use grip::analysis::method_purity_registry::MethodPurityRegistry;
 use grip::analysis::source_file::SourceFile;
 use grip::analysis::struct_registry::StructRegistry;
 use grip::detection::hidden_dep_finder::HiddenDepFinder;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use syn::visit::Visit;
 use syn::{ItemFn, parse_str};
 
@@ -95,7 +95,7 @@ fn a_method_on_a_concrete_field_of_a_known_pure_type_is_not_a_dependency() {
     let fixture = Fixture::empty();
     let item: ItemFn = parse_str("fn f(&self) { self.items.len(); }").expect("valid fn");
     let mut finder = fixture.finder();
-    finder.set_concrete_fields(HashMap::from([(
+    finder.set_concrete_fields(BTreeMap::from([(
         String::from("items"),
         String::from("Vec"),
     )]));
@@ -128,7 +128,7 @@ fn a_nonpure_method_on_a_concrete_field_is_a_dependency_labelled_by_the_field() 
     let fixture = Fixture::empty();
     let item: ItemFn = parse_str("fn f(&self) { self.store.write(); }").expect("valid fn");
     let mut finder = fixture.finder();
-    finder.set_concrete_fields(HashMap::from([(
+    finder.set_concrete_fields(BTreeMap::from([(
         String::from("store"),
         String::from("DiskStore"),
     )]));
@@ -178,7 +178,7 @@ impl Members {
 "#]);
     let item: ItemFn = parse_str("fn f(&self) { self.members.len(); }").expect("valid fn");
     let mut finder = fixture.finder();
-    finder.set_concrete_fields(HashMap::from([(
+    finder.set_concrete_fields(BTreeMap::from([(
         String::from("members"),
         String::from("Members"),
     )]));

@@ -6,7 +6,10 @@ use crate::analysis::known_std_value_types::KNOWN_STD_VALUE_TYPES;
 use crate::analysis::method_purity_registry::MethodPurityRegistry;
 use crate::analysis::struct_registry::StructRegistry;
 use crate::detection::dep_weight_ladder::DepWeightLadder;
-use std::collections::HashMap;
+use alloc::collections::BTreeMap;
+use alloc::format;
+use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use syn::visit::{Visit, visit_expr, visit_stmt};
 use syn::{Expr, ExprMacro, ExprMethodCall, ExprUnsafe, Member, Path, Stmt};
 
@@ -51,7 +54,7 @@ pub struct HiddenDepFinder<'a> {
     count: usize,
     weight: f64,
     labels: Vec<String>,
-    concrete_fields: HashMap<String, String>,
+    concrete_fields: BTreeMap<String, String>,
     registry: &'a StructRegistry,
     method_purity: &'a MethodPurityRegistry,
 }
@@ -62,7 +65,7 @@ impl<'a> HiddenDepFinder<'a> {
             count: 0,
             weight: 0.0,
             labels: Vec::new(),
-            concrete_fields: HashMap::new(),
+            concrete_fields: BTreeMap::new(),
             registry,
             method_purity,
         }
@@ -78,7 +81,7 @@ impl<'a> HiddenDepFinder<'a> {
         &self.labels
     }
 
-    pub fn set_concrete_fields(&mut self, fields: HashMap<String, String>) {
+    pub fn set_concrete_fields(&mut self, fields: BTreeMap<String, String>) {
         self.concrete_fields = fields;
     }
 

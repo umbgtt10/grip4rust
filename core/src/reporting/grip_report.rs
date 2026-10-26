@@ -6,6 +6,8 @@ use crate::analysis::function_info::FunctionInfo;
 use crate::reporting::module_stats::ModuleStats;
 use crate::reporting::offender::Offender;
 use crate::reporting::overall_stats::OverallStats;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 #[derive(Debug, Clone)]
 pub struct GripReport {
