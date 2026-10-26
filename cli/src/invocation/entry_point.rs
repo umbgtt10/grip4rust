@@ -3,11 +3,11 @@
 // SPDX-License-Identifier: MIT
 
 use crate::invocation::args::Args;
-use crate::system::cache::Cache;
 use crate::system::fs_walk::FsWalk;
 use crate::system::json_report_renderer::JsonReportRenderer;
 use anyhow::Result;
 use grip::invocation::app::App;
+use grip::invocation::no_op_cache_store::NoOpCacheStore;
 use grip::invocation::run_outcome::RunOutcome;
 use grip::reporting::default_scorer::DefaultScorer;
 use grip::reporting::text_report_renderer::TextReportRenderer;
@@ -17,9 +17,8 @@ use std::io::{Write, stdout};
 use std::process::ExitCode;
 
 // The composition root: the command line in, the report out on stdout, an exit
-// code back. The one place the file system, the cache on disk, the report's
-// format and stdout are chosen; everything it composes is the core's, tested
-// without them.
+// code back. The one place the file system, the report's format and stdout are
+// chosen; everything it composes is the core's, tested without them.
 pub struct EntryPoint;
 
 impl EntryPoint {
@@ -34,7 +33,7 @@ impl EntryPoint {
             Box::new(FsWalk::new(args.path())),
             Box::new(DefaultScorer::new()),
             renderer,
-            Box::new(Cache::new(args.path())),
+            Box::new(NoOpCacheStore::new()),
             args.config(),
         )
     }

@@ -2,6 +2,5 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-pub mod cache_tests;
 pub mod fs_walk_tests;
 pub mod json_report_renderer_tests;

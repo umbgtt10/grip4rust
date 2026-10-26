@@ -176,6 +176,40 @@ fn run_from_args_injected_outperforms_monolith() {
 }
 
 #[test]
+fn run_from_args_leaves_an_existing_cache_file_untouched() {
+    // Arrange
+    let dir = TempDir::new().unwrap();
+    write_project(&dir, "pub fn greet() -> &'static str { \"hello\" }\n");
+    let cache_file = dir.path().join(".grip_cache").join("cache.json");
+    fs::create_dir_all(cache_file.parent().unwrap()).unwrap();
+    fs::write(&cache_file, "left by an older version").unwrap();
+
+    // Act
+    let result = EntryPoint::run_from_args(vec!["cargo-grip4rust", &dir.path().to_string_lossy()]);
+
+    // Assert
+    assert_eq!(result.unwrap(), ExitCode::SUCCESS);
+    assert_eq!(
+        fs::read_to_string(&cache_file).unwrap(),
+        "left by an older version"
+    );
+}
+
+#[test]
+fn run_from_args_on_a_valid_dir_writes_no_cache_directory() {
+    // Arrange
+    let dir = TempDir::new().unwrap();
+    write_project(&dir, "pub fn greet() -> &'static str { \"hello\" }\n");
+
+    // Act
+    let result = EntryPoint::run_from_args(vec!["cargo-grip4rust", &dir.path().to_string_lossy()]);
+
+    // Assert
+    assert_eq!(result.unwrap(), ExitCode::SUCCESS);
+    assert!(!dir.path().join(".grip_cache").exists());
+}
+
+#[test]
 fn run_from_args_threshold_fails() {
     // Arrange
     let dir = TempDir::new().unwrap();

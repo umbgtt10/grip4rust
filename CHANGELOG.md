@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-The tool's behaviour and command line are unchanged: its stdout, stderr, exit
-codes and cache file are compared byte for byte against 0.9.1. The repository
+The tool's command line and output are unchanged -- its stdout, stderr and exit
+codes are compared byte for byte against 0.9.1 -- but it no longer writes
+`.grip_cache/` into the directory it analyses (see Removed). The repository
 splits into a technology-free core and a cli crate
 (`docs/history/[IMPLEMENTED] CORE_CLI_SPLIT.md`), which changes how the library
 is packaged and much of its API.
@@ -36,9 +37,7 @@ is packaged and much of its API.
 - `Config.path` is the analysed root as text and `Config` gains `target`, the
   name the report gives it; `EntryPoint::compose` takes `&Args`.
 - `traits::cache_store::CacheStore`'s `get` and `set` take the file's path as
-  `&str`. `invocation::cache::Cache` moves to `grip_cli::system::cache::Cache`,
-  its file unchanged; `ItemCounts` no longer implements `Serialize` or
-  `Deserialize`.
+  `&str`; `ItemCounts` no longer implements `Serialize` or `Deserialize`.
 - `traits::reporter::Reporter { render, write }` is
   `traits::report_renderer::ReportRenderer`, which only renders:
   `render(&self, &GripReport) -> Result<String, RenderFailure>`, with the new
@@ -71,6 +70,13 @@ is packaged and much of its API.
   `core/src` or `core/tests` may reach `std::{env,fs,io,net,os,process}`, the
   printing macros or the file-system methods. dry4rust runs once from the root
   over both published crates; the measuring gates cover both.
+
+### Removed
+- The on-disk cache. A run no longer reads `.grip_cache/cache.json` in the
+  analysed directory, nor writes it there: the cache never served a hit -- the
+  run parsed every file every time and only asked the cache whether to store
+  it -- so nothing it held ever changed a result. `invocation::cache::Cache`
+  goes with it.
 
 The command line, output and exit codes are unchanged. The library is not:
 four `pub` free functions became associated functions, for stern4rust 0.17.0's
