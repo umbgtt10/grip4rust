@@ -2,8 +2,8 @@
 
 Each ADR documents one load-bearing decision behind `cargo-grip4rust` —
 succinct, self-contained, citable on its own. Unlike the larger `etheram`
-ecosystem repos, these are not priority-tiered; `grip` is a single-crate CLI
-tool with a small enough decision surface that a flat list is sufficient.
+ecosystem repos, these are not priority-tiered; `grip` is a CLI tool
+with a small enough decision surface that a flat list is sufficient.
 
 Further deferred/unstarted design decisions are tracked in
 `../OPEN_POINTS.md`, not here — an ADR records a decision already made,
@@ -15,6 +15,7 @@ not one still being weighed.
 |---|---|
 | [ADR-AstOnlyNoTypeResolution](ADR-AstOnlyNoTypeResolution.md) | `grip` analyzes via `syn` AST parsing only, never type resolution — trait/call classification is name-based, with known, accepted blind spots for anything off the hardcoded known-lists. |
 | [ADR-DynDispatchAppOverGenerics](ADR-DynDispatchAppOverGenerics.md) | `App` holds `Box<dyn Trait>` fields rather than generic type parameters — one nameable type instead of `App<W, S, R, C>` noise at every call site. |
+| [ADR-TechnologyFreeCore](ADR-TechnologyFreeCore.md) | The analysis is a `no_std` crate, `grip4rust-core`, with a trait for every piece of technology it needs; `cargo-grip4rust` holds the binary and the adapters, and mutation testing covers the core alone. |
 | [ADR-TwoPassProjectWideRegistries](ADR-TwoPassProjectWideRegistries.md) | Two project-wide AST passes (`StructRegistry`, `MethodPurityRegistry`) run before per-file scoring, so `self.field.clone()`/`.method()` on a project's own plain-data type resolves across files — still zero type resolution, just a wider structural net. |
 
 ## Template

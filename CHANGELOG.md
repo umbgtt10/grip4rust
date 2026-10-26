@@ -11,8 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 The tool's behaviour and command line are unchanged: its stdout, stderr, exit
 codes and cache file are compared byte for byte against 0.9.1. The repository
-splits into a technology-free core and a cli crate (`docs/CORE_CLI_SPLIT.md`),
-which changes how the library is packaged and much of its API.
+splits into a technology-free core and a cli crate
+(`docs/history/[IMPLEMENTED] CORE_CLI_SPLIT.md`), which changes how the library
+is packaged and much of its API.
 
 ### Changed (packages)
 - `cargo-grip4rust` is now the command-line crate (`cli/`): the

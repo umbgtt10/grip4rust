@@ -15,8 +15,10 @@
 # copy of, is `FixtureAnalysis` and `CaptureReporter`.
 #
 # A workspace member rather than an excluded crate, so `cargo test` at the root
-# still runs every one of them. The stern4rust gate in stage 2 takes this
-# package as well; the measuring gates are pointed at core/ and leave it alone.
+# still runs every one of them. It runs the analysis end to end on both crates:
+# App from core, Args, FsWalk and the JSON report from cli. The stern4rust gate
+# in stage 2 takes this package as well; the measuring gates take the two
+# published crates and leave it alone, and it is not mutated.
 [package]
 name = "validation"
 version.workspace = true

@@ -62,11 +62,21 @@ just stage1
 just stage2
 ```
 
+The workspace has four members: `core/` (`grip4rust-core`, the library `grip`
+-- the analysis, `no_std`, with no technology in it), `cli/`
+(`cargo-grip4rust`, the binary and its adapters: the file system, the cache,
+the JSON report), `validation/` (the fixture scenarios, end to end) and
+`xtask/` (the gates). A program that wants the analysis without the command
+depends on `grip4rust-core`.
+
 Both must be green before a change is complete. Stage 1 is formatting, clippy
 and tests — cargo built-ins only, so it works on a fresh checkout with none of
 the tools below installed. Stage 2 is `cargo xtask stage2`, which runs, in
-order: `cargo stern4rust` (house coding rules, all of them, on every workspace
-member), `cargo shear` (every declared dependency used), `cargo dry4rust` (no duplication beyond `dry4rust-baseline.json`),
+order: **technology-free core** (`core/` names only `libm`, `quote` and `syn`,
+is `no_std`, and reaches no file system, process, environment or stdout),
+`cargo stern4rust` (house coding rules, all of them, on every workspace
+member), `cargo shear` (every declared dependency used), `cargo dry4rust` (no
+duplication beyond `dry4rust-baseline.json`, over `core/src` and `cli/src`),
 **grip self-analysis**, `cargo crap4rust` (complexity against coverage),
 `cargo twin4rust` (every source file has a mirrored test file) and
 `cargo iceberg4rust` (file risk).

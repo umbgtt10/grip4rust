@@ -27,9 +27,10 @@ stage1:
     cargo clippy --workspace --all-targets -- -D warnings
     cargo test --workspace
 
-# House rules, grip self-analysis, CRAP, mirrored tests and file risk, run in
-# that order. The self-analysis gate is grip4rust's alone: the tool is built
-# from this checkout and pointed at core/, so a change that costs the codebase
-# testability is caught by the very measure the tool exists to report.
+# Technology-free core, house rules, dependencies, duplication, grip
+# self-analysis, CRAP, mirrored tests and file risk, run in that order. The
+# self-analysis gate is grip4rust's alone: the tool is built from this checkout
+# (cli/) and pointed at core/, so a change that costs the codebase testability
+# is caught by the very measure the tool exists to report.
 stage2:
     cargo xtask stage2

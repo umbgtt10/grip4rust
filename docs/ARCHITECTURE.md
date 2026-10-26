@@ -10,32 +10,32 @@ how the scores themselves are computed.
 ## Pipeline
 
 ```
-EntryPoint::run(args) — strips the repeated cargo subcommand
-  → Args (clap)
-  → Config
-  → EntryPoint::compose(config) — builds the parts, hands them to App::new
-    → App
-        walker:   Box<dyn Walk>      — finds .rs files
-        scorer:   Box<dyn Scorer>    — aggregates + scores
-        reporter: Box<dyn Reporter>  — renders output
-        cache:    Box<dyn CacheStore> — skips unchanged files
-      → App::run()
+cli/src/main.rs -> EntryPoint::run(args) -- strips the repeated cargo subcommand
+  -> Args (clap) -> EntryPoint::compose(&args) -- builds the parts, hands them to App::new
+    -> App (core)
+        walker:   Box<dyn Walk>           -- FsWalk (cli): every .rs file, read
+        scorer:   Box<dyn Scorer>         -- DefaultScorer (core)
+        renderer: Box<dyn ReportRenderer> -- TextReportRenderer (core) or JsonReportRenderer (cli)
+        cache:    Box<dyn CacheStore>     -- Cache (cli)
+        config:   Config                  -- Args::config(): root, target, threshold
+      -> App::run() -> Result<RunOutcome, RunFailure>
           1. collect_files():
-             a. walk finds every file, all sources read into memory
-             b. StructRegistry::build(&files) — project-wide, struct-only
+             a. the walk returns every file as a SourceFile -- its path, its
+                path beneath the root, its text
+             b. StructRegistry::build(&files) -- project-wide, struct-only
                 pass: which types are transitively plain data?
-             c. MethodPurityRegistry::build(&files, &registry) — second
+             c. MethodPurityRegistry::build(&files, &registry) -- second
                 project-wide pass, over every inherent impl this time:
                 which (type, method) accessors are provably pure?
              d. Collector::collect(source, path, &registry, &method_purity)
-                per file not present in cache, into
-                (ItemCounts, Vec<FunctionInfo>); cache is populated for
-                files it missed
+                per file, into (ItemCounts, Vec<FunctionInfo>); the cache is
+                asked for each file and given the counts of the ones it misses
           2. compute_report(): scorer aggregates every file's ItemCounts
              into OverallStats + per-module ModuleStats, assembles a
              GripReport
-          3. handle_output(): if --threshold is set, compare and exit;
-             otherwise hand the GripReport to the reporter
+          3. handle_output(): if --threshold is set, only the verdict;
+             otherwise the renderer's text and its line ending
+  -> EntryPoint::finish(outcome) -- writes the output, maps the verdict to the exit code
 ```
 
 Steps (b) and (c) are why `collect_files` reads every file into memory
@@ -48,22 +48,27 @@ it. See `docs/ADRs/ADR-TwoPassProjectWideRegistries.md` for why this is
 two lightweight project-wide passes rather than one deeper one, and why
 neither pass follows a call chain across type boundaries.
 
-`EntryPoint::compose` (`entry_point.rs`) is the only place that wires
-concrete types to trait objects: it builds `FsWalk`/`DefaultScorer`/
-`StdoutReporter`/`Cache` and hands them to `App::new`, `App`'s only
-constructor, which takes every dependency and builds none. Everywhere else
-in the codebase depends on the `traits/` interfaces, never on those four
-directly. See `docs/ADRs/ADR-DynDispatchAppOverGenerics.md` for why these
+`EntryPoint::compose` (`cli/src/invocation/entry_point.rs`) is the only place
+that wires concrete types to trait objects: it builds `FsWalk`,
+`DefaultScorer`, the renderer `--json` asks for and `Cache`, and hands them to
+`App::new`, `App`'s only constructor, which takes every dependency and builds
+none. Everywhere else in the codebase depends on the `traits/` interfaces,
+never on those parts directly. See `docs/ADRs/ADR-DynDispatchAppOverGenerics.md` for why these
 are `Box<dyn Trait>` fields rather than generic parameters.
 
 ## The four injected seams (`traits/`)
 
 | Trait | Concrete impl | Responsibility |
 |---|---|---|
-| `Walk` | `FsWalk` | Recursively find `.rs` files under the target path, excluding `target/`, `tests/`, `examples/`, `benches/` by path component. |
-| `Scorer` | `DefaultScorer` | Turn `ItemCounts` into ratios and a `grip_score`; aggregate per-file counts into per-module and overall stats. |
-| `Reporter` | `StdoutReporter` | Render a `GripReport` as human-readable text or JSON. |
-| `CacheStore` | `Cache` (real) / `NoOpCacheStore` (always-miss fake) | Skip re-parsing a file whose mtime+size haven't changed since the last run. |
+| `Walk` | `FsWalk` (cli) | Recursively find `.rs` files under the target path, excluding `build.rs`, `target/`, `.git/`, `tests/`, `examples/`, `benches/` by path component, and read each into a `SourceFile`. |
+| `Scorer` | `DefaultScorer` (core) | Turn `ItemCounts` into ratios and a `grip_score`; aggregate per-file counts into per-module and overall stats. |
+| `ReportRenderer` | `TextReportRenderer` (core) / `JsonReportRenderer` (cli) | Render a `GripReport` as human-readable text or JSON. |
+| `CacheStore` | `Cache` (cli) / `NoOpCacheStore` (core, always-miss) | Remember each file's counts by mtime and size in `.grip_cache/cache.json`. Written on every run, but a hit is never used -- see `OPEN_POINTS.md`. |
+
+The traits live in the technology-free `core/` (`grip4rust-core`, `no_std`);
+the adapters that touch the disk, serde and stdout live in `cli/`
+(`cargo-grip4rust`). Core's own tests use in-memory fakes from
+`core/tests/support/`.
 
 Every fixture tree under `fixture/` exercises `App::new()`
 with a mix of real and fake implementations of these four traits — that's
@@ -126,20 +131,26 @@ project-wide).
 | `OverallStats` / `ModuleStats` | repo / module | `grip_score: Option<u32>`, the four scoring ratios, `grip_absolute_total` (sum of every in-scope function's `grip_absolute`) |
 | `GripReport` | one CLI invocation | `overall`, `modules: Vec<ModuleStats>`, `functions: Vec<FunctionInfo>`, `offenders` (modules below `--threshold`) |
 | `Offender` | modules below threshold | just enough to list them |
+| `SourceFile` | one walked file | its path as walked, its path beneath the root, its text |
+| `RunOutcome` | one run | the output to write -- empty when `--threshold` asks only for a verdict -- and whether the score fell below the threshold |
 
-`GripReport` is what `Reporter::render` turns into either the
+`GripReport` is what `ReportRenderer::render` turns into either the
 human-readable summary or the `--json` output — it's the single shape
 both output modes are projections of.
 
 ## CLI layer
 
-`Args` (`args.rs`, `clap::Parser`) parses argv into flags; `Config`
-(`config.rs`) is the form `App` actually consumes, built once via
-`Config::from_args(args)`. `main.rs` is one call to `EntryPoint::run`, and
-`EntryPoint` (`entry_point.rs`) is the composition root: `run` strips the
-repeated cargo subcommand and turns an error into a failing exit code,
-`run_from_args` parses the arguments into a `Config`, and `compose` wires the
-concrete parts into an `App` — all real logic lives in `App` and below.
+`cli/` holds everything that talks to the machine. `Args` (`args.rs`,
+`clap::Parser`) parses argv into flags and builds the `Config` core consumes
+(`Args::config`: the root as text, the name the report gives it, the
+threshold). `main.rs` is one call to `EntryPoint::run`, and `EntryPoint`
+(`entry_point.rs`) is the composition root: `run` strips the repeated cargo
+subcommand and turns an error into `error: ...` on stderr and a failing exit
+code, `run_from_args` parses the arguments, `compose` wires the concrete parts
+into an `App`, and `finish` writes the outcome's output and maps its verdict to
+the exit code. `system/` holds the adapters: `FsWalk`, `Cache` and
+`JsonReportRenderer`, whose private records write the JSON document down field
+for field. All real logic lives in `App` and below, in core.
 
 ## Related
 

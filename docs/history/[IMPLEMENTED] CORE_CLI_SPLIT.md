@@ -1,8 +1,28 @@
-# A technology-free core and a cli crate
+# [IMPLEMENTED] A technology-free core and a cli crate
 
-Status: **in progress** -- one commit per slice, in the order below.
+Status: **implemented**, 2026-10-26, in ten signed commits on `main`; the
+record below is the plan as it landed, row by row.
 
-## Why
+| slice | commit |
+|---|---|
+| S0 the record | `241195e` |
+| S1 `DryGate` excludes by path | `f550b26` |
+| S2 the split | `faf5e8c` |
+| S3 `Walk` on `SourceFile` | `94136fd` |
+| S4 `CacheStore` on text paths | `51df881` |
+| S5 `ReportRenderer` and `RunOutcome` | `6a7da36` |
+| S6 `#![no_std]` | `446e764` |
+| S7 the technology-free gate | `7fa928a` |
+| S8 `.cargo/mutants.toml` | `dfa405b` |
+| S9 docs, and this move | the commit that added this file |
+
+---
+
+## A technology-free core and a cli crate
+
+Status: **implemented** -- one commit per slice, in the order below.
+
+### Why
 
 Mutation testing pays for every mutant with a build and a test run. A mutant in
 code that walks a disk, reads a clock or prints is slow to kill, and a test
@@ -13,7 +33,7 @@ binary. So the analysis -- the collector, the two registries, the detectors,
 the scorer, the offenders, the text report -- moves into a crate that touches
 no technology at all, and mutation testing is scoped to that crate alone.
 
-## The shape
+### The shape
 
 The workspace grows a member:
 
@@ -64,7 +84,7 @@ the file-system methods or `extern crate std`.
 `.cargo/mutants.toml` scopes cargo-mutants to `core/src`; each mutant runs
 core's tests only.
 
-## Slices
+### Slices
 
 | # | slice | status |
 |---|---|---|
@@ -77,9 +97,9 @@ core's tests only.
 | S6 | `#![no_std]`: alloc imports, ordered maps, `libm`, typed errors; anyhow leaves core | done |
 | S7 | the technology-free gate, first in stage 2 | done |
 | S8 | `.cargo/mutants.toml` | done |
-| S9 | docs, and this record moves to `docs/history/` | |
+| S9 | docs, and this record moves to `docs/history/` | done |
 
-## Tests that move
+### Tests that move
 
 No test is deleted. Tests whose subject moves go with it:
 

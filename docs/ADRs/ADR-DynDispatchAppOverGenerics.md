@@ -94,6 +94,16 @@ are. Read the text above with the names of its time: its `with_deps()` is
 today's `App::new()`, and its `App::new()` is today's
 `EntryPoint::compose()`.
 
+## Amendment — 2026-10-26
+
+The split into a technology-free core and a cli crate
+([ADR-TechnologyFreeCore](ADR-TechnologyFreeCore.md)) keeps this decision and
+moves its parts: `App` and its four traits are in `grip4rust-core`; `FsWalk`,
+`Cache` and the JSON renderer, with `EntryPoint`, are in `cargo-grip4rust`.
+`Reporter` is `ReportRenderer`, which only renders -- `StdoutReporter`'s text
+half is core's `TextReportRenderer`, and writing to stdout is
+`EntryPoint::finish`'s.
+
 ## Related
 
 - `braintax`'s own `ADR-DynDispatchAppOverGenerics.md` — the identical
