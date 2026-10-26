@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use grip::invocation::config::Config;
-use grip::invocation::entry_point::EntryPoint;
+use grip_cli::invocation::entry_point::EntryPoint;
 use std::ffi::OsString;
 use std::fs;
 use std::path::PathBuf;
@@ -30,7 +30,12 @@ fn compose_on_a_valid_dir_builds_an_app_whose_run_succeeds() {
     // Arrange
     let dir = TempDir::new().unwrap();
     write_project(&dir, "pub fn greet() -> &'static str { \"hello\" }\n");
-    let config = Config::new(dir.path().to_path_buf(), false, None, false);
+    let config = Config {
+        path: dir.path().to_path_buf(),
+        json: false,
+        threshold: None,
+        verbose: false,
+    };
 
     // Act
     let exit_code = EntryPoint::compose(config).run().unwrap();
@@ -43,7 +48,12 @@ fn compose_on_a_valid_dir_builds_an_app_whose_run_succeeds() {
 fn compose_on_an_empty_dir_builds_an_app_whose_run_errors() {
     // Arrange
     let dir = TempDir::new().unwrap();
-    let config = Config::new(dir.path().to_path_buf(), false, None, false);
+    let config = Config {
+        path: dir.path().to_path_buf(),
+        json: false,
+        threshold: None,
+        verbose: false,
+    };
 
     // Act
     let result = EntryPoint::compose(config).run();

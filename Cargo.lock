@@ -112,13 +112,9 @@ dependencies = [
  "anyhow",
  "assert_cmd",
  "clap",
+ "grip4rust-core",
  "predicates",
- "quote",
- "serde",
- "serde_json",
- "syn 2.0.119",
  "tempfile",
- "walkdir",
 ]
 
 [[package]]
@@ -213,6 +209,19 @@ dependencies = [
  "cfg-if",
  "libc",
  "r-efi",
+]
+
+[[package]]
+name = "grip4rust-core"
+version = "0.9.1"
+dependencies = [
+ "anyhow",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn 2.0.119",
+ "tempfile",
+ "walkdir",
 ]
 
 [[package]]
@@ -490,7 +499,7 @@ name = "validation"
 version = "0.9.1"
 dependencies = [
  "anyhow",
- "cargo-grip4rust",
+ "grip4rust-core",
  "serde_json",
 ]
 

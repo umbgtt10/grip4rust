@@ -1,11 +1,21 @@
 [workspace]
 resolver = "2"
-members = ["core", "validation", "xtask"]
+members = ["core", "cli", "validation", "xtask"]
+
+# Shared by every member, so the two published crates release at one version and
+# the version core stamps into a report is the one the binary prints.
+[workspace.package]
+version = "0.9.1"
+edition = "2024"
+rust-version = "1.85"
+authors = ["Umberto Gotti <umberto.gotti@umbertogotti.dev>"]
+license = "MIT"
+repository = "https://github.com/umbgtt10/grip4rust"
 
 # Declared once here; every member takes them with `.workspace = true`, so a
 # version is bumped in one place and no two members can disagree.
 [workspace.dependencies]
-cargo-grip4rust = { path = "core" }
+grip4rust-core = { path = "core", version = "0.9.1" }
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 serde = { version = "1", features = ["derive"] }
@@ -16,3 +26,8 @@ walkdir = "2"
 assert_cmd = "2"
 predicates = "3"
 tempfile = "3"
+
+# Every member and every target: no `unsafe` anywhere in the workspace. core
+# says so at its crate root as well.
+[workspace.lints.rust]
+unsafe_code = "forbid"

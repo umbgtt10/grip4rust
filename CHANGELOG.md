@@ -9,11 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+The tool's behaviour and command line are unchanged: its stdout, stderr, exit
+codes and cache file are compared byte for byte against 0.9.1. The repository
+splits into a technology-free core and a cli crate (`docs/CORE_CLI_SPLIT.md`),
+which changes how the library is packaged and much of its API.
+
+### Changed (packages)
+- `cargo-grip4rust` is now the command-line crate (`cli/`): the
+  `cargo-grip4rust` binary and a library, `grip_cli`. The analysis library
+  `grip` is published by a new package, `grip4rust-core` (`core/`); a dependent
+  replaces `cargo-grip4rust` with `grip4rust-core`, and paths under `grip::`
+  stay for what remains there. Both crates share the workspace's version.
+- `invocation::args::Args` moves to `grip_cli::invocation::args::Args` and
+  gains `config()`; `invocation::entry_point::EntryPoint` moves to
+  `grip_cli::invocation::entry_point::EntryPoint`, unchanged.
+- `Config::from_args` is gone: `Args::config()` builds the `Config`, which
+  keeps its `pub` fields and is otherwise built by literal.
+
 The command line, output and exit codes are unchanged. The library is not:
 four `pub` free functions became associated functions, for stern4rust 0.17.0's
 new `owned-functions` rule -- a file with a subject holds no free function --
 `Scorer::score_counts` returns a struct where it returned a tuple, `App` is
-built from parts composed outside it, and six types with behaviour keep their
+built from parts composed outside it, and five types with behaviour keep their
 fields private behind getters.
 
 ### Changed
@@ -30,17 +47,15 @@ fields private behind getters.
 - The free `invocation::app::run` is gone: `main.rs` hands the process's
   arguments to `EntryPoint::run`, which strips the cargo subcommand.
   `Args::parse_cargo`, which only `run` used, goes with it.
-- `ItemCounts`, `HiddenDepFinder`, `IoCallFinder`, `UnsafeFinder`, `Args` and
-  `Config` keep their fields private behind getters: they have behaviour, and
+- `ItemCounts`, `HiddenDepFinder`, `IoCallFinder`, `UnsafeFinder` and `Args`
+  keep their fields private behind getters: they have behaviour, and
   stern4rust's coming `records-and-objects` rule asks an object to hide its
   fields. Every field that was `pub` is read through a getter named after it --
   `ItemCounts`' ten, `HiddenDepFinder`'s `count`, `weight` and `labels`, the
-  two finders' `found`, and `Args`' and `Config`'s `path`, `json`, `threshold`
-  and `verbose`. An `ItemCounts` is built from `ItemCounts::default()` by a
-  `with_<field>` step per field, and records a function and an item itself,
-  `record_function` and `record_item` beside `record_impl_method`; a `Config`
-  is built by the new `Config::new(path, json, threshold, verbose)` or by
-  `Config::from_args`.
+  two finders' `found`, and `Args`' `path`, `json`, `threshold` and `verbose`.
+  An `ItemCounts` is built from `ItemCounts::default()` by a `with_<field>`
+  step per field, and records a function and an item itself,
+  `record_function` and `record_item` beside `record_impl_method`.
 - All twenty-four stern4rust rules apply to every workspace member.
 - `Scorer::score_counts` returns a `reporting::scores::Scores` instead of
   `(Option<u32>, f64, f64, f64, f64, f64)`, whose five ratios only their

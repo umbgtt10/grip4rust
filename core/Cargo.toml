@@ -1,15 +1,16 @@
 [package]
-name = "cargo-grip4rust"
-version = "0.9.1"
-edition = "2024"
-rust-version = "1.85"
-description = "A cargo subcommand for measuring Rust testability"
-authors = ["Umberto Gotti <umberto.gotti@umbertogotti.dev>"]
-license = "MIT"
-readme = "../README.md"
-repository = "https://github.com/umbgtt10/grip4rust"
-keywords = ["cargo", "subcommand", "search", "grep", "cli"]
-categories = ["development-tools::cargo-plugins", "command-line-utilities"]
+name = "grip4rust-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "The analysis behind cargo-grip4rust: a testability score for Rust code across purity, public surface, trait seams and hidden dependencies"
+readme = "README.md"
+documentation = "https://docs.rs/grip4rust-core"
+keywords = ["testability", "metrics", "static-analysis"]
+categories = ["development-tools"]
 
 autotests = false
 
@@ -20,9 +21,11 @@ name = "grip"
 name = "all_tests"
 path = "tests/all_tests.rs"
 
+[lints]
+workspace = true
+
 [dependencies]
 anyhow = { workspace = true }
-clap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 quote = { workspace = true }
@@ -30,6 +33,4 @@ syn = { workspace = true }
 walkdir = { workspace = true }
 
 [dev-dependencies]
-assert_cmd = { workspace = true }
-predicates = { workspace = true }
 tempfile = { workspace = true }

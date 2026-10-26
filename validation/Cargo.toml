@@ -19,11 +19,11 @@
 # package as well; the measuring gates are pointed at core/ and leave it alone.
 [package]
 name = "validation"
-version = "0.9.1"
-edition = "2024"
-rust-version = "1.85"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
 description = "End-to-end validation of grip4rust against the fixture trees"
-license = "MIT"
+license.workspace = true
 publish = false
 
 autotests = false
@@ -36,9 +36,12 @@ path = "src/lib.rs"
 name = "all_tests"
 path = "tests/all_tests.rs"
 
+[lints]
+workspace = true
+
 [dependencies]
-# The package is cargo-grip4rust; its [lib] target is `grip`, which is the name
+# The package is grip4rust-core; its [lib] target is `grip`, which is the name
 # the harness and the tests import.
-cargo-grip4rust = { workspace = true }
+grip4rust-core = { workspace = true }
 anyhow = { workspace = true }
 serde_json = { workspace = true }

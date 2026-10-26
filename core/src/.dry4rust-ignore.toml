@@ -1,3 +1,0 @@
-[[ignore]]
-fingerprint = "86a9ad020b85f6c2"
-reason = "Plain constructors, Self { a, b, c, d }, of two objects, Config and App: under stern4rust's records-and-objects (R035) an object keeps its fields private, so its constructor is its struct's shape, not copied logic. dry4rust leaves plain constructors out from its next release (ADR-PlainConstructorsAreTheStructsShape); delete this entry then."

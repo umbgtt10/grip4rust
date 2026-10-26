@@ -2,7 +2,7 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use grip::invocation::entry_point::EntryPoint;
+use grip_cli::invocation::entry_point::EntryPoint;
 use std::env::args_os;
 use std::process::ExitCode;
 

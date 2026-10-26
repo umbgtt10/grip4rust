@@ -31,10 +31,15 @@ impl FixtureAnalysis {
 
     #[must_use]
     pub fn report(&self) -> Value {
-        let config = Config::new(self.path.clone(), true, None, false);
+        let config = Config {
+            path: self.path.clone(),
+            json: true,
+            threshold: None,
+            verbose: false,
+        };
         let captured = Rc::new(RefCell::new(String::new()));
         let app = App::new(
-            Box::new(FsWalk::new(config.path())),
+            Box::new(FsWalk::new(&config.path)),
             Box::new(DefaultScorer::new()),
             Box::new(CaptureReporter::new(Rc::clone(&captured))),
             Box::new(NoOpCacheStore::new()),

@@ -23,11 +23,16 @@ fn new_builds_an_app_that_runs_on_the_injected_dependencies() {
         "pub fn greet() -> &'static str { \"hello\" }\n",
     )
     .unwrap();
-    let config = Config::new(dir.path().to_path_buf(), true, None, false);
+    let config = Config {
+        path: dir.path().to_path_buf(),
+        json: true,
+        threshold: None,
+        verbose: false,
+    };
 
     // Act
     let app = App::new(
-        Box::new(FsWalk::new(config.path())),
+        Box::new(FsWalk::new(&config.path)),
         Box::new(DefaultScorer::new()),
         Box::new(StdoutReporter::new(true, false)),
         Box::new(NoOpCacheStore::new()),

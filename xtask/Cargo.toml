@@ -1,9 +1,11 @@
 [package]
 name = "xtask"
 version = "0.1.0"
-edition = "2024"
-rust-version = "1.85"
-license = "MIT"
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 description = "Gate orchestration for the grip4rust workspace"
 publish = false
 
@@ -20,6 +22,9 @@ path = "src/main.rs"
 [[test]]
 name = "all_tests"
 path = "tests/all_tests.rs"
+
+[lints]
+workspace = true
 
 [dependencies]
 serde = { workspace = true }

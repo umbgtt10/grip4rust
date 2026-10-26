@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 use clap::Parser;
+use grip::invocation::config::Config;
 use std::ffi::OsString;
 use std::path::Path;
 use std::path::PathBuf;
@@ -32,6 +33,16 @@ impl Args {
         T: Into<OsString> + Clone,
     {
         Self::parse_from(args)
+    }
+
+    #[must_use]
+    pub fn config(&self) -> Config {
+        Config {
+            path: self.path.clone(),
+            json: self.json,
+            threshold: self.threshold,
+            verbose: self.verbose,
+        }
     }
 
     #[must_use]

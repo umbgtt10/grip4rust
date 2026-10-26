@@ -54,7 +54,7 @@ impl App {
         if indexed.is_empty() {
             return Err(anyhow!(
                 "no Rust source files found in {}",
-                self.config.path().display()
+                self.config.path.display()
             ));
         }
 
@@ -103,13 +103,13 @@ impl App {
         };
         let target = self
             .config
-            .path()
+            .path
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or(".")
             .to_string();
         let module_stats = self.scorer.module_stats(modules);
-        let offender_threshold = self.config.threshold().unwrap_or(50);
+        let offender_threshold = self.config.threshold.unwrap_or(50);
         let offenders = module_stats
             .iter()
             .filter_map(|m| {
@@ -132,7 +132,7 @@ impl App {
     }
 
     fn handle_output(&self, report: &GripReport) -> Result<ExitCode> {
-        if let Some(min) = self.config.threshold() {
+        if let Some(min) = self.config.threshold {
             return Ok(if report.overall.grip_score.is_none_or(|s| s >= min) {
                 ExitCode::SUCCESS
             } else {
@@ -144,7 +144,7 @@ impl App {
     }
 
     fn module_from_path(&self, path: &Path) -> String {
-        let relative = path.strip_prefix(self.config.path()).unwrap_or(path);
+        let relative = path.strip_prefix(&self.config.path).unwrap_or(path);
         let s = relative.to_string_lossy().replace('\\', "/");
         let without_src = s.strip_prefix("src/").map(|s| s.to_string()).unwrap_or(s);
         if let Some(pos) = without_src.rfind('/') {

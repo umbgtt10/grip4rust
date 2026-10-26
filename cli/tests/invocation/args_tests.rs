@@ -2,8 +2,56 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use grip::invocation::args::Args;
+use grip_cli::invocation::args::Args;
 use std::ffi::OsString;
+
+#[test]
+fn config_preserves_json() {
+    // Arrange
+    let args = Args::parse_from_args(vec!["cargo-grip4rust", "--json"]);
+
+    // Act
+    let config = args.config();
+
+    // Assert
+    assert!(config.json);
+}
+
+#[test]
+fn config_preserves_path() {
+    // Arrange
+    let args = Args::parse_from_args(vec!["cargo-grip4rust", "my-project"]);
+
+    // Act
+    let config = args.config();
+
+    // Assert
+    assert_eq!(config.path.to_string_lossy(), "my-project");
+}
+
+#[test]
+fn config_preserves_threshold() {
+    // Arrange
+    let args = Args::parse_from_args(vec!["cargo-grip4rust", "--threshold", "42"]);
+
+    // Act
+    let config = args.config();
+
+    // Assert
+    assert_eq!(config.threshold, Some(42));
+}
+
+#[test]
+fn config_preserves_verbose() {
+    // Arrange
+    let args = Args::parse_from_args(vec!["cargo-grip4rust", "--verbose"]);
+
+    // Act
+    let config = args.config();
+
+    // Assert
+    assert!(config.verbose);
+}
 
 #[test]
 fn default_path_is_dot() {

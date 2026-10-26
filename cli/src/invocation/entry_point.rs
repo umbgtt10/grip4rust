@@ -2,14 +2,14 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::analysis::fs_walk::FsWalk;
-use crate::invocation::app::App;
 use crate::invocation::args::Args;
-use crate::invocation::cache::Cache;
-use crate::invocation::config::Config;
-use crate::reporting::default_scorer::DefaultScorer;
-use crate::reporting::stdout_reporter::StdoutReporter;
 use anyhow::Result;
+use grip::analysis::fs_walk::FsWalk;
+use grip::invocation::app::App;
+use grip::invocation::cache::Cache;
+use grip::invocation::config::Config;
+use grip::reporting::default_scorer::DefaultScorer;
+use grip::reporting::stdout_reporter::StdoutReporter;
 use std::ffi::OsString;
 use std::process::ExitCode;
 
@@ -19,10 +19,10 @@ impl EntryPoint {
     #[must_use]
     pub fn compose(config: Config) -> App {
         App::new(
-            Box::new(FsWalk::new(config.path())),
+            Box::new(FsWalk::new(&config.path)),
             Box::new(DefaultScorer::new()),
-            Box::new(StdoutReporter::new(config.json(), config.verbose())),
-            Box::new(Cache::new(config.path())),
+            Box::new(StdoutReporter::new(config.json, config.verbose)),
+            Box::new(Cache::new(&config.path)),
             config,
         )
     }
@@ -43,6 +43,6 @@ impl EntryPoint {
         I: IntoIterator<Item = T>,
         T: Into<OsString> + Clone,
     {
-        Self::compose(Config::from_args(Args::parse_from_args(args))).run()
+        Self::compose(Args::parse_from_args(args).config()).run()
     }
 }
