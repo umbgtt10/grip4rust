@@ -5,7 +5,7 @@ members = ["core", "cli", "validation", "xtask"]
 # Shared by every member, so the two published crates release at one version and
 # the version core stamps into a report is the one the binary prints.
 [workspace.package]
-version = "0.9.1"
+version = "0.10.0"
 edition = "2024"
 rust-version = "1.85"
 authors = ["Umberto Gotti <umberto.gotti@umbertogotti.dev>"]
@@ -15,8 +15,8 @@ repository = "https://github.com/umbgtt10/grip4rust"
 # Declared once here; every member takes them with `.workspace = true`, so a
 # version is bumped in one place and no two members can disagree.
 [workspace.dependencies]
-cargo-grip4rust = { path = "cli", version = "0.9.1" }
-grip4rust-core = { path = "core", version = "0.9.1" }
+cargo-grip4rust = { path = "cli", version = "0.10.0" }
+grip4rust-core = { path = "core", version = "0.10.0" }
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 libm = "0.2.16"

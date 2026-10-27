@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-10-27
+
 The tool's command line and output are unchanged -- its stdout, stderr and exit
 codes are compared byte for byte against 0.9.1 -- but it no longer writes
 `.grip_cache/` into the directory it analyses (see Removed). The repository
