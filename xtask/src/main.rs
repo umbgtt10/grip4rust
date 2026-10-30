@@ -13,6 +13,7 @@ use xtask::gates::boundary::disk_source_files::DiskSourceFiles;
 use xtask::gates::boundary::package_dependencies::PackageDependencies;
 use xtask::gates::boundary_gate::BoundaryGate;
 use xtask::gates::crap_gate::CrapGate;
+use xtask::gates::deny_gate::DenyGate;
 use xtask::gates::dry_gate::DryGate;
 use xtask::gates::gate::Gate;
 use xtask::gates::grip_self_gate::GripSelfGate;
@@ -170,6 +171,8 @@ fn run_stage2() -> ExitCode {
         String::from(CRAP_THRESHOLD),
     );
     let twin = TwinGate::new(&runner, manifest_path.clone(), measured.clone());
+    // Last: its advisories change without the code changing (see DenyGate).
+    let deny = DenyGate::new(&runner, manifest_path.clone());
     let iceberg = IcebergGate::new(
         &runner,
         manifest_path,
@@ -178,7 +181,7 @@ fn run_stage2() -> ExitCode {
     );
 
     let gates: Vec<&dyn Gate> = vec![
-        &boundary, &stern, &shear, &dry, &grip, &crap, &twin, &iceberg,
+        &boundary, &stern, &shear, &dry, &grip, &crap, &twin, &iceberg, &deny,
     ];
 
     match Stage2::new(gates).run() {
