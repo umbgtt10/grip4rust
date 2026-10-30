@@ -32,8 +32,13 @@ If either gate is not green, the work is not complete.
 Both run identically on Windows, Linux and macOS, and the same two commands run
 in CI -- there is no second definition of the gates to drift out of step.
 
-Stage 1 is formatting, clippy and tests -- cargo built-ins only, so it works on
-a fresh checkout with none of the house tools installed. Stage 2 is nine gates,
+Stage 1 is `sync`, then formatting, clippy and tests -- cargo built-ins only, so
+it works on a fresh checkout with none of the house tools installed, though
+`sync` needs the network. `sync` is `cargo update`: while the tools are in
+development, every dependency moves to its newest compatible version, in the
+lock file only -- a requirement in a manifest never moves, so a published
+crate's users can still resolve what they could. What it moves is committed on
+its own. Breaking versions are a separate decision, and not taken here. Stage 2 is nine gates,
 run in this order:
 
 | gate | asks |

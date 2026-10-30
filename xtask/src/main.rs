@@ -12,6 +12,7 @@ use xtask::gates::boundary::crate_root_attributes::CrateRootAttributes;
 use xtask::gates::boundary::disk_source_files::DiskSourceFiles;
 use xtask::gates::boundary::package_dependencies::PackageDependencies;
 use xtask::gates::boundary_gate::BoundaryGate;
+use xtask::gates::cargo_update_gate::CargoUpdateGate;
 use xtask::gates::crap_gate::CrapGate;
 use xtask::gates::deny_gate::DenyGate;
 use xtask::gates::dry_gate::DryGate;
@@ -72,8 +73,27 @@ const DRY_MIN_NODES: &str = "25";
 fn main() -> ExitCode {
     match args().nth(1).as_deref() {
         Some("stage2") => run_stage2(),
+        Some("sync") => run_sync(),
         _ => {
-            eprintln!("usage: cargo xtask stage2");
+            eprintln!("usage: cargo xtask <stage2|sync>");
+            ExitCode::FAILURE
+        }
+    }
+}
+
+// Stage 1's first step: the lock file to the newest compatible versions.
+fn run_sync() -> ExitCode {
+    let root = workspace_root();
+    let manifest_path = below(&root, &["Cargo.toml"]).to_string_lossy().into_owned();
+    let runner = SystemCommandRunner::new();
+    let update = CargoUpdateGate::new(&runner, manifest_path);
+    match Stage2::new(vec![&update]).run() {
+        Ok(()) => {
+            println!("\ngrip4rust sync done");
+            ExitCode::SUCCESS
+        }
+        Err(reason) => {
+            eprintln!("\nFailed: {reason}");
             ExitCode::FAILURE
         }
     }

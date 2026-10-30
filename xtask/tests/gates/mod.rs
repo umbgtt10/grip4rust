@@ -4,6 +4,7 @@
 
 pub mod boundary;
 pub mod boundary_gate_tests;
+pub mod cargo_update_gate_tests;
 pub mod crap_gate_tests;
 pub mod deny_gate_tests;
 pub mod dry_gate_tests;
