@@ -122,3 +122,20 @@ fn score_counts_with_nothing_pure_or_public_returns_zero() {
     assert_eq!(scores.pure_ratio, 0.0);
     assert_eq!(scores.public_ratio, 0.0);
 }
+
+#[test]
+fn score_counts_with_unequal_pure_and_public_ratios_returns_each_in_its_own_field() {
+    // Arrange
+    let counts = ItemCounts::default()
+        .with_total_functions(4)
+        .with_pure_functions(1)
+        .with_total_items(4)
+        .with_public_items(3);
+
+    // Act
+    let scores = scorer().score_counts(&counts);
+
+    // Assert
+    assert_eq!(scores.pure_ratio, 0.25);
+    assert_eq!(scores.public_ratio, 0.75);
+}
