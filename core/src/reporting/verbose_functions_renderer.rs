@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 use crate::analysis::function_info::FunctionInfo;
-use crate::detection::contribution_schedule::ContributionSchedule;
 use alloc::borrow::ToOwned;
 use alloc::format;
 use alloc::string::{String, ToString};
@@ -51,8 +50,6 @@ impl VerboseFunctionsRenderer {
     }
 
     fn function_line(f: &FunctionInfo) -> String {
-        let contr =
-            ContributionSchedule::new().contribution(f.is_pure, f.has_trait_seam, f.dep_weight);
         let labels = f.hidden_dep_labels.join(", ");
         format!(
             "    {:<35}  pure: {:>5}  seam: {:>5}  hidden: {:>2}  contr: {:>5.0}%  [{}]  {}",
@@ -60,7 +57,7 @@ impl VerboseFunctionsRenderer {
             if f.is_pure { "yes" } else { "no" },
             if f.has_trait_seam { "yes" } else { "no " },
             f.hidden_deps,
-            contr * 100.0,
+            f.grip_absolute * 100.0,
             if labels.is_empty() { "-" } else { &labels },
             Self::contribution_marker(f.hidden_deps),
         )

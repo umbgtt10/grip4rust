@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constructor or a std module call straight into a method of its own fall;
   this crate's own absolute total falls from 86.49 to 85.89, its score holding
   at 64.
+- `--verbose` prints each function's `contr:` from the `grip_absolute` its
+  `FunctionInfo` carries, the figure JSON reports and the totals sum.
+  `VerboseFunctionsRenderer` worked it out again from `is_pure`,
+  `has_trait_seam` and `dep_weight` through its own `ContributionSchedule`: one
+  figure with two sources, which agreed only while nothing set one apart from
+  the other. No output changes, the collector setting both from one schedule.
 
 ## [0.10.0] - 2026-10-27
 
