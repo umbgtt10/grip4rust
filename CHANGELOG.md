@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- A hidden dependency in the arguments of a method called on `self` is
+  counted. `HiddenDepFinder` returned before visiting anything beneath a call
+  whose receiver was a bare `self`, so `self.save(Database::connect())` counted
+  no dependency where `store.save(Database::connect())` counted one. The call
+  on `self` itself is still none: `self.helper()` counts nothing.
+  `HiddenDepFinder::is_bare_self`, private, goes. Scores of code passing a
+  constructor or a std module call straight into a method of its own fall;
+  this crate's own absolute total falls from 86.49 to 85.89, its score holding
+  at 64.
+
 ## [0.10.0] - 2026-10-27
 
 The tool's command line and output are unchanged -- its stdout, stderr and exit

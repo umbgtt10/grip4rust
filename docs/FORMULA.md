@@ -145,6 +145,10 @@ names. Instead, it uses structural rules over the parsed call expression:
 | known std module call, `module::fn` tail, `std`/`core`-prefixed or unqualified | `fs::read(...)`, `std::fs::read(...)` | ✅ |
 | known std module call, third-party-qualified | `mycrate::fs::read(...)` | ❌ — tail matches but the crate prefix doesn't |
 
+A rule that clears a call clears the call alone, never its arguments: in
+`self.save(Database::connect())` the call on `self` is no dependency, and
+`Database::connect()` is found as it would be anywhere else.
+
 This catches any concrete dependency regardless of crate —
 `StripeGateway`, `TcpStream`, `redis::Client`, `MyDatabase` — without
 maintaining a denylist of third-party type names, at the cost of the
