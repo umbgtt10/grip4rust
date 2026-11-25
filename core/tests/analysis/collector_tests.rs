@@ -30,6 +30,97 @@ fn by_value_mut_self_builder_method_is_pure() {
 }
 
 #[test]
+fn collect_for_a_clean_function_normalizes_its_contribution_to_a_percentage() {
+    // Arrange
+    let source = "pub fn add(a: i32, b: i32) -> i32 { a + b }\n";
+
+    // Act
+    let (_counts, fns) = Collector::collect(
+        source,
+        "lib.rs",
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
+
+    // Assert
+    assert_eq!(fns[0].grip_absolute, 0.95);
+    assert_eq!(fns[0].grip_normalized, 95);
+}
+
+#[test]
+fn collect_for_a_clean_inherent_method_normalizes_its_contribution_to_a_percentage() {
+    // Arrange
+    let source = "pub struct Meter;\nimpl Meter {\n    pub fn reading(&self) -> u32 { 1 }\n}\n";
+
+    // Act
+    let (_counts, fns) = Collector::collect(
+        source,
+        "lib.rs",
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
+
+    // Assert
+    assert_eq!(fns[0].grip_absolute, 0.95);
+    assert_eq!(fns[0].grip_normalized, 95);
+}
+
+#[test]
+fn collect_for_a_function_inside_an_inline_module_counts_it() {
+    // Arrange
+    let source = "mod inner {\n    pub fn answer() -> u32 { 42 }\n}\n";
+
+    // Act
+    let (counts, fns) = Collector::collect(
+        source,
+        "lib.rs",
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
+
+    // Assert
+    assert_eq!(counts.total_functions(), 1);
+    assert_eq!(fns[0].name, "answer");
+}
+
+#[test]
+fn collect_for_each_kind_of_item_marked_for_tests_counts_none_of_them() {
+    // Arrange
+    let source = r#"
+#[test]
+fn checks() {}
+
+#[cfg(test)]
+pub struct Fixture;
+
+#[cfg(test)]
+pub trait Probe {}
+
+#[cfg(test)]
+pub enum Case {}
+
+#[cfg(test)]
+impl Fixture {
+    pub fn build() -> u32 { 1 }
+}
+"#;
+
+    // Act
+    let (counts, fns) = Collector::collect(
+        source,
+        "lib.rs",
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
+
+    // Assert
+    assert_eq!(counts.total_functions(), 0);
+    assert_eq!(counts.total_items(), 0);
+    assert_eq!(counts.inherent_methods(), 0);
+    assert!(fns.is_empty());
+}
+
+#[test]
 fn hidden_dep_arc_dyn_field_not_counted() {
     // Arrange
     let source = r#"

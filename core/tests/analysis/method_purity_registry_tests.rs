@@ -76,6 +76,34 @@ impl Members {
 }
 
 #[test]
+fn is_known_pure_method_inherent_impl_inside_an_inline_module_returns_true() {
+    // Arrange
+    let source = r#"
+mod members {
+    struct Members {
+        ids: Vec<i32>,
+    }
+    impl Members {
+        pub fn len(&self) -> usize { self.ids.len() }
+    }
+}
+"#;
+    let files = vec![SourceFile {
+        path: String::from("lib.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
+    let struct_registry = StructRegistry::build(&files);
+    let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
+
+    // Act
+    let result = method_purity.is_known_pure_method("Members", "len");
+
+    // Assert
+    assert!(result);
+}
+
+#[test]
 fn is_known_pure_method_io_call_body_returns_false() {
     // Arrange
     let source = r#"

@@ -57,6 +57,38 @@ fn merge_with_default_is_identity() {
 }
 
 #[test]
+fn merged_with_unequal_counts_adds_each_field() {
+    // Arrange
+    let a = full_counts();
+    let b = ItemCounts::default()
+        .with_total_functions(7)
+        .with_pure_functions(4)
+        .with_total_items(11)
+        .with_public_items(5)
+        .with_inherent_methods(4)
+        .with_inherent_impure(3)
+        .with_local_trait_methods(5)
+        .with_local_trait_impure(3)
+        .with_total_contribution(6.0)
+        .with_clean_functions(3);
+
+    // Act
+    let merged = a.merged(&b);
+
+    // Assert
+    assert_eq!(merged.total_functions(), 12);
+    assert_eq!(merged.pure_functions(), 7);
+    assert_eq!(merged.total_items(), 20);
+    assert_eq!(merged.public_items(), 11);
+    assert_eq!(merged.inherent_methods(), 7);
+    assert_eq!(merged.inherent_impure(), 4);
+    assert_eq!(merged.local_trait_methods(), 7);
+    assert_eq!(merged.local_trait_impure(), 5);
+    assert_eq!(merged.total_contribution(), 10.0);
+    assert_eq!(merged.clean_functions(), 5);
+}
+
+#[test]
 fn record_function_for_a_clean_pure_function_counts_it_clean_and_pure() {
     // Arrange
     let mut counts = ItemCounts::default();

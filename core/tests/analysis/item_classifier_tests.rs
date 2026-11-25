@@ -62,6 +62,25 @@ fn classify_visibility_for_pub_returns_pub() {
 }
 
 #[test]
+fn has_test_attr_for_a_feature_gated_cfg_attr_returns_false() {
+    // Arrange & Act
+    let found =
+        ItemClassifier::has_test_attr(&attrs("#[cfg_attr(feature = \"serde\", derive(Debug))]"));
+
+    // Assert
+    assert!(!found);
+}
+
+#[test]
+fn has_test_attr_for_a_feature_gated_cfg_returns_false() {
+    // Arrange & Act
+    let found = ItemClassifier::has_test_attr(&attrs("#[cfg(feature = \"std\")]"));
+
+    // Assert
+    assert!(!found);
+}
+
+#[test]
 fn has_test_attr_for_a_test_attribute_returns_true() {
     // Arrange & Act
     let found = ItemClassifier::has_test_attr(&attrs("#[test]"));
@@ -124,12 +143,30 @@ fn is_foreign_trait_for_a_locally_rooted_path_returns_false() {
     assert!(!foreign);
 }
 
+#[test]
+fn is_foreign_trait_for_a_single_segment_named_like_a_std_root_returns_false() {
+    // Arrange & Act
+    let foreign = ItemClassifier::is_foreign_trait(&path("core"));
+
+    // Assert
+    assert!(!foreign);
+}
+
 // Without type resolution a single-segment path is ambiguous, so a multi-segment
 // path rooted at std, core or alloc is the only unambiguous signal.
 #[test]
 fn is_foreign_trait_for_a_std_rooted_path_returns_true() {
     // Arrange & Act
     let foreign = ItemClassifier::is_foreign_trait(&path("std::fmt::Anything"));
+
+    // Assert
+    assert!(foreign);
+}
+
+#[test]
+fn is_foreign_trait_for_an_alloc_rooted_path_returns_true() {
+    // Arrange & Act
+    let foreign = ItemClassifier::is_foreign_trait(&path("alloc::anything::Anything"));
 
     // Assert
     assert!(foreign);
