@@ -92,6 +92,7 @@ impl App {
             local_trait_impure: overall_counts.local_trait_impure(),
             trait_ratio: scores.trait_ratio,
             avg_contribution: scores.avg_contribution,
+            avg_hidden_deps: scores.avg_hidden_deps,
             clean_fn_ratio: scores.clean_fn_ratio,
             grip_absolute_total: overall_counts.total_contribution(),
         };

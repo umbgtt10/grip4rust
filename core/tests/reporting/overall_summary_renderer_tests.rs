@@ -19,6 +19,7 @@ fn stats() -> OverallStats {
         local_trait_impure: 2,
         trait_ratio: 0.4,
         avg_contribution: 0.7,
+        avg_hidden_deps: 0.35,
         clean_fn_ratio: 0.65,
         grip_absolute_total: 12.34,
     }
@@ -34,6 +35,20 @@ fn render_always_shows_absolute_total() {
 
     // Assert
     assert!(lines.iter().any(|l| l.contains("12.34")));
+}
+
+#[test]
+fn render_with_hidden_deps_shows_their_average_per_function() {
+    // Arrange
+    let renderer = OverallSummaryRenderer::new();
+
+    // Act
+    let lines = renderer.render(&stats());
+
+    // Assert
+    assert!(lines.contains(
+        &"Hidden deps:           avg 0.35  — 65.0% clean  (70.0% avg contribution)".to_string()
+    ));
 }
 
 #[test]

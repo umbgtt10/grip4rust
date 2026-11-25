@@ -144,7 +144,7 @@ impl<'a> Collector<'a> {
             self.contribution_schedule
                 .contribution(is_pure, has_trait_seam, finder.weight());
 
-        self.counts.record_function(contr, is_pure);
+        self.counts.record_function(contr, is_pure, finder.count());
         self.counts.record_item(is_pub);
 
         self.functions.push(FunctionInfo {
@@ -190,7 +190,7 @@ impl<'a> Collector<'a> {
             self.contribution_schedule
                 .contribution(is_pure, is_trait_impl, finder.weight());
 
-        self.counts.record_function(contr, is_pure);
+        self.counts.record_function(contr, is_pure, finder.count());
         self.counts.record_impl_method(is_trait_impl, is_pure);
 
         let is_pub = matches!(

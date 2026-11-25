@@ -41,12 +41,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   module's `traits:` column reads `N/A`, as both did only where there was no
   impl method at all; the ratio is then vacuous, 1.0 in the score. Scores do
   not change.
+- `Hidden deps: avg` prints the mean number of hidden dependencies per
+  function. It printed a total, `total_functions - avg_contribution *
+  total_functions` -- the contribution every function fell short of 1.0 by,
+  summed -- which grew with the size of the crate and counted impurity and
+  missing seams as well as hidden dependencies: this crate's own report read
+  `avg 47.69`, and now reads `avg 0.58`. `docs/FORMULA.md` defines the figure,
+  `total_hidden_deps / total_functions`, `0.0` without functions, beside
+  `clean_fn_ratio`, the other figure the summary prints without weighing it in
+  the score. Scores do not change.
 
 ### Changed
 - `OverallStats` and `ModuleStats` gain `inherent_impure` and
   `local_trait_impure`, the counts `trait_ratio` is the ratio of, filled by
   `App` and `DefaultScorer::module_stats` from `ItemCounts`. The JSON document
   is unchanged.
+- `ItemCounts` counts the hidden dependencies of the functions it records:
+  `record_function` takes the function's hidden-dependency count as a third
+  argument, summed into `total_hidden_deps` (with `with_total_hidden_deps`) and
+  merged like every other count. `Scores`, `OverallStats` and `ModuleStats`
+  gain `avg_hidden_deps`. The JSON document is unchanged.
 
 ## [0.10.0] - 2026-10-27
 

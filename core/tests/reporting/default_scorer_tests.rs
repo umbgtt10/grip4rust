@@ -82,6 +82,23 @@ fn module_stats_sorted() {
 }
 
 #[test]
+fn module_stats_with_hidden_deps_carries_their_average() {
+    // Arrange
+    let map = BTreeMap::from([(
+        "alpha".to_string(),
+        ItemCounts::default()
+            .with_total_functions(2)
+            .with_total_hidden_deps(3),
+    )]);
+
+    // Act
+    let stats = scorer().module_stats(map);
+
+    // Assert
+    assert_eq!(stats[0].avg_hidden_deps, 1.5);
+}
+
+#[test]
 fn module_stats_with_impure_methods_of_each_kind_carries_their_counts() {
     // Arrange
     let map = BTreeMap::from([(
@@ -123,6 +140,18 @@ fn score_counts_with_everything_pure_and_public_returns_one_hundred() {
     assert_eq!(scores.grip_score, Some(100));
     assert_eq!(scores.pure_ratio, 1.0);
     assert_eq!(scores.public_ratio, 1.0);
+}
+
+#[test]
+fn score_counts_with_no_functions_returns_zero_average_hidden_deps() {
+    // Arrange
+    let counts = ItemCounts::default();
+
+    // Act
+    let scores = scorer().score_counts(&counts);
+
+    // Assert
+    assert_eq!(scores.avg_hidden_deps, 0.0);
 }
 
 #[test]
@@ -184,6 +213,20 @@ fn score_counts_with_one_impure_method_of_each_kind_returns_a_trait_ratio_of_one
 
     // Assert
     assert_eq!(scores.trait_ratio, 0.5);
+}
+
+#[test]
+fn score_counts_with_three_hidden_deps_over_four_functions_returns_an_average_of_three_quarters() {
+    // Arrange
+    let counts = ItemCounts::default()
+        .with_total_functions(4)
+        .with_total_hidden_deps(3);
+
+    // Act
+    let scores = scorer().score_counts(&counts);
+
+    // Assert
+    assert_eq!(scores.avg_hidden_deps, 0.75);
 }
 
 #[test]

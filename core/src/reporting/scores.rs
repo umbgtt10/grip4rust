@@ -9,5 +9,6 @@ pub struct Scores {
     pub public_ratio: f64,
     pub trait_ratio: f64,
     pub avg_contribution: f64,
+    pub avg_hidden_deps: f64,
     pub clean_fn_ratio: f64,
 }

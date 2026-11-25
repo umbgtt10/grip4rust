@@ -55,6 +55,21 @@ fn new_builds_an_app_that_runs_on_the_injected_dependencies() {
 }
 
 #[test]
+fn run_averages_the_hidden_deps_over_every_function_in_the_overall_figures() {
+    // Arrange
+    let handed = Rc::new(RefCell::new(Vec::new()));
+    let walk = InMemoryWalk::new()
+        .with_file("src/clean/lib.rs", GREET)
+        .with_file("src/dirty/lib.rs", HIDDEN);
+
+    // Act
+    app(walk, &handed, None).run().unwrap();
+
+    // Assert
+    assert_eq!(handed.borrow()[0].overall.avg_hidden_deps, 0.5);
+}
+
+#[test]
 fn run_counts_the_impure_methods_of_each_kind_in_the_overall_figures() {
     // Arrange
     let handed = Rc::new(RefCell::new(Vec::new()));

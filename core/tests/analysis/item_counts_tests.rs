@@ -15,6 +15,7 @@ fn full_counts() -> ItemCounts {
         .with_local_trait_methods(2)
         .with_local_trait_impure(2)
         .with_total_contribution(4.0)
+        .with_total_hidden_deps(3)
         .with_clean_functions(2)
 }
 
@@ -37,6 +38,7 @@ fn merge_adds_all_fields() {
     assert_eq!(merged.local_trait_methods(), 4);
     assert_eq!(merged.local_trait_impure(), 4);
     assert_eq!(merged.total_contribution(), 8.0);
+    assert_eq!(merged.total_hidden_deps(), 6);
     assert_eq!(merged.clean_functions(), 4);
 }
 
@@ -70,6 +72,7 @@ fn merged_with_unequal_counts_adds_each_field() {
         .with_local_trait_methods(5)
         .with_local_trait_impure(3)
         .with_total_contribution(6.0)
+        .with_total_hidden_deps(4)
         .with_clean_functions(3);
 
     // Act
@@ -85,6 +88,7 @@ fn merged_with_unequal_counts_adds_each_field() {
     assert_eq!(merged.local_trait_methods(), 7);
     assert_eq!(merged.local_trait_impure(), 5);
     assert_eq!(merged.total_contribution(), 10.0);
+    assert_eq!(merged.total_hidden_deps(), 7);
     assert_eq!(merged.clean_functions(), 5);
 }
 
@@ -94,13 +98,14 @@ fn record_function_for_a_clean_pure_function_counts_it_clean_and_pure() {
     let mut counts = ItemCounts::default();
 
     // Act
-    counts.record_function(1.0, true);
+    counts.record_function(1.0, true, 0);
 
     // Assert
     assert_eq!(counts.total_functions(), 1);
     assert_eq!(counts.pure_functions(), 1);
     assert_eq!(counts.clean_functions(), 1);
     assert_eq!(counts.total_contribution(), 1.0);
+    assert_eq!(counts.total_hidden_deps(), 0);
     assert_eq!(counts.total_items(), 0);
 }
 
@@ -110,13 +115,14 @@ fn record_function_for_an_impure_function_counts_it_neither_clean_nor_pure() {
     let mut counts = ItemCounts::default();
 
     // Act
-    counts.record_function(0.25, false);
+    counts.record_function(0.25, false, 2);
 
     // Assert
     assert_eq!(counts.total_functions(), 1);
     assert_eq!(counts.pure_functions(), 0);
     assert_eq!(counts.clean_functions(), 0);
     assert_eq!(counts.total_contribution(), 0.25);
+    assert_eq!(counts.total_hidden_deps(), 2);
 }
 
 #[test]

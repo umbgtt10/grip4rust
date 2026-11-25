@@ -125,7 +125,7 @@ project-wide).
 |---|---|---|
 | `ItemCounts` | per file, merged to per-module/overall | raw counts (public items, pure functions, trait methods, `total_contribution`, …) that `Scorer` turns into ratios |
 | `FunctionInfo` | per function | `grip_absolute`/`grip_normalized` (this function's own score), `is_pure`, `has_trait_seam`, `dep_weight`, `hidden_dep_labels` |
-| `OverallStats` / `ModuleStats` | repo / module | `grip_score: Option<u32>`, the four scoring ratios, `grip_absolute_total` (sum of every in-scope function's `grip_absolute`) |
+| `OverallStats` / `ModuleStats` | repo / module | `grip_score: Option<u32>`, the four scoring ratios, the impure method counts `trait_ratio` divides, `clean_fn_ratio` and `avg_hidden_deps`, `grip_absolute_total` (sum of every in-scope function's `grip_absolute`) |
 | `GripReport` | one CLI invocation | `overall`, `modules: Vec<ModuleStats>`, `functions: Vec<FunctionInfo>`, `offenders` (modules below `--threshold`) |
 | `Offender` | modules below threshold | just enough to list them |
 | `SourceFile` | one walked file | its path as walked, its path beneath the root, its text |

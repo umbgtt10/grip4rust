@@ -19,6 +19,7 @@ pub struct ModuleStats {
     pub local_trait_impure: usize,
     pub trait_ratio: f64,
     pub avg_contribution: f64,
+    pub avg_hidden_deps: f64,
     pub clean_fn_ratio: f64,
     pub grip_absolute_total: f64,
 }

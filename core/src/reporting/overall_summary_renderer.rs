@@ -36,8 +36,7 @@ impl OverallSummaryRenderer {
             Self::trait_methods_line(overall),
             format!(
                 "Hidden deps:           avg {:.2}  — {:.1}% clean  ({:.1}% avg contribution)",
-                overall.total_functions as f64
-                    - overall.avg_contribution * overall.total_functions as f64,
+                overall.avg_hidden_deps,
                 overall.clean_fn_ratio * 100.0,
                 overall.avg_contribution * 100.0,
             ),
