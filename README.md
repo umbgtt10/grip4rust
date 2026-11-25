@@ -127,7 +127,7 @@ cargo grip4rust [OPTIONS] [PATH]
 | Option | Description |
 |---|---|
 | `--json` | Emit structured JSON output |
-| `--threshold N` | Exit non-zero if overall grip score < N. Alias: `--min-score` |
+| `--threshold N` | Exit non-zero if overall grip score < N; the report lists the modules below N as offenders. Alias: `--min-score` |
 | `--verbose` | Per-function detail: purity, seam, hidden deps, contribution, labels |
 | `-h`, `--help` | Print help |
 | `-V`, `--version` | Print version |

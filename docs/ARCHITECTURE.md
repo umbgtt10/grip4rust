@@ -31,8 +31,8 @@ cli/src/main.rs -> EntryPoint::run(args) -- strips the repeated cargo subcommand
           2. compute_report(): scorer aggregates every file's ItemCounts
              into OverallStats + per-module ModuleStats, assembles a
              GripReport
-          3. handle_output(): if --threshold is set, only the verdict;
-             otherwise the renderer's text and its line ending
+          3. handle_output(): the renderer's text and its line ending, and,
+             if --threshold is set, whether the score fell below it
   -> EntryPoint::finish(outcome) -- writes the output, maps the verdict to the exit code
 ```
 
@@ -126,10 +126,10 @@ project-wide).
 | `ItemCounts` | per file, merged to per-module/overall | raw counts (public items, pure functions, trait methods, `total_contribution`, …) that `Scorer` turns into ratios |
 | `FunctionInfo` | per function | `grip_absolute`/`grip_normalized` (this function's own score), `is_pure`, `has_trait_seam`, `dep_weight`, `hidden_dep_labels` |
 | `OverallStats` / `ModuleStats` | repo / module | `grip_score: Option<u32>`, the four scoring ratios, the impure method counts `trait_ratio` divides, `clean_fn_ratio` and `avg_hidden_deps`, `grip_absolute_total` (sum of every in-scope function's `grip_absolute`) |
-| `GripReport` | one CLI invocation | `overall`, `modules: Vec<ModuleStats>`, `functions: Vec<FunctionInfo>`, `offenders` (modules below `--threshold`) |
+| `GripReport` | one CLI invocation | `overall`, `modules: Vec<ModuleStats>`, `functions: Vec<FunctionInfo>`, `offenders` (modules below `--threshold`, or below 50 without one) |
 | `Offender` | modules below threshold | just enough to list them |
 | `SourceFile` | one walked file | its path as walked, its path beneath the root, its text |
-| `RunOutcome` | one run | the output to write -- empty when `--threshold` asks only for a verdict -- and whether the score fell below the threshold |
+| `RunOutcome` | one run | the output to write and whether the score fell below the threshold, if one was given |
 
 `GripReport` is what `ReportRenderer::render` turns into either the
 human-readable summary or the `--json` output — it's the single shape

@@ -201,7 +201,7 @@ fn run_with_a_threshold_above_the_score_returns_a_failing_verdict() {
     assert_eq!(
         outcome,
         RunOutcome {
-            output: String::new(),
+            output: String::from("rendered\n"),
             below_threshold: true,
         }
     );
@@ -220,14 +220,14 @@ fn run_with_a_threshold_and_no_functions_returns_a_passing_verdict() {
     assert_eq!(
         outcome,
         RunOutcome {
-            output: String::new(),
+            output: String::from("rendered\n"),
             below_threshold: false,
         }
     );
 }
 
 #[test]
-fn run_with_a_threshold_equal_to_the_score_returns_a_passing_verdict_without_rendering() {
+fn run_with_a_threshold_equal_to_the_score_returns_a_passing_verdict_with_the_report() {
     // Arrange
     let handed = Rc::new(RefCell::new(Vec::new()));
     let walk = InMemoryWalk::new().with_file("src/lib.rs", HIDDEN);
@@ -239,11 +239,40 @@ fn run_with_a_threshold_equal_to_the_score_returns_a_passing_verdict_without_ren
     assert_eq!(
         outcome,
         RunOutcome {
-            output: String::new(),
+            output: String::from("rendered\n"),
             below_threshold: false,
         }
     );
-    assert!(handed.borrow().is_empty());
+    assert_eq!(handed.borrow().len(), 1);
+}
+
+#[test]
+fn run_with_a_threshold_renders_the_report_listing_the_modules_below_it_as_offenders() {
+    // Arrange
+    let handed = Rc::new(RefCell::new(Vec::new()));
+    let walk = InMemoryWalk::new()
+        .with_file("src/clean/lib.rs", GREET)
+        .with_file("src/dirty/lib.rs", HIDDEN);
+
+    // Act
+    let outcome = app(walk, &handed, Some(60)).run().unwrap();
+
+    // Assert
+    let report = &handed.borrow()[0];
+    let offenders: Vec<(&str, u32)> = report
+        .offenders
+        .iter()
+        .map(|offender| (offender.path.as_str(), offender.grip_score))
+        .collect();
+    assert_eq!(
+        outcome,
+        RunOutcome {
+            output: String::from("rendered\n"),
+            below_threshold: false,
+        }
+    );
+    assert_eq!(report.offender_threshold, 60);
+    assert_eq!(offenders, [("dirty", 28)]);
 }
 
 #[test]

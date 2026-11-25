@@ -120,17 +120,15 @@ impl App {
     }
 
     fn handle_output(&self, report: &GripReport) -> Result<RunOutcome, RunFailure> {
-        if let Some(min) = self.config.threshold {
-            return Ok(RunOutcome {
-                output: String::new(),
-                below_threshold: !report.overall.grip_score.is_none_or(|s| s >= min),
-            });
-        }
         let mut output = self.renderer.render(report)?;
         output.push('\n');
         Ok(RunOutcome {
             output,
-            below_threshold: false,
+            below_threshold: self
+                .config
+                .threshold
+                .zip(report.overall.grip_score)
+                .is_some_and(|(min, score)| score < min),
         })
     }
 

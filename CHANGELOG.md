@@ -50,6 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `total_hidden_deps / total_functions`, `0.0` without functions, beside
   `clean_fn_ratio`, the other figure the summary prints without weighing it in
   the score. Scores do not change.
+- `--threshold N` prints the report, its offenders the modules below N. The
+  run worked the offenders out against N and then printed nothing at all,
+  only exiting non-zero below it, so a failing run never said which score
+  failed or where; a run without `--threshold` printed its offenders against
+  50 all along. The report is the one the run would print without
+  `--threshold`, text or `--json`, and the exit code is unchanged. A script
+  that ran `--threshold` for its silence now gets the report on stdout.
 
 ### Changed
 - `OverallStats` and `ModuleStats` gain `inherent_impure` and
