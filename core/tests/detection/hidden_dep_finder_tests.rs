@@ -352,6 +352,19 @@ fn visit_block_with_a_concrete_field_reached_through_another_receiver_finds_no_d
 }
 
 #[test]
+fn visit_block_with_a_dependency_in_the_arguments_of_a_method_on_bare_self_finds_it() {
+    // Arrange
+    let on_self = "fn f(&self) { self.save(Database::connect()); }";
+    let on_param = "fn f(store: &Store) { store.save(Database::connect()); }";
+
+    // Act
+    let found = [deps_of(on_self).2, deps_of(on_param).2];
+
+    // Assert
+    assert_eq!(found, [["Database::connect"], ["Database::connect"]]);
+}
+
+#[test]
 fn visit_block_with_a_std_module_call_under_a_crate_of_its_own_finds_no_dependency() {
     // Arrange & Act
     let (count, _, _) = deps_of(r#"fn f() { my_crate::fs::read("p"); }"#);

@@ -5,8 +5,7 @@
 use alloc::string::String;
 
 // What a run ends with: the text to print -- the rendered report with its line
-// ending, or nothing when the run was only asked whether the score reaches a
-// threshold -- and whether it fell below that threshold.
+// ending -- and whether the score fell below the threshold the run was given.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RunOutcome {
     pub output: String,

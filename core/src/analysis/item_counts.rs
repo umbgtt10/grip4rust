@@ -13,6 +13,7 @@ pub struct ItemCounts {
     local_trait_methods: usize,
     local_trait_impure: usize,
     total_contribution: f64,
+    total_hidden_deps: usize,
     clean_functions: usize,
 }
 
@@ -54,6 +55,7 @@ impl ItemCounts {
             local_trait_methods: self.local_trait_methods + other.local_trait_methods,
             local_trait_impure: self.local_trait_impure + other.local_trait_impure,
             total_contribution: self.total_contribution + other.total_contribution,
+            total_hidden_deps: self.total_hidden_deps + other.total_hidden_deps,
             clean_functions: self.clean_functions + other.clean_functions,
         }
     }
@@ -68,9 +70,10 @@ impl ItemCounts {
         self.pure_functions
     }
 
-    pub fn record_function(&mut self, contribution: f64, is_pure: bool) {
+    pub fn record_function(&mut self, contribution: f64, is_pure: bool, hidden_deps: usize) {
         self.total_functions += 1;
         self.total_contribution += contribution;
+        self.total_hidden_deps += hidden_deps;
         if contribution == 1.0 {
             self.clean_functions += 1;
         }
@@ -110,6 +113,11 @@ impl ItemCounts {
     #[must_use]
     pub fn total_functions(&self) -> usize {
         self.total_functions
+    }
+
+    #[must_use]
+    pub fn total_hidden_deps(&self) -> usize {
+        self.total_hidden_deps
     }
 
     #[must_use]
@@ -185,6 +193,14 @@ impl ItemCounts {
     pub fn with_total_functions(self, total_functions: usize) -> Self {
         Self {
             total_functions,
+            ..self
+        }
+    }
+
+    #[must_use]
+    pub fn with_total_hidden_deps(self, total_hidden_deps: usize) -> Self {
+        Self {
+            total_hidden_deps,
             ..self
         }
     }

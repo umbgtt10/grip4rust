@@ -87,9 +87,12 @@ impl App {
             pure_ratio: scores.pure_ratio,
             public_ratio: scores.public_ratio,
             inherent_methods: overall_counts.inherent_methods(),
+            inherent_impure: overall_counts.inherent_impure(),
             local_trait_methods: overall_counts.local_trait_methods(),
+            local_trait_impure: overall_counts.local_trait_impure(),
             trait_ratio: scores.trait_ratio,
             avg_contribution: scores.avg_contribution,
+            avg_hidden_deps: scores.avg_hidden_deps,
             clean_fn_ratio: scores.clean_fn_ratio,
             grip_absolute_total: overall_counts.total_contribution(),
         };
@@ -117,17 +120,15 @@ impl App {
     }
 
     fn handle_output(&self, report: &GripReport) -> Result<RunOutcome, RunFailure> {
-        if let Some(min) = self.config.threshold {
-            return Ok(RunOutcome {
-                output: String::new(),
-                below_threshold: !report.overall.grip_score.is_none_or(|s| s >= min),
-            });
-        }
         let mut output = self.renderer.render(report)?;
         output.push('\n');
         Ok(RunOutcome {
             output,
-            below_threshold: false,
+            below_threshold: self
+                .config
+                .threshold
+                .zip(report.overall.grip_score)
+                .is_some_and(|(min, score)| score < min),
         })
     }
 

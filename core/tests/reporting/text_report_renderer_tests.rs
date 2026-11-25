@@ -187,7 +187,7 @@ fn human_output_verbose_shows_per_function_detail() {
 }
 
 #[test]
-fn render_with_and_without_impl_methods_shows_the_trait_ratio_only_where_there_are_some() {
+fn render_with_and_without_impure_impl_methods_shows_the_trait_ratio_only_where_there_are_some() {
     // Arrange
     let report = report_with(
         vec![
@@ -195,6 +195,7 @@ fn render_with_and_without_impl_methods_shows_the_trait_ratio_only_where_there_a
                 path: "seamed".to_string(),
                 grip_score: Some(90),
                 local_trait_methods: 1,
+                local_trait_impure: 1,
                 trait_ratio: 1.0,
                 ..Default::default()
             },
@@ -236,6 +237,29 @@ fn render_with_modules_at_the_band_edges_marks_each_line_by_its_band() {
         .map(|path| module_line(&out, path).rsplit("%  ").next().unwrap())
         .to_vec();
     assert_eq!(markers, ["❌", "⚠️", "⚠️", ""]);
+}
+
+#[test]
+fn render_with_only_pure_impl_methods_shows_no_trait_ratio() {
+    // Arrange
+    let report = report_with(
+        vec![ModuleStats {
+            path: "pure".to_string(),
+            grip_score: Some(90),
+            inherent_methods: 2,
+            local_trait_methods: 1,
+            trait_ratio: 1.0,
+            ..Default::default()
+        }],
+        vec![],
+        vec![],
+    );
+
+    // Act
+    let out = reporter().render(&report).unwrap();
+
+    // Assert
+    assert!(module_line(&out, "pure").contains("traits:    N/A"));
 }
 
 #[test]

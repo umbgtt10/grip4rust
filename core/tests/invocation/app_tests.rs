@@ -16,6 +16,7 @@ const FIFTY: &str =
     "pub fn idle() {}\nfn shout() { println!(\"x\"); }\nfn count() -> u32 { println!(\"x\"); 1 }\n";
 const GREET: &str = "pub fn greet() -> &'static str { \"hello\" }\n";
 const HIDDEN: &str = "fn hidden() { println!(\"x\"); }\n";
+const IMPURE: &str = "pub struct S;\npub trait T { fn shout(&self); }\nimpl S {\n    fn talk(&self) {}\n    fn yell(&self) {}\n    fn name(&self) -> u8 { 1 }\n}\nimpl T for S { fn shout(&self) {} }\n";
 
 fn app(walk: InMemoryWalk, handed: &Rc<RefCell<Vec<GripReport>>>, threshold: Option<u32>) -> App {
     App::new(
@@ -50,6 +51,38 @@ fn new_builds_an_app_that_runs_on_the_injected_dependencies() {
             output: String::from("rendered\n"),
             below_threshold: false,
         }
+    );
+}
+
+#[test]
+fn run_averages_the_hidden_deps_over_every_function_in_the_overall_figures() {
+    // Arrange
+    let handed = Rc::new(RefCell::new(Vec::new()));
+    let walk = InMemoryWalk::new()
+        .with_file("src/clean/lib.rs", GREET)
+        .with_file("src/dirty/lib.rs", HIDDEN);
+
+    // Act
+    app(walk, &handed, None).run().unwrap();
+
+    // Assert
+    assert_eq!(handed.borrow()[0].overall.avg_hidden_deps, 0.5);
+}
+
+#[test]
+fn run_counts_the_impure_methods_of_each_kind_in_the_overall_figures() {
+    // Arrange
+    let handed = Rc::new(RefCell::new(Vec::new()));
+    let walk = InMemoryWalk::new().with_file("src/lib.rs", IMPURE);
+
+    // Act
+    app(walk, &handed, None).run().unwrap();
+
+    // Assert
+    let overall = &handed.borrow()[0].overall;
+    assert_eq!(
+        (overall.inherent_impure, overall.local_trait_impure),
+        (2, 1)
     );
 }
 
@@ -168,7 +201,7 @@ fn run_with_a_threshold_above_the_score_returns_a_failing_verdict() {
     assert_eq!(
         outcome,
         RunOutcome {
-            output: String::new(),
+            output: String::from("rendered\n"),
             below_threshold: true,
         }
     );
@@ -187,14 +220,14 @@ fn run_with_a_threshold_and_no_functions_returns_a_passing_verdict() {
     assert_eq!(
         outcome,
         RunOutcome {
-            output: String::new(),
+            output: String::from("rendered\n"),
             below_threshold: false,
         }
     );
 }
 
 #[test]
-fn run_with_a_threshold_equal_to_the_score_returns_a_passing_verdict_without_rendering() {
+fn run_with_a_threshold_equal_to_the_score_returns_a_passing_verdict_with_the_report() {
     // Arrange
     let handed = Rc::new(RefCell::new(Vec::new()));
     let walk = InMemoryWalk::new().with_file("src/lib.rs", HIDDEN);
@@ -206,11 +239,40 @@ fn run_with_a_threshold_equal_to_the_score_returns_a_passing_verdict_without_ren
     assert_eq!(
         outcome,
         RunOutcome {
-            output: String::new(),
+            output: String::from("rendered\n"),
             below_threshold: false,
         }
     );
-    assert!(handed.borrow().is_empty());
+    assert_eq!(handed.borrow().len(), 1);
+}
+
+#[test]
+fn run_with_a_threshold_renders_the_report_listing_the_modules_below_it_as_offenders() {
+    // Arrange
+    let handed = Rc::new(RefCell::new(Vec::new()));
+    let walk = InMemoryWalk::new()
+        .with_file("src/clean/lib.rs", GREET)
+        .with_file("src/dirty/lib.rs", HIDDEN);
+
+    // Act
+    let outcome = app(walk, &handed, Some(60)).run().unwrap();
+
+    // Assert
+    let report = &handed.borrow()[0];
+    let offenders: Vec<(&str, u32)> = report
+        .offenders
+        .iter()
+        .map(|offender| (offender.path.as_str(), offender.grip_score))
+        .collect();
+    assert_eq!(
+        outcome,
+        RunOutcome {
+            output: String::from("rendered\n"),
+            below_threshold: false,
+        }
+    );
+    assert_eq!(report.offender_threshold, 60);
+    assert_eq!(offenders, [("dirty", 28)]);
 }
 
 #[test]

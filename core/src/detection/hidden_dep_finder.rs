@@ -181,7 +181,10 @@ impl<'a> HiddenDepFinder<'a> {
                 }
                 true
             }
-            Expr::MethodCall(expr_method) => self.handle_method_call_expr(expr_method),
+            Expr::MethodCall(expr_method) => {
+                self.handle_method_call_expr(expr_method);
+                true
+            }
             Expr::Macro(expr_macro) => self.handle_macro_expr(expr_macro),
             _ => true,
         }
@@ -195,10 +198,7 @@ impl<'a> HiddenDepFinder<'a> {
         true
     }
 
-    fn handle_method_call_expr(&mut self, expr_method: &ExprMethodCall) -> bool {
-        if Self::is_bare_self(&expr_method.receiver) {
-            return false;
-        }
+    fn handle_method_call_expr(&mut self, expr_method: &ExprMethodCall) {
         if let Some(name) = Self::concrete_field_name(&expr_method.receiver) {
             if let Some(type_name) = self.concrete_fields.get(&name).cloned() {
                 let method = expr_method.method.to_string();
@@ -208,15 +208,6 @@ impl<'a> HiddenDepFinder<'a> {
                 }
             }
         }
-        true
-    }
-
-    fn is_bare_self(receiver: &Expr) -> bool {
-        matches!(
-            receiver,
-            Expr::Path(expr_path)
-                if expr_path.path.segments.len() == 1 && expr_path.path.segments[0].ident == "self"
-        )
     }
 
     fn is_pure_value_method(&self, type_name: &str, method: &str) -> bool {

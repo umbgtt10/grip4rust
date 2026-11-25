@@ -9,6 +9,103 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-25
+
+Seven defects, reported by sentinel4rust's first mutation round over `core`
+(its survivors answered under Changed (development)), fixed test first. Minor
+rather than patch: scores move -- a hidden dependency passed into a method
+called on `self` is now counted -- `--threshold` prints the report it used to
+withhold, two lines of the summary print what they always claimed to, and
+`OverallStats`, `ModuleStats`, `Scores` and `ItemCounts` change shape. This
+crate's own score holds at 64.
+
+### Fixed
+- A hidden dependency in the arguments of a method called on `self` is
+  counted. `HiddenDepFinder` returned before visiting anything beneath a call
+  whose receiver was a bare `self`, so `self.save(Database::connect())` counted
+  no dependency where `store.save(Database::connect())` counted one. The call
+  on `self` itself is still none: `self.helper()` counts nothing.
+  `HiddenDepFinder::is_bare_self`, private, goes. Scores of code passing a
+  constructor or a std module call straight into a method of its own fall;
+  this crate's own absolute total falls from 86.49 to 85.89, its score holding
+  at 64.
+- `--verbose` prints each function's `contr:` from the `grip_absolute` its
+  `FunctionInfo` carries, the figure JSON reports and the totals sum.
+  `VerboseFunctionsRenderer` worked it out again from `is_pure`,
+  `has_trait_seam` and `dep_weight` through its own `ContributionSchedule`: one
+  figure with two sources, which agreed only while nothing set one apart from
+  the other. No output changes, the collector setting both from one schedule.
+- `MethodPurityRegistry` leaves test code out, as `Collector` does: a module,
+  an inherent impl or a method marked for tests is not walked, so an accessor
+  defined only for tests no longer vouches for a production call of the same
+  name. It walks an inline module through the shared `InlineModule`, as
+  `Collector` does, rather than its own copy of the walk.
+- The summary's trait line counts impure methods, as the percentage beside it
+  and `docs/FORMULA.md`'s `trait_ratio` always have: `Trait methods: N / M
+  impure impl methods are trait-bound (X%)`, N and M the trait-bound and all
+  impure impl methods. It counted N and M over every impl method, pure ones
+  included, so the fraction and its percentage disagreed -- this crate's own
+  report read `12 / 134 impl methods are trait-bound (22.9%)`, and now reads
+  `8 / 35 impure impl methods are trait-bound (22.9%)`. Where there is no
+  impure impl method the line reads `N/A (no impure impl methods)`, and a
+  module's `traits:` column reads `N/A`, as both did only where there was no
+  impl method at all; the ratio is then vacuous, 1.0 in the score. Scores do
+  not change.
+- `Hidden deps: avg` prints the mean number of hidden dependencies per
+  function. It printed a total, `total_functions - avg_contribution *
+  total_functions` -- the contribution every function fell short of 1.0 by,
+  summed -- which grew with the size of the crate and counted impurity and
+  missing seams as well as hidden dependencies: this crate's own report read
+  `avg 47.69`, and now reads `avg 0.58`. `docs/FORMULA.md` defines the figure,
+  `total_hidden_deps / total_functions`, `0.0` without functions, beside
+  `clean_fn_ratio`, the other figure the summary prints without weighing it in
+  the score. Scores do not change.
+- `--threshold N` prints the report, its offenders the modules below N. The
+  run worked the offenders out against N and then printed nothing at all,
+  only exiting non-zero below it, so a failing run never said which score
+  failed or where; a run without `--threshold` printed its offenders against
+  50 all along. The report is the one the run would print without
+  `--threshold`, text or `--json`, and the exit code is unchanged. A script
+  that ran `--threshold` for its silence now gets the report on stdout.
+- The README's samples are the tool's output. The verbose header read
+  `grip 0.9.1 -- my-crate — verbose` where the tool prints `grip {version} —
+  {target} — verbose`, and the per-function lines were laid out as the tool
+  never lays them out; the self-analysis sample carried the two figures fixed
+  above, `20 / 121 impl methods are trait-bound (34.9%)` and `avg 54.32`. Both
+  samples are now copied from runs of this release: over `core/`, and
+  `--verbose` over a crate of one file.
+
+### Changed
+- `OverallStats` and `ModuleStats` gain `inherent_impure` and
+  `local_trait_impure`, the counts `trait_ratio` is the ratio of, filled by
+  `App` and `DefaultScorer::module_stats` from `ItemCounts`. The JSON document
+  is unchanged.
+- `ItemCounts` counts the hidden dependencies of the functions it records:
+  `record_function` takes the function's hidden-dependency count as a third
+  argument, summed into `total_hidden_deps` (with `with_total_hidden_deps`) and
+  merged like every other count. `Scores`, `OverallStats` and `ModuleStats`
+  gain `avg_hidden_deps`. The JSON document is unchanged.
+
+### Changed (development)
+- sentinel4rust's mutation round over `core` at `dc57c97` is answered: the
+  survivors in `analysis/`, `detection/`, `reporting/` and `invocation/` are
+  killed by tests, each seen failing under its mutant; the ones that pointed
+  at defects are the Fixed entries above. `has_test_attr` matching `test`
+  anywhere in a `cfg` is deferred by the owner as one check shared by five
+  tools, recorded in `docs/OPEN_POINTS.md`.
+- Every commit message carries `core`'s grip and braintax and their ratio,
+  scored as the commit stages it: `.githooks/commit-msg` runs `cargo xtask
+  grip-braintax`, enabled once a clone by `just hooks`.
+- Stage 1 starts with `just sync`, `cargo update` in the lock file only, what
+  it moves committed on its own; anyhow moves to 1.0.104, past
+  RUSTSEC-2026-0190.
+- Stage 2 gains a last gate, `cargo deny`, against the `deny.toml` every
+  *4rust repository shares: advisories, licences MIT, Apache-2.0 and
+  Unicode-3.0, crates.io as the only source.
+- `scores_tests` goes, its one test comparing two `Scores` literals; its check,
+  that the pure and public ratios are not swapped, moves to `DefaultScorer`'s
+  tests.
+
 ## [0.10.0] - 2026-10-27
 
 The tool's command line and output are unchanged -- its stdout, stderr and exit

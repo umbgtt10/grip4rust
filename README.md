@@ -127,7 +127,7 @@ cargo grip4rust [OPTIONS] [PATH]
 | Option | Description |
 |---|---|
 | `--json` | Emit structured JSON output |
-| `--threshold N` | Exit non-zero if overall grip score < N. Alias: `--min-score` |
+| `--threshold N` | Exit non-zero if overall grip score < N; the report lists the modules below N as offenders. Alias: `--min-score` |
 | `--verbose` | Per-function detail: purity, seam, hidden deps, contribution, labels |
 | `-h`, `--help` | Print help |
 | `-V`, `--version` | Print version |
@@ -137,41 +137,60 @@ cargo grip4rust [OPTIONS] [PATH]
 ## Output
 
 ```
-cargo-grip4rust 0.9.1 -- core
+cargo-grip4rust 0.11.0 -- core
 ══════════════════════════════════════════════════════
 
-Overall grip score:    61 / 100
-Absolute grip total:   75.68
-Public surface:        40 items
-Total functions:       130
-Probably pure:         87 / 130  (66.9%)
-Trait methods:         20 / 121 impl methods are trait-bound  (34.9%)
-Hidden deps:           avg 54.32  — 3.1% clean  (58.2% avg contribution)
+Overall grip score:    64 / 100
+Absolute grip total:   88.21
+Public surface:        36 items
+Total functions:       136
+Probably pure:         101 / 136  (74.3%)
+Trait methods:         8 / 35 impure impl methods are trait-bound  (22.9%)
+Hidden deps:           avg 0.58  — 2.2% clean  (64.9% avg contribution)
 
 Per module:
-  .                               grip:  74   pure: 100.0%   pub:   0   traits:    N/A   clean:   0.0%
-  analysis                        grip:  55   pure:  65.4%   pub:  15   traits:  16.7%   clean:   0.0%  ⚠️
-  detection                       grip:  54   pure:  51.5%   pub:   5   traits:  37.5%   clean:   0.0%  ⚠️
-  invocation                      grip:  65   pure:  65.2%   pub:   7   traits:  62.5%   clean:   4.3%  ⚠️
-  reporting                       grip:  94   pure:  95.2%   pub:   9   traits: 100.0%   clean:  14.3%
-  traits                          grip: N/A   pure:   0.0%   pub:   4   traits:    N/A   clean:   0.0%
+  .                               grip: N/A   pure:   0.0%   pub:   0   traits:    N/A   clean:   0.0%
+  analysis                        grip:  59   pure:  74.0%   pub:  13   traits:  10.5%   clean:   0.0%  ⚠️
+  detection                       grip:  63   pure:  56.8%   pub:   5   traits:  37.5%   clean:   0.0%  ⚠️
+  invocation                      grip:  92   pure: 100.0%   pub:   4   traits:    N/A   clean:   0.0%
+  reporting                       grip:  97   pure: 100.0%   pub:  11   traits:    N/A   clean:  15.0%
+  traits                          grip: N/A   pure:   0.0%   pub:   3   traits:    N/A   clean:   0.0%
 ```
 
 (`grip`'s own source, analyzed by itself — and the number `just stage2` holds
-above a floor of 59. `N/A` on the `traits` module is the zero-function case:
-`grip_score` is `Option<u32>`, `None` rather than a misleading default when
-there's nothing to score.)
+above a floor of 59. `N/A` in the `grip` column, on `.` and `traits`, is the
+zero-function case: `grip_score` is `Option<u32>`, `None` rather than a
+misleading default when there's nothing to score. `N/A` in the `traits` column
+is a module without an impure impl method, where `trait_ratio` is vacuous. The
+trait line counts impure impl methods, the ones `trait_ratio` divides, and
+`Hidden deps: avg` is the mean number of hidden dependencies per function.)
 
 ### Verbose output (`--verbose`)
 
+A crate of one file, `src/timer.rs`, with three functions: the verbose report
+is the same summary under its own header, then a line per function.
+
 ```
-grip 0.9.1 -- my-crate — verbose
+grip 0.11.0 — my-crate — verbose
 ══════════════════════════════════════════════════════
 
-  timer.rs:
-    schedule_round_timeout    pure:    no  seam:   no   hidden:  2  contr:   0%  [Instant::now, thread::sleep]  ❌
-    compute_timeout_ms        pure:   yes  seam:   no   hidden:  0  contr:  95%  [-]                              ✅
-    reset_timer               pure:    no  seam:   no   hidden:  1  contr:  12%  [Instant::now]                    ⚠️
+Overall grip score:    64 / 100
+Absolute grip total:   1.05
+Public surface:        3 items
+Total functions:       3
+Probably pure:         1 / 3  (33.3%)
+Trait methods:         N/A    (no impure impl methods)
+Hidden deps:           avg 1.33  — 0.0% clean  (35.2% avg contribution)
+
+Per module:
+  .                               grip:  64   pure:  33.3%   pub:   3   traits:    N/A   clean:   0.0%  ⚠️
+
+Per-function detail:
+
+  my-crate/src/timer.rs:
+    compute_timeout_ms                   pure:   yes  seam:   no   hidden:  0  contr:    95%  [-]  ✅
+    reset_timer                          pure:    no  seam:   no   hidden:  1  contr:    10%  [Instant::now]  ⚠️
+    schedule_round_timeout               pure:    no  seam:   no   hidden:  3  contr:     0%  [Instant::now, thread::sleep, println]  ❌
 ```
 
 ---

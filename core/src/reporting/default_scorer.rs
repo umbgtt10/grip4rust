@@ -44,6 +44,11 @@ impl Scorer for DefaultScorer {
         } else {
             0.0
         };
+        let avg_hidden_deps = if counts.total_functions() > 0 {
+            counts.total_hidden_deps() as f64 / counts.total_functions() as f64
+        } else {
+            0.0
+        };
         let clean_fn_ratio = if counts.total_functions() > 0 {
             counts.clean_functions() as f64 / counts.total_functions() as f64
         } else {
@@ -66,6 +71,7 @@ impl Scorer for DefaultScorer {
             public_ratio,
             trait_ratio,
             avg_contribution,
+            avg_hidden_deps,
             clean_fn_ratio,
         }
     }
@@ -100,9 +106,12 @@ impl Scorer for DefaultScorer {
                     pure_functions: counts.pure_functions(),
                     public_ratio: scores.public_ratio,
                     inherent_methods: counts.inherent_methods(),
+                    inherent_impure: counts.inherent_impure(),
                     local_trait_methods: counts.local_trait_methods(),
+                    local_trait_impure: counts.local_trait_impure(),
                     trait_ratio: scores.trait_ratio,
                     avg_contribution: scores.avg_contribution,
+                    avg_hidden_deps: scores.avg_hidden_deps,
                     clean_fn_ratio: scores.clean_fn_ratio,
                     grip_absolute_total: counts.total_contribution(),
                 }

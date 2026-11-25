@@ -66,6 +66,23 @@ fn collect_for_a_clean_inherent_method_normalizes_its_contribution_to_a_percenta
 }
 
 #[test]
+fn collect_for_a_function_and_a_method_with_hidden_deps_counts_every_one() {
+    // Arrange
+    let source = "fn f() { println!(\"x\"); Database::connect(); }\npub struct Meter;\nimpl Meter {\n    pub fn reading(&self) -> u32 { println!(\"x\"); 1 }\n}\n";
+
+    // Act
+    let (counts, _fns) = Collector::collect(
+        source,
+        "lib.rs",
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
+
+    // Assert
+    assert_eq!(counts.total_hidden_deps(), 3);
+}
+
+#[test]
 fn collect_for_a_function_inside_an_inline_module_counts_it() {
     // Arrange
     let source = "mod inner {\n    pub fn answer() -> u32 { 42 }\n}\n";

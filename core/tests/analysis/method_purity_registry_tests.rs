@@ -76,6 +76,35 @@ impl Members {
 }
 
 #[test]
+fn is_known_pure_method_inherent_impl_inside_a_test_module_returns_false() {
+    // Arrange
+    let source = r#"
+#[cfg(test)]
+mod tests {
+    struct Members {
+        ids: Vec<i32>,
+    }
+    impl Members {
+        pub fn len(&self) -> usize { self.ids.len() }
+    }
+}
+"#;
+    let files = vec![SourceFile {
+        path: String::from("lib.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
+    let struct_registry = StructRegistry::build(&files);
+    let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
+
+    // Act
+    let result = method_purity.is_known_pure_method("Members", "len");
+
+    // Assert
+    assert!(!result);
+}
+
+#[test]
 fn is_known_pure_method_inherent_impl_inside_an_inline_module_returns_true() {
     // Arrange
     let source = r#"
@@ -101,6 +130,33 @@ mod members {
 
     // Assert
     assert!(result);
+}
+
+#[test]
+fn is_known_pure_method_inherent_impl_marked_for_tests_returns_false() {
+    // Arrange
+    let source = r#"
+struct Members {
+    ids: Vec<i32>,
+}
+#[cfg(test)]
+impl Members {
+    pub fn len(&self) -> usize { self.ids.len() }
+}
+"#;
+    let files = vec![SourceFile {
+        path: String::from("lib.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
+    let struct_registry = StructRegistry::build(&files);
+    let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
+
+    // Act
+    let result = method_purity.is_known_pure_method("Members", "len");
+
+    // Assert
+    assert!(!result);
 }
 
 #[test]
@@ -169,6 +225,33 @@ impl Lengthy for Members {
         !result,
         "trait-impl methods are out of scope, inherent impls only"
     );
+}
+
+#[test]
+fn is_known_pure_method_method_marked_for_tests_returns_false() {
+    // Arrange
+    let source = r#"
+struct Members {
+    ids: Vec<i32>,
+}
+impl Members {
+    #[cfg(test)]
+    pub fn len(&self) -> usize { self.ids.len() }
+}
+"#;
+    let files = vec![SourceFile {
+        path: String::from("lib.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
+    let struct_registry = StructRegistry::build(&files);
+    let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
+
+    // Act
+    let result = method_purity.is_known_pure_method("Members", "len");
+
+    // Assert
+    assert!(!result);
 }
 
 #[test]

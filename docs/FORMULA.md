@@ -97,6 +97,21 @@ for that scope, rather than a misleading deterministic value computed from
 an empty set (this was a real bug once: a zero-function module produced a
 deterministic `20` before `grip_score` became optional).
 
+### Reported beside the score
+
+Two more figures are worked out from the same counts and printed in the
+summary, without weighing in `grip_score`:
+
+| Figure | Definition | Zero-denominator fallback | Summary line |
+|---|---|---|---|
+| `clean_fn_ratio` | `clean_functions / total_functions`, a function clean when its `grip_absolute` is `1.0` | `0.0` | `Hidden deps: … % clean` |
+| `avg_hidden_deps` | `total_hidden_deps / total_functions` (mean of every function's `hidden_deps` in scope) | `0.0` | `Hidden deps: avg …` |
+
+The summary's trait line, `Trait methods: N / M impure impl methods are
+trait-bound (X%)`, prints `trait_ratio` with its own numerator and
+denominator, `local_trait_impure` and `inherent_impure + local_trait_impure`,
+and reads `N/A` where that denominator is zero.
+
 ### `grip_absolute_total`
 
 `OverallStats`/`ModuleStats` also expose **`grip_absolute_total: f64`** —
@@ -144,6 +159,10 @@ names. Instead, it uses structural rules over the parsed call expression:
 | `Box::new(...)`, `String::new()`, `Vec::new()` | — | ❌ std alloc-only (`STD_CONSTRUCTORS`) |
 | known std module call, `module::fn` tail, `std`/`core`-prefixed or unqualified | `fs::read(...)`, `std::fs::read(...)` | ✅ |
 | known std module call, third-party-qualified | `mycrate::fs::read(...)` | ❌ — tail matches but the crate prefix doesn't |
+
+A rule that clears a call clears the call alone, never its arguments: in
+`self.save(Database::connect())` the call on `self` is no dependency, and
+`Database::connect()` is found as it would be anywhere else.
 
 This catches any concrete dependency regardless of crate —
 `StripeGateway`, `TcpStream`, `redis::Client`, `MyDatabase` — without

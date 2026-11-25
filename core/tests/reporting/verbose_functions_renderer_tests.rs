@@ -37,6 +37,27 @@ fn render_groups_functions_by_file() {
 }
 
 #[test]
+fn render_with_a_function_shows_the_contribution_it_carries() {
+    // Arrange
+    let renderer = VerboseFunctionsRenderer::new(true);
+    let functions = vec![FunctionInfo {
+        grip_absolute: 0.42,
+        grip_normalized: 42,
+        ..function("scored_fn", "src/lib.rs", 0, vec![])
+    }];
+
+    // Act
+    let lines = renderer.render(&functions);
+
+    // Assert
+    assert!(
+        lines
+            .iter()
+            .any(|l| l.contains("scored_fn") && l.contains("contr:    42%"))
+    );
+}
+
+#[test]
 fn render_with_empty_functions_returns_empty() {
     // Arrange
     let renderer = VerboseFunctionsRenderer::new(true);
