@@ -151,6 +151,24 @@ fn print_macros_are_not_io_here() {
 }
 
 #[test]
+fn visit_block_with_a_question_marked_write_macro_finds_io() {
+    // Arrange & Act
+    let found = performs_io(r#"fn f(w: W) -> R { write!(w, "x")?; done() }"#);
+
+    // Assert
+    assert!(found);
+}
+
+#[test]
+fn visit_block_with_a_two_segment_call_under_an_unflagged_root_finds_no_io() {
+    // Arrange & Act
+    let found = performs_io("fn f() -> u64 { Config::default_port() }");
+
+    // Assert
+    assert!(!found);
+}
+
+#[test]
 fn write_macros_count_as_io() {
     // Arrange -- write! and writeln! reach a sink the signature never mentions.
 

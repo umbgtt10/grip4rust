@@ -331,3 +331,41 @@ fn the_same_dependency_twice_is_counted_twice() {
     assert_eq!(count, 2);
     assert!((weight - 0.6).abs() < EPSILON);
 }
+
+#[test]
+fn visit_block_with_a_concrete_field_reached_through_another_receiver_finds_no_dependency() {
+    // Arrange
+    let fixture = Fixture::empty();
+    let item: ItemFn =
+        parse_str("fn f(&self, other: &Service) { other.store.write(); }").expect("valid fn");
+    let mut finder = fixture.finder();
+    finder.set_concrete_fields(BTreeMap::from([(
+        String::from("store"),
+        String::from("DiskStore"),
+    )]));
+
+    // Act
+    finder.visit_block(&item.block);
+
+    // Assert
+    assert_eq!(finder.count(), 0);
+}
+
+#[test]
+fn visit_block_with_a_std_module_call_under_a_crate_of_its_own_finds_no_dependency() {
+    // Arrange & Act
+    let (count, _, _) = deps_of(r#"fn f() { my_crate::fs::read("p"); }"#);
+
+    // Assert
+    assert_eq!(count, 0);
+}
+
+#[test]
+fn visit_block_with_macros_that_do_not_print_finds_no_dependency() {
+    // Arrange & Act
+    let (count, _, labels) = deps_of("fn f() -> usize { let v = vec![1]; assert!(true); v.len() }");
+
+    // Assert
+    assert_eq!(count, 0);
+    assert!(labels.is_empty());
+}
