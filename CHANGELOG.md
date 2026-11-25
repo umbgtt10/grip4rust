@@ -57,6 +57,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   50 all along. The report is the one the run would print without
   `--threshold`, text or `--json`, and the exit code is unchanged. A script
   that ran `--threshold` for its silence now gets the report on stdout.
+- The README's samples are the tool's output. The verbose header read
+  `grip 0.9.1 -- my-crate — verbose` where the tool prints `grip {version} —
+  {target} — verbose`, and the per-function lines were laid out as the tool
+  never lays them out; the self-analysis sample carried the two figures fixed
+  above, `20 / 121 impl methods are trait-bound (34.9%)` and `avg 54.32`. Both
+  samples are now copied from runs of this release: over `core/`, and
+  `--verbose` over a crate of one file.
 
 ### Changed
 - `OverallStats` and `ModuleStats` gain `inherent_impure` and
