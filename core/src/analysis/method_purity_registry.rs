@@ -3,6 +3,8 @@
 // SPDX-License-Identifier: MIT
 
 use crate::analysis::function_purity::FunctionPurity;
+use crate::analysis::inline_module::InlineModule;
+use crate::analysis::item_classifier::ItemClassifier;
 use crate::analysis::source_file::SourceFile;
 use crate::analysis::struct_registry::StructRegistry;
 use crate::detection::hidden_dep_finder::HiddenDepFinder;
@@ -77,7 +79,7 @@ impl MethodPurityRegistry {
         no_nested_trust: &MethodPurityRegistry,
         concrete_fields: &BTreeMap<String, String>,
     ) {
-        if !Self::has_pure_signature(method) {
+        if ItemClassifier::has_test_attr(&method.attrs) || !Self::has_pure_signature(method) {
             return;
         }
         let mut finder = HiddenDepFinder::new(struct_registry, no_nested_trust);
@@ -96,14 +98,12 @@ impl MethodPurityRegistry {
         no_nested_trust: &MethodPurityRegistry,
     ) {
         match item {
-            Item::Impl(item_impl) => {
+            Item::Impl(item_impl) if !ItemClassifier::has_test_attr(&item_impl.attrs) => {
                 self.record_impl(item_impl, struct_registry, no_nested_trust);
             }
-            Item::Mod(item_mod) => {
-                if let Some((_, items)) = &item_mod.content {
-                    for inner in items {
-                        self.visit_top_level_item(inner, struct_registry, no_nested_trust);
-                    }
+            Item::Mod(item_mod) if !ItemClassifier::has_test_attr(&item_mod.attrs) => {
+                for inner in InlineModule::new(item_mod).items() {
+                    self.visit_top_level_item(inner, struct_registry, no_nested_trust);
                 }
             }
             _ => {}

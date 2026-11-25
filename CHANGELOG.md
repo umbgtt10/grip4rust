@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `has_trait_seam` and `dep_weight` through its own `ContributionSchedule`: one
   figure with two sources, which agreed only while nothing set one apart from
   the other. No output changes, the collector setting both from one schedule.
+- `MethodPurityRegistry` leaves test code out, as `Collector` does: a module,
+  an inherent impl or a method marked for tests is not walked, so an accessor
+  defined only for tests no longer vouches for a production call of the same
+  name. It walks an inline module through the shared `InlineModule`, as
+  `Collector` does, rather than its own copy of the walk.
 
 ## [0.10.0] - 2026-10-27
 
