@@ -137,7 +137,7 @@ cargo grip4rust [OPTIONS] [PATH]
 ## Output
 
 ```
-cargo-grip4rust 0.10.0 -- core
+cargo-grip4rust 0.11.0 -- core
 ══════════════════════════════════════════════════════
 
 Overall grip score:    64 / 100
@@ -171,7 +171,7 @@ A crate of one file, `src/timer.rs`, with three functions: the verbose report
 is the same summary under its own header, then a line per function.
 
 ```
-grip 0.10.0 — my-crate — verbose
+grip 0.11.0 — my-crate — verbose
 ══════════════════════════════════════════════════════
 
 Overall grip score:    64 / 100

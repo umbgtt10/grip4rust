@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-25
+
+Seven defects, reported by sentinel4rust's first mutation round over `core`
+(its survivors answered under Changed (development)), fixed test first. Minor
+rather than patch: scores move -- a hidden dependency passed into a method
+called on `self` is now counted -- `--threshold` prints the report it used to
+withhold, two lines of the summary print what they always claimed to, and
+`OverallStats`, `ModuleStats`, `Scores` and `ItemCounts` change shape. This
+crate's own score holds at 64.
+
 ### Fixed
 - A hidden dependency in the arguments of a method called on `self` is
   counted. `HiddenDepFinder` returned before visiting anything beneath a call
@@ -75,6 +85,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   argument, summed into `total_hidden_deps` (with `with_total_hidden_deps`) and
   merged like every other count. `Scores`, `OverallStats` and `ModuleStats`
   gain `avg_hidden_deps`. The JSON document is unchanged.
+
+### Changed (development)
+- sentinel4rust's mutation round over `core` at `dc57c97` is answered: the
+  survivors in `analysis/`, `detection/`, `reporting/` and `invocation/` are
+  killed by tests, each seen failing under its mutant; the ones that pointed
+  at defects are the Fixed entries above. `has_test_attr` matching `test`
+  anywhere in a `cfg` is deferred by the owner as one check shared by five
+  tools, recorded in `docs/OPEN_POINTS.md`.
+- Every commit message carries `core`'s grip and braintax and their ratio,
+  scored as the commit stages it: `.githooks/commit-msg` runs `cargo xtask
+  grip-braintax`, enabled once a clone by `just hooks`.
+- Stage 1 starts with `just sync`, `cargo update` in the lock file only, what
+  it moves committed on its own; anyhow moves to 1.0.104, past
+  RUSTSEC-2026-0190.
+- Stage 2 gains a last gate, `cargo deny`, against the `deny.toml` every
+  *4rust repository shares: advisories, licences MIT, Apache-2.0 and
+  Unicode-3.0, crates.io as the only source.
+- `scores_tests` goes, its one test comparing two `Scores` literals; its check,
+  that the pure and public ratios are not swapped, moves to `DefaultScorer`'s
+  tests.
 
 ## [0.10.0] - 2026-10-27
 
