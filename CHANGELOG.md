@@ -30,6 +30,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   defined only for tests no longer vouches for a production call of the same
   name. It walks an inline module through the shared `InlineModule`, as
   `Collector` does, rather than its own copy of the walk.
+- The summary's trait line counts impure methods, as the percentage beside it
+  and `docs/FORMULA.md`'s `trait_ratio` always have: `Trait methods: N / M
+  impure impl methods are trait-bound (X%)`, N and M the trait-bound and all
+  impure impl methods. It counted N and M over every impl method, pure ones
+  included, so the fraction and its percentage disagreed -- this crate's own
+  report read `12 / 134 impl methods are trait-bound (22.9%)`, and now reads
+  `8 / 35 impure impl methods are trait-bound (22.9%)`. Where there is no
+  impure impl method the line reads `N/A (no impure impl methods)`, and a
+  module's `traits:` column reads `N/A`, as both did only where there was no
+  impl method at all; the ratio is then vacuous, 1.0 in the score. Scores do
+  not change.
+
+### Changed
+- `OverallStats` and `ModuleStats` gain `inherent_impure` and
+  `local_trait_impure`, the counts `trait_ratio` is the ratio of, filled by
+  `App` and `DefaultScorer::module_stats` from `ItemCounts`. The JSON document
+  is unchanged.
 
 ## [0.10.0] - 2026-10-27
 

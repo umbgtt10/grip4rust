@@ -69,8 +69,8 @@ impl TextReportRenderer {
 
     fn render_module_line(&self, module: &ModuleStats) -> String {
         let marker = self.module_marker(module.grip_score);
-        let total_impl = module.inherent_methods + module.local_trait_methods;
-        let traits_display = if total_impl == 0 {
+        let total_impure = module.inherent_impure + module.local_trait_impure;
+        let traits_display = if total_impure == 0 {
             "   N/A".to_string()
         } else {
             format!("{:>5.1}%", module.trait_ratio * 100.0)

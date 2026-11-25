@@ -52,14 +52,14 @@ impl OverallSummaryRenderer {
     }
 
     fn trait_methods_line(overall: &OverallStats) -> String {
-        let total_impl = overall.inherent_methods + overall.local_trait_methods;
-        if total_impl == 0 {
-            "Trait methods:         N/A    (no impl methods)".to_string()
+        let total_impure = overall.inherent_impure + overall.local_trait_impure;
+        if total_impure == 0 {
+            "Trait methods:         N/A    (no impure impl methods)".to_string()
         } else {
             format!(
-                "Trait methods:         {} / {} impl methods are trait-bound  ({:.1}%)",
-                overall.local_trait_methods,
-                total_impl,
+                "Trait methods:         {} / {} impure impl methods are trait-bound  ({:.1}%)",
+                overall.local_trait_impure,
+                total_impure,
                 overall.trait_ratio * 100.0
             )
         }

@@ -82,6 +82,27 @@ fn module_stats_sorted() {
 }
 
 #[test]
+fn module_stats_with_impure_methods_of_each_kind_carries_their_counts() {
+    // Arrange
+    let map = BTreeMap::from([(
+        "alpha".to_string(),
+        ItemCounts::default()
+            .with_total_functions(3)
+            .with_inherent_impure(2)
+            .with_local_trait_impure(1),
+    )]);
+
+    // Act
+    let stats = scorer().module_stats(map);
+
+    // Assert
+    assert_eq!(
+        (stats[0].inherent_impure, stats[0].local_trait_impure),
+        (2, 1)
+    );
+}
+
+#[test]
 fn score_counts_with_everything_pure_and_public_returns_one_hundred() {
     // Arrange
     let counts = ItemCounts::default()
