@@ -35,6 +35,22 @@ fn render_always_shows_absolute_total() {
 }
 
 #[test]
+fn render_with_impl_methods_counts_the_trait_bound_ones_out_of_all_of_them() {
+    // Arrange
+    let renderer = OverallSummaryRenderer::new();
+
+    // Act
+    let lines = renderer.render(&stats());
+
+    // Assert
+    assert!(
+        lines
+            .iter()
+            .any(|l| l.contains("2 / 5 impl methods are trait-bound"))
+    );
+}
+
+#[test]
 fn render_with_none_grip_score_shows_na() {
     // Arrange
     let renderer = OverallSummaryRenderer::new();

@@ -12,6 +12,8 @@ use grip::reporting::grip_report::GripReport;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+const FIFTY: &str =
+    "pub fn idle() {}\nfn shout() { println!(\"x\"); }\nfn count() -> u32 { println!(\"x\"); 1 }\n";
 const GREET: &str = "pub fn greet() -> &'static str { \"hello\" }\n";
 const HIDDEN: &str = "fn hidden() { println!(\"x\"); }\n";
 
@@ -49,6 +51,21 @@ fn new_builds_an_app_that_runs_on_the_injected_dependencies() {
             below_threshold: false,
         }
     );
+}
+
+#[test]
+fn run_lists_no_module_scoring_exactly_fifty_as_an_offender_when_no_threshold_is_given() {
+    // Arrange
+    let handed = Rc::new(RefCell::new(Vec::new()));
+    let walk = InMemoryWalk::new().with_file("src/even/lib.rs", FIFTY);
+
+    // Act
+    app(walk, &handed, None).run().unwrap();
+
+    // Assert
+    let report = &handed.borrow()[0];
+    assert_eq!(report.modules[0].grip_score, Some(50));
+    assert!(report.offenders.is_empty());
 }
 
 #[test]
