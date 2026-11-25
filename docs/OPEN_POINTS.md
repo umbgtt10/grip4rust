@@ -95,6 +95,23 @@ still narrower than it could be:
 All fail *safe* (conservatively still flagged). See `CHANGELOG.md` for what's already
 fixed.
 
+## One shared "is this test code?" check (deferred by the owner 2026-11-25)
+
+The same defect exists in crap4rust, grip4rust, braintax4rust, iceberg4rust and
+slotgate; to be written once with shared test vectors (attribute path ending in
+`test`; `cfg(P)` test-only when P is `test`, `all(..)` with any part test-only,
+`any(..)` with every part test-only, never `not(..)`; `cfg_attr` never makes an
+item test-only) and adopted by every tool.
+
+Here it is `ItemClassifier::has_test_attr` (`core/src/analysis/item_classifier.rs`),
+which `Collector` and `MethodPurityRegistry` both ask: it takes a `cfg` or
+`cfg_attr` attribute for a test one whenever `test` appears anywhere in its
+tokens, so `#[cfg(not(test))]`, `#[cfg(feature = "attest")]` and
+`#[cfg_attr(test, derive(Debug))]` each leave production code out of the score,
+and it knows only a bare `#[test]`, not a path ending in `test` such as
+`#[tokio::test]`. Not fixed here alone, so that the five tools agree on one
+answer.
+
 ## The cache never served a hit -- closed: removed
 
 `App::collect_files` asked the `CacheStore` about each file only to decide
