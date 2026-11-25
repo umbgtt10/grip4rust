@@ -41,6 +41,13 @@ fn dummy_report() -> GripReport {
     report_with(dummy_modules(), vec![], vec![])
 }
 
+fn module_line<'a>(out: &'a str, path: &str) -> &'a str {
+    let start = format!("  {path} ");
+    out.lines()
+        .find(|line| line.starts_with(&start))
+        .expect("the module should have a line")
+}
+
 fn report_with(
     modules: Vec<ModuleStats>,
     offenders: Vec<Offender>,
@@ -177,4 +184,71 @@ fn human_output_verbose_shows_per_function_detail() {
     // Assert
     assert!(out.contains("Per-function detail"));
     assert!(out.contains("compute"));
+}
+
+#[test]
+fn render_with_and_without_impl_methods_shows_the_trait_ratio_only_where_there_are_some() {
+    // Arrange
+    let report = report_with(
+        vec![
+            ModuleStats {
+                path: "seamed".to_string(),
+                grip_score: Some(90),
+                local_trait_methods: 1,
+                trait_ratio: 1.0,
+                ..Default::default()
+            },
+            ModuleStats {
+                path: "bare".to_string(),
+                grip_score: Some(90),
+                ..Default::default()
+            },
+        ],
+        vec![],
+        vec![],
+    );
+
+    // Act
+    let out = reporter().render(&report).unwrap();
+
+    // Assert
+    assert!(module_line(&out, "seamed").contains("traits: 100.0%"));
+    assert!(module_line(&out, "bare").contains("traits:    N/A"));
+}
+
+#[test]
+fn render_with_modules_at_the_band_edges_marks_each_line_by_its_band() {
+    // Arrange
+    let modules = [39, 40, 69, 70]
+        .map(|score| ModuleStats {
+            path: format!("score_{score}"),
+            grip_score: Some(score),
+            ..Default::default()
+        })
+        .to_vec();
+    let report = report_with(modules, vec![], vec![]);
+
+    // Act
+    let out = reporter().render(&report).unwrap();
+
+    // Assert
+    let markers: Vec<&str> = ["score_39", "score_40", "score_69", "score_70"]
+        .map(|path| module_line(&out, path).rsplit("%  ").next().unwrap())
+        .to_vec();
+    assert_eq!(markers, ["❌", "⚠️", "⚠️", ""]);
+}
+
+#[test]
+fn render_without_verbose_heads_the_output_with_the_version_and_target() {
+    // Arrange
+    let report = dummy_report();
+
+    // Act
+    let out = reporter().render(&report).unwrap();
+
+    // Assert
+    assert_eq!(
+        out.lines().next(),
+        Some("cargo-grip4rust 0.1.0 -- my-crate")
+    );
 }
