@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-11-28
+
+Breaking, three ways: `grip4rust-core`'s public API takes syn 3's syntax types
+where it took syn 2's; unstable syntax parses as syn 3 reads it, so a file with
+default field values or a `const impl` is now scored and one with an
+`impl const` or a `static ||` coroutine closure no longer is; and a receiver
+written out with its type is scored by what the type says, so
+`self: &mut Self` is impure, as `&mut self` is. Across both scoring changes no
+score measured moves: beggar, faction, cartel and this repository print
+byte-identical output. This crate's own score holds at 64.
+
 ### Fixed
 - A scoring change: a method whose receiver is written out with its type is
   scored by what the type says. `self: &mut Self` takes `&mut`, exactly as
