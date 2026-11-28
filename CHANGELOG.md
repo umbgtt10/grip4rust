@@ -44,6 +44,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `[workspace.metadata.ripe4rust]` names the gates, `just stage1` and `just
   stage2`, so every move `cargo ripe4rust plan` (`just ripe`) proposes is held
   to the bar every change is.
+- serge4rust moves to 0.3.3, which says how a run ended plainly: `could not
+  run, exit code 2` or `could not run, terminated by signal` where it said
+  `exit code Some(2)` or `exit code None`, and the same in a report crap4rust
+  did not produce. The self-analysis gate says it the same way, with
+  serge4rust's `ProcessEnd`: a failed run reads `could not run, exit code 101`,
+  its stderr below, where it read `exit code Some(101)`. `published` in
+  `[workspace.metadata.ripe4rust]` names `grip4rust-core`, so ripe4rust asks
+  about a breaking dependency in its public API as a breaking change of ours.
 - The documents say what is: stern4rust's 39 rules, stage 1's `sync` and stage
   2's `cargo deny` in the README, and the source paths and names under
   `core/src` in `docs/`.

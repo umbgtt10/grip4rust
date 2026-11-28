@@ -72,14 +72,41 @@ fn run_builds_the_tool_from_this_checkout_rather_than_an_install() {
 #[test]
 fn run_with_a_failing_build_reports_the_exit_code_rather_than_parsing() {
     // Arrange
-    let runner = FakeCommandRunner::new().with_streaming_code(Some(101));
+    let runner = FakeCommandRunner::new()
+        .with_streaming_code(Some(101))
+        .with_stderr("error[E0308]: mismatched types");
     let parser = GripReportParser::new();
 
     // Act
     let result = gate(&runner, &parser).run();
 
     // Assert
-    assert!(result.is_err_and(|error| error.to_string().contains("101")));
+    assert_eq!(
+        result.map_err(|failure| failure.to_string()),
+        Err(String::from(
+            "could not run, exit code 101\nstderr: error[E0308]: mismatched types"
+        ))
+    );
+}
+
+#[test]
+fn run_with_a_run_ended_by_a_signal_reports_the_signal() {
+    // Arrange
+    let runner = FakeCommandRunner::new()
+        .with_streaming_code(None)
+        .with_stderr("Killed");
+    let parser = GripReportParser::new();
+
+    // Act
+    let result = gate(&runner, &parser).run();
+
+    // Assert
+    assert_eq!(
+        result.map_err(|failure| failure.to_string()),
+        Err(String::from(
+            "could not run, terminated by signal\nstderr: Killed"
+        ))
+    );
 }
 
 #[test]
