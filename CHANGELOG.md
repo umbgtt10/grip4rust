@@ -10,6 +10,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- `grip4rust-core` parses with syn 3 (`3.0.10`) in place of syn 2, so the tree
+  carries one copy of syn. No score measured moves: release builds before and
+  after, run over beggar, faction, cartel and this repository, in text,
+  `--verbose` and `--json`, printed byte-identical output. Where syn 3 reads
+  differently is unstable syntax, and a file syn cannot parse is left out of
+  the score whole, as it always was: a file with default field values
+  (`struct S { a: u32 = 1 }`) or a `const impl` is now scored, and one with an
+  `impl const` or a `static ||` coroutine closure no longer is. For a library
+  caller it breaks: every `pub` function of core that takes a syntax node --
+  `FunctionPurity`, `ItemClassifier`, `StructRegistry`, `TypePathSegments`,
+  `InlineModule`, `DepWeightLadder` -- takes syn 3's, and `HiddenDepFinder`,
+  `IoCallFinder` and `UnsafeFinder` implement syn 3's `Visit`.
 - `EntryPoint::run` is no longer marked `#[must_use]`: from Rust 1.100 the
   `ExitCode` it returns is, and clippy's `double_must_use` refuses the second
   mark. Ignoring the exit code still warns, on 1.100 and later.
@@ -25,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The rest of `xtask/src` goes, and its tests with it: serge4rust carries
   them. A green run reads as it did; a tool that fails to run is reported in
   serge4rust's words. `xtask` no longer declares `syn` or `tempfile`.
+- An unsafe method is tested as impure, and as never a trusted accessor:
+  `ItemClassifier::is_impl_method_impure` and `MethodPurityRegistry` each gain
+  the test their unsafe check lacked, which the move to syn 3's `Safety`
+  touched.
 - `[workspace.metadata.ripe4rust]` names the gates, `just stage1` and `just
   stage2`, so every move `cargo ripe4rust plan` (`just ripe`) proposes is held
   to the bar every change is.

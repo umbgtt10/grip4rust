@@ -5,7 +5,7 @@
 use crate::detection::io_call_finder::IoCallFinder;
 use crate::detection::unsafe_finder::UnsafeFinder;
 use syn::visit::Visit;
-use syn::{Block, FnArg, ReturnType, Signature, Type};
+use syn::{Block, FnArg, ReceiverKind, ReturnType, Signature, Type};
 
 pub struct FunctionPurity;
 
@@ -18,7 +18,7 @@ impl FunctionPurity {
 
     pub fn has_mut_param(sig: &Signature) -> bool {
         sig.inputs.iter().any(|arg| match arg {
-            FnArg::Receiver(recv) => recv.reference.is_some() && recv.mutability.is_some(),
+            FnArg::Receiver(recv) => matches!(recv.kind, ReceiverKind::Reference(_, _, Some(_))),
             FnArg::Typed(pat_type) => Self::has_mut_in_type(&pat_type.ty),
         })
     }

@@ -328,3 +328,32 @@ fn is_known_pure_method_unknown_type_returns_false() {
         "a type with no registered methods is never trusted"
     );
 }
+
+#[test]
+fn is_known_pure_method_unsafe_method_returns_false() {
+    // Arrange
+    let source = r#"
+struct Members {
+    ids: Vec<i32>,
+}
+impl Members {
+    pub unsafe fn len(&self) -> usize { self.ids.len() }
+}
+"#;
+    let files = vec![SourceFile {
+        path: String::from("members.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
+    let struct_registry = StructRegistry::build(&files);
+    let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
+
+    // Act
+    let result = method_purity.is_known_pure_method("Members", "len");
+
+    // Assert
+    assert!(
+        !result,
+        "an unsafe method is never trusted as a pure accessor"
+    );
+}

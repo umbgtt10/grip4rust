@@ -192,6 +192,16 @@ fn is_impl_method_impure_for_a_value_returning_method_returns_false() {
 }
 
 #[test]
+fn is_impl_method_impure_for_an_unsafe_method_returns_true() {
+    // Arrange & Act
+    let impure =
+        ItemClassifier::is_impl_method_impure(&impl_method("unsafe fn raw(&self) -> u32 { 1 }"));
+
+    // Assert
+    assert!(impure);
+}
+
+#[test]
 fn is_probably_pure_for_a_mutable_parameter_returns_false() {
     // Arrange & Act
     let pure =

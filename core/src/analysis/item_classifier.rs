@@ -6,7 +6,7 @@ use crate::analysis::function_purity::FunctionPurity;
 use crate::analysis::visibility_level::VisibilityLevel;
 use alloc::string::ToString;
 use quote::ToTokens;
-use syn::{Attribute, ImplItemFn, ItemFn, Path as SynPath, Visibility};
+use syn::{Attribute, ImplItemFn, ItemFn, Path as SynPath, Safety, Visibility};
 
 const KNOWN_FOREIGN_TRAITS: &[&str] = &[
     "Display",
@@ -109,7 +109,7 @@ impl ItemClassifier {
         if FunctionPurity::is_unit_return(&method.sig) {
             return true;
         }
-        if method.sig.unsafety.is_some() {
+        if matches!(method.sig.safety, Safety::Unsafe(_)) {
             return true;
         }
         FunctionPurity::has_unsafe_block(&method.block)
@@ -124,7 +124,7 @@ impl ItemClassifier {
         if FunctionPurity::is_unit_return(&item_fn.sig) {
             return false;
         }
-        if item_fn.sig.unsafety.is_some() {
+        if matches!(item_fn.sig.safety, Safety::Unsafe(_)) {
             return false;
         }
         !FunctionPurity::has_unsafe_block(&item_fn.block)
