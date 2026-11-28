@@ -2,10 +2,10 @@
 // Licensed under the MIT License
 // SPDX-License-Identifier: MIT
 
-use crate::gates::gate::Gate;
-use crate::gates::gate_failure::GateFailure;
 use crate::grip::grip_report_parser::GripReportParser;
-use crate::process::command_runner::CommandRunner;
+use serge4rust::gates::gate::Gate;
+use serge4rust::gates::gate_failure::GateFailure;
+use serge4rust::process::command_runner::CommandRunner;
 
 pub struct GripSelfGate<'a> {
     runner: &'a dyn CommandRunner,
@@ -54,13 +54,21 @@ impl Gate for GripSelfGate<'_> {
         let outcome = self.runner.run_capturing("cargo", &args)?;
 
         if !outcome.is_success() {
-            return Err(GateFailure::ExitedWith {
-                exit_code: outcome.exit_code(),
-                stderr: outcome.stderr().to_string(),
+            return Err(GateFailure::Own {
+                reason: format!(
+                    "exit code {:?}\nstderr: {}",
+                    outcome.exit_code(),
+                    outcome.stderr()
+                ),
             });
         }
 
-        let report = self.parser.parse(outcome.stdout())?;
+        let report = self
+            .parser
+            .parse(outcome.stdout())
+            .map_err(|failure| GateFailure::Own {
+                reason: failure.to_string(),
+            })?;
 
         println!("  {}", report.summary(self.floor));
 
@@ -68,10 +76,12 @@ impl Gate for GripSelfGate<'_> {
             return Ok(());
         }
 
-        Err(GateFailure::Found(format!(
-            "score {} is below the floor of {}",
-            report.score(),
-            self.floor
-        )))
+        Err(GateFailure::Own {
+            reason: format!(
+                "score {} is below the floor of {}",
+                report.score(),
+                self.floor
+            ),
+        })
     }
 }
