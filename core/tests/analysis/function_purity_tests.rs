@@ -109,6 +109,42 @@ fn has_mut_param_with_plain_self_returns_false() {
 }
 
 #[test]
+fn has_mut_param_with_typed_by_value_self_returns_false() {
+    // Arrange
+    let item_fn = parse_fn("fn f(self: Box<Self>) {}");
+
+    // Act
+    let result = FunctionPurity::has_mut_param(&item_fn.sig);
+
+    // Assert
+    assert!(!result, "self: Box<Self> is by value, as self is");
+}
+
+#[test]
+fn has_mut_param_with_typed_mut_self_reference_returns_true() {
+    // Arrange
+    let item_fn = parse_fn("fn f(self: &mut Self) {}");
+
+    // Act
+    let result = FunctionPurity::has_mut_param(&item_fn.sig);
+
+    // Assert
+    assert!(result, "self: &mut Self is &mut self written out");
+}
+
+#[test]
+fn has_mut_param_with_typed_self_reference_returns_false() {
+    // Arrange
+    let item_fn = parse_fn("fn f(self: &Self) {}");
+
+    // Act
+    let result = FunctionPurity::has_mut_param(&item_fn.sig);
+
+    // Assert
+    assert!(!result, "self: &Self is &self written out");
+}
+
+#[test]
 fn has_unsafe_block_with_no_unsafe_returns_false() {
     // Arrange
     let item_fn = parse_fn("fn f() { let x = 1; }");

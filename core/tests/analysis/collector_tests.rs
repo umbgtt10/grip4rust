@@ -101,6 +101,42 @@ fn collect_for_a_function_inside_an_inline_module_counts_it() {
 }
 
 #[test]
+fn collect_for_a_method_with_a_typed_mut_self_receiver_scores_it_impure() {
+    // Arrange
+    let source = "pub struct Builder { x: i32 }\nimpl Builder {\n    pub fn take_x(self: &mut Self) -> i32 { self.x }\n}\n";
+
+    // Act
+    let (counts, fns) = Collector::collect(
+        source,
+        "lib.rs",
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
+
+    // Assert
+    assert_eq!(counts.pure_functions(), 0);
+    assert!(!fns[0].is_pure, "self: &mut Self is &mut self written out");
+}
+
+#[test]
+fn collect_for_a_method_with_a_typed_self_receiver_scores_it_pure() {
+    // Arrange
+    let source = "pub struct Builder { x: i32 }\nimpl Builder {\n    pub fn x(self: &Self) -> i32 { self.x }\n}\n";
+
+    // Act
+    let (counts, fns) = Collector::collect(
+        source,
+        "lib.rs",
+        &StructRegistry::default(),
+        &MethodPurityRegistry::default(),
+    );
+
+    // Assert
+    assert_eq!(counts.pure_functions(), 1);
+    assert!(fns[0].is_pure, "self: &Self is &self written out");
+}
+
+#[test]
 fn collect_for_each_kind_of_item_marked_for_tests_counts_none_of_them() {
     // Arrange
     let source = r#"
