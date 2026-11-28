@@ -112,12 +112,12 @@ found). It delegates to five smaller, single-purpose helpers as it walks:
 | `IoCallFinder` | Does this method body perform I/O (the piece of `FunctionPurity`'s check that needs a real AST walk)? Walks statements as well as expressions, so a `write!(w, "x");` that discards its `Result` is seen alongside the `write!(w, "x")?` form. |
 | `UnsafeFinder` | Does this function body contain an `unsafe` block (ditto)? |
 
-`Collector` itself decides trait-boundary classification (`is_foreign_trait`,
-against `KNOWN_FOREIGN_TRAITS`) and owns the per-file `struct_concrete_fields`
-map that `HiddenDepFinder` uses to resolve a *receiver's* type — a separate,
-narrower thing from what the two registries above resolve (a receiver's
-*type name* is always this-file-local; whether that type is safe to trust is
-project-wide).
+`Collector` itself decides trait-boundary classification, asking
+`ItemClassifier::is_foreign_trait` (against its `KNOWN_FOREIGN_TRAITS`), and
+owns the per-file `struct_concrete_fields` map that `HiddenDepFinder` uses to
+resolve a *receiver's* type — a separate, narrower thing from what the two
+registries above resolve (a receiver's *type name* is always this-file-local;
+whether that type is safe to trust is project-wide).
 
 ## Data model
 
@@ -156,4 +156,4 @@ for field. All real logic lives in `App` and below, in core.
 - `docs/ADRs/` — why `App` is shaped this way, why classification is
   name/structure-based rather than type-resolved, and why the two
   registries are project-wide passes with the specific scope they have.
-- `ROADMAP.md` — what's shipped and what's planned next.
+- `docs/ROADMAP.md` — what's shipped and what's planned next.

@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (development)
+- `xtask` takes its gates from serge4rust 0.3.2, the house's gate library, on
+  crates.io: every stage 2 gate but the self-analysis one, the stage that runs
+  them, the `CommandRunner` they are constructed against, their failures,
+  crap4rust's report, stage 1's lock sync and the commit scoring. `xtask` keeps
+  `main.rs`, which configures them with this repository's constants, and what
+  is this tool's alone: the self-analysis gate and the grip4rust report it
+  reads, on serge4rust's `Gate` and `CommandRunner`, with their twenty tests.
+  The rest of `xtask/src` goes, and its tests with it: serge4rust carries
+  them. A green run reads as it did; a tool that fails to run is reported in
+  serge4rust's words. `xtask` no longer declares `syn` or `tempfile`.
+- `[workspace.metadata.ripe4rust]` names the gates, `just stage1` and `just
+  stage2`, so every move `cargo ripe4rust plan` (`just ripe`) proposes is held
+  to the bar every change is.
+- The documents say what is: stern4rust's 39 rules, stage 1's `sync` and stage
+  2's `cargo deny` in the README, and the source paths and names under
+  `core/src` in `docs/`.
+
 ## [0.11.0] - 2026-11-25
 
 Seven defects, reported by sentinel4rust's first mutation round over `core`

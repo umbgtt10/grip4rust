@@ -14,7 +14,7 @@ This repository is **SELF-CONTAINED**.
 The LLM **SHALL NOT cross its boundaries without asking**.
 
 That means:
-- do not inspect, edit, or rely on files outside `grip/` unless the user explicitly asks
+- do not inspect, edit, or rely on files outside `grip4rust/` unless the user explicitly asks
 - do not pull assumptions from sibling repositories or crates
 - do not propose cross-repository changes by default
 
@@ -69,14 +69,14 @@ stern4rust runs **second** because its corrections are renames, file moves and
 directory splits: a layout it is about to reject is a layout the others would
 have measured for nothing. Its findings are also the cheapest to act on.
 
-All twenty-four of its rules are enforced on every member -- `grip4rust-core`,
-`cargo-grip4rust`, `validation` and `xtask` -- with nothing skipped, selected,
-excluded or unconfigured, and no baseline. `docs/header.txt` holds the
-three-line header every `.rs` file carries and `stern4rust.toml` names it -- in
-the config rather than the gate script, so a hand-run of `cargo stern4rust`
-checks exactly what the gate checks. The gate names all four members for the
-same reason: while it named two of three, `validation` broke `imported-paths`
-nine times with stage 2 green.
+All thirty-nine of its rules (cargo-stern4rust 0.24.0) are enforced on every
+member -- `grip4rust-core`, `cargo-grip4rust`, `validation` and `xtask` -- with
+nothing skipped, selected, excluded or unconfigured, and no baseline.
+`docs/header.txt` holds the three-line header every `.rs` file carries and
+`stern4rust.toml` names it -- in the config rather than the gate script, so a
+hand-run of `cargo stern4rust` checks exactly what the gate checks. The gate
+names all four members for the same reason: while it named two of three,
+`validation` broke `imported-paths` nine times with stage 2 green.
 
 cargo-shear runs **third**: its corrections edit manifests only -- a
 dependency removed, or moved to the section that uses it -- so they change

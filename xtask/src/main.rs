@@ -130,8 +130,8 @@ fn run_stage2() -> ExitCode {
 
     // First: core stays free of technology -- only its allowed crates in its
     // manifest, `no_std` and `forbid(unsafe_code)` on its root, and no file
-    // system, process, environment or stdout in its tests -- so mutation testing
-    // it needs nothing but its own tests. A breach is fixed by moving code into
+    // system, process, environment or stdout in its sources or tests -- so
+    // mutation testing it needs nothing but its own tests. A breach is fixed by moving code into
     // cli, which changes what every later gate, stern4rust's included, measures;
     // and it costs a second.
     let sources = DiskSourceFiles::new();
@@ -208,7 +208,8 @@ fn run_stage2() -> ExitCode {
         String::from(CRAP_THRESHOLD),
     );
     let twin = TwinGate::new(&runner, manifest_path.clone(), measured.clone());
-    // Last: its advisories change without the code changing (see DenyGate).
+    // Last: its advisories change without the code changing (see serge4rust's
+    // DenyGate).
     let deny = DenyGate::new(&runner, manifest_path.clone(), DENY_FETCH_ATTEMPTS);
     let iceberg = IcebergGate::new(
         &runner,

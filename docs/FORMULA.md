@@ -3,10 +3,11 @@
 Full reference for how `grip` computes its scores, at every level: per
 function, per module, and per repo. `README.md` keeps a short summary and
 points here for the complete picture — this is the document that stays in
-sync with `src/`, not the other way around.
+sync with `core/src/`, not the other way around.
 
 Every number here is read directly from the source that computes it
-(`contribution_schedule.rs`, `default_scorer.rs`, `hidden_dep_finder.rs`),
+(`contribution_schedule.rs`, `default_scorer.rs`, `hidden_dep_finder.rs`,
+`dep_weight_ladder.rs`),
 not transcribed from memory — if this document and the source ever
 disagree, the source is right and this file is stale.
 
@@ -36,13 +37,14 @@ contribution(pure, seam, dep_weight) =
 
 Each hidden dependency found in the function body (via `HiddenDepFinder`)
 adds a weight; `dep_weight` is the sum across every hidden dependency in
-that function. Weight is looked up per call by `dep_weight(label)` in
-`hidden_dep_finder.rs`, keyed on the label's text prefix:
+that function. Weight is looked up per call by
+`DepWeightLadder::weight_of(label)` in `dep_weight_ladder.rs`, keyed on the
+label's text prefix:
 
-Labels come from `path_label`, which joins a macro's **path segments**, so a
-print macro arrives as the bare name `print` — never `print!`. A prefix written
-with a `!` can therefore never match. Two arms cover all four macros, since
-`print` prefixes `println` and `eprint` prefixes `eprintln`.
+Labels come from `DepWeightLadder::label_of`, which joins a macro's **path
+segments**, so a print macro arrives as the bare name `print` — never `print!`.
+A prefix written with a `!` can therefore never match. Two arms cover all four
+macros, since `print` prefixes `println` and `eprint` prefixes `eprintln`.
 
 | Label prefix | Weight | Examples |
 |---|---|---|
@@ -172,9 +174,9 @@ blind spots recorded in `docs/ADRs/ADR-AstOnlyNoTypeResolution.md`.
 ### Value-type and method-purity exemptions
 
 `self.concrete_field.method(...)` is not a flat yes/no — `HiddenDepFinder`
-consults `KNOWN_STD_VALUE_TYPES`/`PURE_VALUE_METHODS`
-(`known_hidden_dep_names.rs`) plus the two project-wide registries built in
-`App::collect_files` before deciding:
+consults `KNOWN_STD_VALUE_TYPES` (`known_std_value_types.rs`) and its own
+`PURE_VALUE_METHODS` (`hidden_dep_finder.rs`) plus the two project-wide
+registries built in `App::collect_files` before deciding:
 
 | `method` | Field's type is a known std value type (`Vec`, `HashMap`, `String`, …) | Field's type is a project-local type | Flagged? |
 |---|---|---|---|

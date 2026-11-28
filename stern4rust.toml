@@ -4,8 +4,8 @@
 # header says. Naming the file here rather than in the gate script means a
 # hand-run of `cargo stern4rust` checks exactly what the gate checks.
 #
-# Every rule applies to every member -- `cargo-grip4rust`, `validation` and
-# `xtask` -- with nothing skipped, selected or excluded. `validation` once
+# Every rule applies to every member -- `grip4rust-core`, `cargo-grip4rust`,
+# `validation` and `xtask` -- with nothing skipped, selected or excluded. `validation` once
 # skipped `paired-test-file` because it had no `src/` for its test files to be
 # named after; it now has one, and each scenario's test file pairs with the
 # source file naming its fixture.
