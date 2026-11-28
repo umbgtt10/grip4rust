@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `EntryPoint::run` is no longer marked `#[must_use]`: from Rust 1.100 the
+  `ExitCode` it returns is, and clippy's `double_must_use` refuses the second
+  mark. Ignoring the exit code still warns, on 1.100 and later.
+
 ### Changed (development)
 - `xtask` takes its gates from serge4rust 0.3.2, the house's gate library, on
   crates.io: every stage 2 gate but the self-analysis one, the stage that runs
