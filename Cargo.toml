@@ -39,3 +39,8 @@ unsafe_code = "forbid"
 # change passes here, so an upgrade is held to the same bar.
 [workspace.metadata.ripe4rust]
 gates = ["just stage1", "just stage2"]
+
+# Moves `cargo ripe4rust plan` holds back, each with its reason and the day to
+# look at it again.
+[workspace.metadata.ripe4rust.pins]
+rust = { reason = "just stage1 red on 1.100.1: clippy::double_must_use -- cli/src/invocation/entry_point.rs:49: this function has a #[must_use] attribute with no message, but returns a type already considered as #[must_use]", review = "2026-12-12" }
