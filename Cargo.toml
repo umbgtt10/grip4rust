@@ -34,3 +34,8 @@ tempfile = "3"
 # says so at its crate root as well.
 [workspace.lints.rust]
 unsafe_code = "forbid"
+
+# The gates cargo ripe4rust's plan gives every move it proposes: the two every
+# change passes here, so an upgrade is held to the same bar.
+[workspace.metadata.ripe4rust]
+gates = ["just stage1", "just stage2"]

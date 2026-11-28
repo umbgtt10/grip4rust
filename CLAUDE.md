@@ -215,6 +215,17 @@ every member.
   full; the measuring gates would otherwise be measuring the thing that invoked
   them.
 
+### ripe4rust plans the upgrades
+
+`just ripe` runs `cargo ripe4rust plan`: what could move -- the toolchain, a
+dependency's newer release -- and how each move would be checked.
+`[workspace.metadata.ripe4rust]` in the root `Cargo.toml` names the gates,
+`just stage1` and `just stage2`, so a move it plans is held to the bar every
+change is. The plan is information: it applies nothing, and a move it lists is
+taken, if at all, as a decision of its own.
+
+`cargo install cargo-ripe4rust`
+
 ## Layout
 
 | member | package | library | what it holds |

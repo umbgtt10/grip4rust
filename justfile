@@ -45,3 +45,7 @@ stage1: sync
 # is caught by the very measure the tool exists to report.
 stage2:
     cargo xtask stage2
+
+# What ripe4rust would move, each move with its gates -- applying nothing.
+ripe:
+    cargo ripe4rust plan
