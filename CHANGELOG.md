@@ -9,6 +9,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `grip4rust-core` parses with syn 3 (`3.0.10`) in place of syn 2, so the tree
+  carries one copy of syn. No score measured moves: release builds before and
+  after, run over beggar, faction, cartel and this repository, in text,
+  `--verbose` and `--json`, printed byte-identical output. Where syn 3 reads
+  differently is unstable syntax, and a file syn cannot parse is left out of
+  the score whole, as it always was: a file with default field values
+  (`struct S { a: u32 = 1 }`) or a `const impl` is now scored, and one with an
+  `impl const` or a `static ||` coroutine closure no longer is. For a library
+  caller it breaks: every `pub` function of core that takes a syntax node --
+  `FunctionPurity`, `ItemClassifier`, `StructRegistry`, `TypePathSegments`,
+  `InlineModule`, `DepWeightLadder` -- takes syn 3's, and `HiddenDepFinder`,
+  `IoCallFinder` and `UnsafeFinder` implement syn 3's `Visit`.
+- `EntryPoint::run` is no longer marked `#[must_use]`: from Rust 1.100 the
+  `ExitCode` it returns is, and clippy's `double_must_use` refuses the second
+  mark. Ignoring the exit code still warns, on 1.100 and later.
+
+### Changed (development)
+- `xtask` takes its gates from serge4rust 0.3.2, the house's gate library, on
+  crates.io: every stage 2 gate but the self-analysis one, the stage that runs
+  them, the `CommandRunner` they are constructed against, their failures,
+  crap4rust's report, stage 1's lock sync and the commit scoring. `xtask` keeps
+  `main.rs`, which configures them with this repository's constants, and what
+  is this tool's alone: the self-analysis gate and the grip4rust report it
+  reads, on serge4rust's `Gate` and `CommandRunner`, with their twenty tests.
+  The rest of `xtask/src` goes, and its tests with it: serge4rust carries
+  them. A green run reads as it did; a tool that fails to run is reported in
+  serge4rust's words. `xtask` no longer declares `syn` or `tempfile`.
+- An unsafe method is tested as impure, and as never a trusted accessor:
+  `ItemClassifier::is_impl_method_impure` and `MethodPurityRegistry` each gain
+  the test their unsafe check lacked, which the move to syn 3's `Safety`
+  touched.
+- `[workspace.metadata.ripe4rust]` names the gates, `just stage1` and `just
+  stage2`, so every move `cargo ripe4rust plan` (`just ripe`) proposes is held
+  to the bar every change is.
+- serge4rust moves to 0.3.3, which says how a run ended plainly: `could not
+  run, exit code 2` or `could not run, terminated by signal` where it said
+  `exit code Some(2)` or `exit code None`, and the same in a report crap4rust
+  did not produce. The self-analysis gate says it the same way, with
+  serge4rust's `ProcessEnd`: a failed run reads `could not run, exit code 101`,
+  its stderr below, where it read `exit code Some(101)`. `published` in
+  `[workspace.metadata.ripe4rust]` names `grip4rust-core`, so ripe4rust asks
+  about a breaking dependency in its public API as a breaking change of ours.
+- The documents say what is: stern4rust's 39 rules, stage 1's `sync` and stage
+  2's `cargo deny` in the README, and the source paths and names under
+  `core/src` in `docs/`.
+
 ## [0.11.0] - 2026-11-25
 
 Seven defects, reported by sentinel4rust's first mutation round over `core`

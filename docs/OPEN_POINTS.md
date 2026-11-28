@@ -32,9 +32,10 @@ own tests pin. Verified by trying it.
 
 ## Foreign-trait allowlist as configuration
 
-`is_foreign_trait()` (`src/collector.rs`) checks a hardcoded ~40-name
-`KNOWN_FOREIGN_TRAITS` list plus a `std`/`core`/`alloc` first-segment check
-to decide whether a trait impl counts as a local architectural seam. Any
+`ItemClassifier::is_foreign_trait()` (`core/src/analysis/item_classifier.rs`)
+checks a hardcoded 46-name `KNOWN_FOREIGN_TRAITS` list plus a
+`std`/`core`/`alloc` first-segment check to decide whether a trait impl counts
+as a local architectural seam. Any
 third-party framework trait not on that list — `tokio::io::AsyncRead`,
 `axum::extract::FromRequest`, and similar — gets misclassified as local,
 inflating `trait_ratio` for codebases built on such frameworks. Already
@@ -48,7 +49,7 @@ at runtime.
 
 ## Configurable grip_score weights
 
-`score_counts()` (`default_scorer.rs`) weights pure_ratio / public_ratio /
+`score_counts()` (`core/src/reporting/default_scorer.rs`) weights pure_ratio / public_ratio /
 trait_ratio / avg_contribution at 0.30 / 0.20 / 0.25 / 0.25 — hardcoded,
 summing to 1.0 by construction but not asserted anywhere. Every project
 gets the same notion of "good" baked in by these four numbers.
@@ -65,12 +66,12 @@ Not started.
 
 ## Structural hidden-dep detection still can't resolve enums, generics, or cross-crate types
 
-`HiddenDepFinder` (`src/hidden_dep_finder.rs`) exempts `self.field.method(...)` from being
+`HiddenDepFinder` (`core/src/detection/hidden_dep_finder.rs`) exempts `self.field.method(...)` from being
 flagged as a hidden dependency in two ways: `.clone()` clears when
-`StructRegistry::is_transitive_value_type` (`src/struct_registry.rs`) can prove the field's
+`StructRegistry::is_transitive_value_type` (`core/src/analysis/struct_registry.rs`) can prove the field's
 type is plain data (every field resolves down to a known std value type, recursively);
 `len`/`get`/`is_empty`/`contains`/`iter` clear when `MethodPurityRegistry`
-(`src/method_purity_registry.rs`) can prove the *specific method being called* is a pure,
+(`core/src/analysis/method_purity_registry.rs`) can prove the *specific method being called* is a pure,
 zero-hidden-dep inherent `&self` accessor — by re-running the same purity and hidden-dep
 analysis `Collector` already uses for scoring, just ahead of time and project-wide. This is
 still narrower than it could be:
@@ -119,4 +120,4 @@ whether to store it; every file was parsed on every run, and each run wrote
 `.grip_cache/cache.json` into the directory it analysed. Closed by removing the
 feature rather than fixing it: `Cache`, the `CacheStore` port and
 `NoOpCacheStore` are gone, and a run reads and writes no `.grip_cache/`
-(CHANGELOG, `[Unreleased]`, Removed).
+(CHANGELOG, `[0.10.0]`, Removed).

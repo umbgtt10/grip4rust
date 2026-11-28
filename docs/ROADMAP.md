@@ -1,9 +1,9 @@
 # grip — Roadmap
 
-**Crate:** `cargo-grip4rust`  
+**Crates:** `cargo-grip4rust` (the command) and `grip4rust-core` (the analysis)  
 **License:** MIT  
-**Last updated:** 2026-10-10  
-**Current status:** Phase 4 — ✅ Complete (latest feature phase; shipped in v0.5.0) · **Latest release:** v0.9.1 (every stern4rust rule on every member and a dry4rust gate, no behaviour change, no new phase)
+**Last updated:** 2026-11-28  
+**Current status:** Phase 4 — ✅ Complete (latest feature phase; shipped in v0.5.0) · **Latest release:** v0.11.0 (seven defects the mutation round reported, fixed; no new phase)
 
 ---
 

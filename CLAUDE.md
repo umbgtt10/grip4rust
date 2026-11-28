@@ -14,7 +14,7 @@ This repository is **SELF-CONTAINED**.
 The LLM **SHALL NOT cross its boundaries without asking**.
 
 That means:
-- do not inspect, edit, or rely on files outside `grip/` unless the user explicitly asks
+- do not inspect, edit, or rely on files outside `grip4rust/` unless the user explicitly asks
 - do not pull assumptions from sibling repositories or crates
 - do not propose cross-repository changes by default
 
@@ -69,14 +69,14 @@ stern4rust runs **second** because its corrections are renames, file moves and
 directory splits: a layout it is about to reject is a layout the others would
 have measured for nothing. Its findings are also the cheapest to act on.
 
-All twenty-four of its rules are enforced on every member -- `grip4rust-core`,
-`cargo-grip4rust`, `validation` and `xtask` -- with nothing skipped, selected,
-excluded or unconfigured, and no baseline. `docs/header.txt` holds the
-three-line header every `.rs` file carries and `stern4rust.toml` names it -- in
-the config rather than the gate script, so a hand-run of `cargo stern4rust`
-checks exactly what the gate checks. The gate names all four members for the
-same reason: while it named two of three, `validation` broke `imported-paths`
-nine times with stage 2 green.
+All thirty-nine of its rules (cargo-stern4rust 0.24.0) are enforced on every
+member -- `grip4rust-core`, `cargo-grip4rust`, `validation` and `xtask` -- with
+nothing skipped, selected, excluded or unconfigured, and no baseline.
+`docs/header.txt` holds the three-line header every `.rs` file carries and
+`stern4rust.toml` names it -- in the config rather than the gate script, so a
+hand-run of `cargo stern4rust` checks exactly what the gate checks. The gate
+names all four members for the same reason: while it named two of three,
+`validation` broke `imported-paths` nine times with stage 2 green.
 
 cargo-shear runs **third**: its corrections edit manifests only -- a
 dependency removed, or moved to the section that uses it -- so they change
@@ -182,15 +182,18 @@ nature, and the other gates still cover it.
 
 Stage 2 is driven by `cargo xtask stage2` -- a real crate under `xtask/`, gated
 like any other code, rather than a script. The gates come from serge4rust, the
-house's gate library, taken from crates.io as `serge4rust = "0.3.2"`: every gate
+house's gate library, taken from crates.io as `serge4rust = "0.3.3"`: every gate
 but one, the stage that runs them, the `CommandRunner` they are constructed
 against, their failures, crap4rust's report and the commit scoring, so the
 argument lists and the failure messages are covered by serge4rust's own tests.
 `xtask` keeps `main.rs`, which configures them with this repository's
 constants, and what is this tool's alone: the self-analysis gate and the
 grip4rust report it reads, on serge4rust's `Gate` and `CommandRunner` and
-covered by `xtask`'s own integration tests. A gate that needs a change is
-changed in serge4rust and released, never patched in place here.
+covered by `xtask`'s own integration tests. It says a failed run's end as
+serge4rust's gates do, with serge4rust's `ProcessEnd` -- `could not run, exit
+code 101` or `could not run, terminated by signal` -- and the run's stderr
+below it. A gate that needs a change is changed in serge4rust and released,
+never patched in place here.
 
 Every measuring gate in stage 2 is scoped to the two published crates,
 `grip4rust-core` and `cargo-grip4rust`, which is what keeps the rest of the
@@ -221,8 +224,12 @@ every member.
 dependency's newer release -- and how each move would be checked.
 `[workspace.metadata.ripe4rust]` in the root `Cargo.toml` names the gates,
 `just stage1` and `just stage2`, so a move it plans is held to the bar every
-change is. The plan is information: it applies nothing, and a move it lists is
-taken, if at all, as a decision of its own.
+change is, and `published`, the crate others depend on as a library:
+`grip4rust-core`, so a breaking dependency in its public API -- syn's types are
+-- is asked about as a breaking change of this crate's. `cargo-grip4rust` is
+the command; its library serves the command and its tests, and is not named.
+The plan is information: it applies nothing, and a move it lists is taken, if
+at all, as a decision of its own.
 
 `cargo install cargo-ripe4rust`
 

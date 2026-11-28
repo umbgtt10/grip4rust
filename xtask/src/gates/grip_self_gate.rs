@@ -6,6 +6,7 @@ use crate::grip::grip_report_parser::GripReportParser;
 use serge4rust::gates::gate::Gate;
 use serge4rust::gates::gate_failure::GateFailure;
 use serge4rust::process::command_runner::CommandRunner;
+use serge4rust::process::process_end::ProcessEnd;
 
 pub struct GripSelfGate<'a> {
     runner: &'a dyn CommandRunner,
@@ -56,8 +57,10 @@ impl Gate for GripSelfGate<'_> {
         if !outcome.is_success() {
             return Err(GateFailure::Own {
                 reason: format!(
-                    "exit code {:?}\nstderr: {}",
-                    outcome.exit_code(),
+                    "could not run, {}\nstderr: {}",
+                    ProcessEnd {
+                        exit_code: outcome.exit_code()
+                    },
                     outcome.stderr()
                 ),
             });

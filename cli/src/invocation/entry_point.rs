@@ -45,7 +45,6 @@ impl EntryPoint {
         })
     }
 
-    #[must_use]
     pub fn run(args: Vec<OsString>) -> ExitCode {
         match Self::run_from_args(Args::without_cargo_subcommand(args)) {
             Ok(exit_code) => exit_code,

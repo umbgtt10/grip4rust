@@ -11,7 +11,7 @@ use crate::detection::hidden_dep_finder::HiddenDepFinder;
 use alloc::collections::{BTreeMap, BTreeSet};
 use alloc::string::{String, ToString};
 use syn::visit::Visit;
-use syn::{ImplItem, ImplItemFn, Item, ItemImpl, parse_file};
+use syn::{ImplItem, ImplItemFn, Item, ItemImpl, Safety, parse_file};
 
 #[derive(Debug, Default)]
 pub struct MethodPurityRegistry {
@@ -42,7 +42,7 @@ impl MethodPurityRegistry {
     fn has_pure_signature(method: &ImplItemFn) -> bool {
         !FunctionPurity::has_mut_param(&method.sig)
             && !FunctionPurity::is_unit_return(&method.sig)
-            && method.sig.unsafety.is_none()
+            && !matches!(method.sig.safety, Safety::Unsafe(_))
             && !FunctionPurity::has_unsafe_block(&method.block)
             && !FunctionPurity::has_io_call(&method.block)
     }

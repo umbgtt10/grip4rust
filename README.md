@@ -41,7 +41,7 @@ Full derivation of every term, every weight, and the structural rules
 | Doc | What's in it |
 |---|---|
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | How a `grip` invocation flows through the code, module by module. |
-| [`docs/FORMULA.md`](docs/FORMULA.md) | Every scoring term, in full, kept in sync with `src/`. |
+| [`docs/FORMULA.md`](docs/FORMULA.md) | Every scoring term, in full, kept in sync with `core/src/`. |
 | [`docs/ADRs/`](docs/ADRs/) | Why the codebase is shaped the way it is. |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | What's shipped, what's next. |
 | [`docs/OPEN_POINTS.md`](docs/OPEN_POINTS.md) | Known gaps, deliberately deferred. |
@@ -69,17 +69,21 @@ report), `validation/` (the fixture scenarios, end to end) and
 `xtask/` (the gates). A program that wants the analysis without the command
 depends on `grip4rust-core`.
 
-Both must be green before a change is complete. Stage 1 is formatting, clippy
-and tests — cargo built-ins only, so it works on a fresh checkout with none of
-the tools below installed. Stage 2 is `cargo xtask stage2`, which runs, in
-order: **technology-free core** (`core/` names only `libm`, `quote` and `syn`,
-is `no_std`, and reaches no file system, process, environment or stdout),
-`cargo stern4rust` (house coding rules, all of them, on every workspace
-member), `cargo shear` (every declared dependency used), `cargo dry4rust` (no
-duplication beyond `dry4rust-baseline.json`, over `core/src` and `cli/src`),
-**grip self-analysis**, `cargo crap4rust` (complexity against coverage),
-`cargo twin4rust` (every source file has a mirrored test file) and
-`cargo iceberg4rust` (file risk).
+Both must be green before a change is complete. Stage 1 is `sync` (`cargo
+update`, which moves the lock file only), then formatting, clippy and tests —
+cargo built-ins only, so it works on a fresh checkout with none of the tools
+below installed, though `sync` needs the network. Stage 2 is `cargo xtask
+stage2`, which runs, in order: **technology-free core** (`core/` names only
+`libm`, `quote` and `syn`, is `no_std`, and reaches no file system, process,
+environment or stdout), `cargo stern4rust` (house coding rules, all of them, on
+every workspace member), `cargo shear` (every declared dependency used),
+`cargo dry4rust` (no duplication beyond `dry4rust-baseline.json`, over
+`core/src` and `cli/src`), **grip self-analysis**, `cargo crap4rust`
+(complexity against coverage), `cargo twin4rust` (every source file has a
+mirrored test file), `cargo iceberg4rust` (file risk) and `cargo deny`
+(advisories, licences and sources of the dependencies). The gates come from
+[serge4rust](https://crates.io/crates/serge4rust), the house's gate library,
+all but the self-analysis one.
 
 The self-analysis gate is this repository's alone. It builds `cargo-grip4rust`
 from the working tree, points it at `core/`, and fails if the score drops below
@@ -100,6 +104,7 @@ Everything the two stages need, none of which ships with cargo:
 | `cargo-twin4rust` | `cargo install cargo-twin4rust` | stage 2 |
 | `cargo-iceberg4rust` | `cargo install cargo-iceberg4rust` | stage 2 |
 | [`cargo-shear`](https://github.com/Boshen/cargo-shear) | `cargo install --locked cargo-shear --version 1.14.0` | stage 2 |
+| [`cargo-deny`](https://github.com/EmbarkStudios/cargo-deny) | `cargo install --locked cargo-deny --version 0.20.2` | stage 2 |
 
 `cargo-llvm-cov` and `llvm-tools` are what the CRAP gate needs; without them it
 fails with a bare exit code that says nothing about a missing install.

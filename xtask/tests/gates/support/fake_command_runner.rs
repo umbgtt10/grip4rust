@@ -8,12 +8,13 @@ use serge4rust::process::launch_failure::LaunchFailure;
 use std::cell::RefCell;
 
 // The seam the self-analysis gate is constructed against, faked here for its
-// tests: every tool is installed and starts, a run answers with the code and
-// stdout it was given, and every run's arguments are recorded.
+// tests: every tool is installed and starts, a run answers with the code,
+// stdout and stderr it was given, and every run's arguments are recorded.
 pub struct FakeCommandRunner {
     streaming_code: Option<i32>,
     capturing_code: Option<i32>,
     stdout: String,
+    stderr: String,
     calls: RefCell<Vec<Vec<String>>>,
 }
 
@@ -23,6 +24,7 @@ impl FakeCommandRunner {
             streaming_code: Some(0),
             capturing_code: Some(0),
             stdout: String::new(),
+            stderr: String::new(),
             calls: RefCell::new(Vec::new()),
         }
     }
@@ -36,6 +38,11 @@ impl FakeCommandRunner {
 
     pub fn with_stdout(mut self, stdout: &str) -> Self {
         self.stdout = String::from(stdout);
+        self
+    }
+
+    pub fn with_stderr(mut self, stderr: &str) -> Self {
+        self.stderr = String::from(stderr);
         self
     }
 
@@ -73,7 +80,7 @@ impl CommandRunner for FakeCommandRunner {
         Ok(CommandOutcome::new(
             self.capturing_code,
             self.stdout.clone(),
-            String::new(),
+            self.stderr.clone(),
         ))
     }
 }

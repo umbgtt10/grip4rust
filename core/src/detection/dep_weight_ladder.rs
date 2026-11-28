@@ -18,7 +18,7 @@ impl DepWeightLadder {
             .join("::")
     }
 
-    // Labels come from `path_label`, which joins macro path segments, so a
+    // Labels come from `label_of`, which joins macro path segments, so a
     // print macro arrives as the bare name `print` with no `!`. Matching on
     // `print!` never fires and drops the call into the unknown-dependency
     // catch-all instead. `print` also prefixes `println`, and `eprint`

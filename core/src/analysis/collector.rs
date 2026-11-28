@@ -117,7 +117,7 @@ impl<'a> Collector<'a> {
         item_impl
             .trait_
             .as_ref()
-            .is_some_and(|(_, p, _)| ItemClassifier::is_foreign_trait(p))
+            .is_some_and(|(p, _)| ItemClassifier::is_foreign_trait(p))
     }
 
     fn record_item(&mut self, vis: &Visibility) {
