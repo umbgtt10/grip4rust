@@ -54,7 +54,7 @@ run in this order:
 | `cargo deny` | do the dependencies carry an advisory, a refused licence or a foreign source |
 
 The technology-free gate runs **first**. It needs no installed tool -- it reads
-`cargo metadata` and parses with the xtask's own `syn` -- and fails when
+`cargo metadata` and parses with serge4rust's `syn` -- and fails when
 `grip4rust-core`'s manifest names a crate outside `libm`, `quote` and `syn` in
 any section, when `core/src/lib.rs` lacks `#![no_std]` or
 `#![forbid(unsafe_code)]`, or when a file under `core/src` or `core/tests`
@@ -181,9 +181,16 @@ changed rather than of whatever version happens to be installed. It scores
 nature, and the other gates still cover it.
 
 Stage 2 is driven by `cargo xtask stage2` -- a real crate under `xtask/`, gated
-like any other code, rather than a script. Each gate is a `Gate` implementation
-constructed against a `CommandRunner` trait, so the argument lists and the
-failure messages are covered by `xtask`'s own integration tests.
+like any other code, rather than a script. The gates come from serge4rust, the
+house's gate library, taken from crates.io as `serge4rust = "0.3.2"`: every gate
+but one, the stage that runs them, the `CommandRunner` they are constructed
+against, their failures, crap4rust's report and the commit scoring, so the
+argument lists and the failure messages are covered by serge4rust's own tests.
+`xtask` keeps `main.rs`, which configures them with this repository's
+constants, and what is this tool's alone: the self-analysis gate and the
+grip4rust report it reads, on serge4rust's `Gate` and `CommandRunner` and
+covered by `xtask`'s own integration tests. A gate that needs a change is
+changed in serge4rust and released, never patched in place here.
 
 Every measuring gate in stage 2 is scoped to the two published crates,
 `grip4rust-core` and `cargo-grip4rust`, which is what keeps the rest of the

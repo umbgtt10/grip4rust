@@ -29,7 +29,4 @@ workspace = true
 [dependencies]
 serde = { workspace = true }
 serde_json = { workspace = true }
-syn = { workspace = true }
-
-[dev-dependencies]
-tempfile = { workspace = true }
+serge4rust = { workspace = true }
