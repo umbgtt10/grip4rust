@@ -142,20 +142,20 @@ cargo grip4rust [OPTIONS] [PATH]
 ## Output
 
 ```
-cargo-grip4rust 0.11.0 -- core
+cargo-grip4rust 0.12.0 -- core
 ══════════════════════════════════════════════════════
 
 Overall grip score:    64 / 100
-Absolute grip total:   88.21
+Absolute grip total:   89.16
 Public surface:        36 items
-Total functions:       136
-Probably pure:         101 / 136  (74.3%)
+Total functions:       137
+Probably pure:         102 / 137  (74.5%)
 Trait methods:         8 / 35 impure impl methods are trait-bound  (22.9%)
-Hidden deps:           avg 0.58  — 2.2% clean  (64.9% avg contribution)
+Hidden deps:           avg 0.58  — 2.2% clean  (65.1% avg contribution)
 
 Per module:
   .                               grip: N/A   pure:   0.0%   pub:   0   traits:    N/A   clean:   0.0%
-  analysis                        grip:  59   pure:  74.0%   pub:  13   traits:  10.5%   clean:   0.0%  ⚠️
+  analysis                        grip:  60   pure:  74.3%   pub:  13   traits:  10.5%   clean:   0.0%  ⚠️
   detection                       grip:  63   pure:  56.8%   pub:   5   traits:  37.5%   clean:   0.0%  ⚠️
   invocation                      grip:  92   pure: 100.0%   pub:   4   traits:    N/A   clean:   0.0%
   reporting                       grip:  97   pure: 100.0%   pub:  11   traits:    N/A   clean:  15.0%
@@ -176,7 +176,7 @@ A crate of one file, `src/timer.rs`, with three functions: the verbose report
 is the same summary under its own header, then a line per function.
 
 ```
-grip 0.11.0 — my-crate — verbose
+grip 0.12.0 — my-crate — verbose
 ══════════════════════════════════════════════════════
 
 Overall grip score:    64 / 100

@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] — 2026-11-28
+
+Breaking, three ways: `grip4rust-core`'s public API takes syn 3's syntax types
+where it took syn 2's; unstable syntax parses as syn 3 reads it, so a file with
+default field values or a `const impl` is now scored and one with an
+`impl const` or a `static ||` coroutine closure no longer is; and a receiver
+written out with its type is scored by what the type says, so
+`self: &mut Self` is impure, as `&mut self` is. Across both scoring changes no
+score measured moves: beggar, faction, cartel and this repository print
+byte-identical output. This crate's own score holds at 64.
+
+### Fixed
+- A scoring change: a method whose receiver is written out with its type is
+  scored by what the type says. `self: &mut Self` takes `&mut`, exactly as
+  `&mut self` does, so the method is impure and never trusted as a pure
+  accessor; `self: &Self` is `&self`, and a by-value type -- `self: Box<Self>`,
+  `self: Rc<Self>` -- is by value, as `self` is. `FunctionPurity::has_mut_param`,
+  which `ItemClassifier`'s purity checks and `MethodPurityRegistry` read,
+  matched the `&mut self` shorthand only and took every typed receiver as by
+  value, as it did under syn 2, so `fn next(self: &mut Self) -> u32` scored
+  pure. The type is read as a typed parameter's is: a `&mut` reference, in
+  parentheses or not, so `self: Pin<&mut Self>` stays by value, as `x: Pin<&mut
+  T>` does. No score measured moves: release builds before and after, run with
+  `--json` over beggar, faction, cartel and this repository, printed
+  byte-identical output -- none of them writes a typed receiver.
+
 ### Changed
 - `grip4rust-core` parses with syn 3 (`3.0.10`) in place of syn 2, so the tree
   carries one copy of syn. No score measured moves: release builds before and

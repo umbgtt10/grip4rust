@@ -173,6 +173,27 @@ fn is_foreign_trait_for_an_alloc_rooted_path_returns_true() {
 }
 
 #[test]
+fn is_impl_method_impure_for_a_typed_mut_self_receiver_returns_true() {
+    // Arrange & Act
+    let impure = ItemClassifier::is_impl_method_impure(&impl_method(
+        "fn next(self: &mut Self) -> u32 { 1 }",
+    ));
+
+    // Assert
+    assert!(impure);
+}
+
+#[test]
+fn is_impl_method_impure_for_a_typed_self_receiver_returns_false() {
+    // Arrange & Act
+    let impure =
+        ItemClassifier::is_impl_method_impure(&impl_method("fn value(self: &Self) -> u32 { 1 }"));
+
+    // Assert
+    assert!(!impure);
+}
+
+#[test]
 fn is_impl_method_impure_for_a_unit_returning_method_returns_true() {
     // Arrange & Act
     let impure = ItemClassifier::is_impl_method_impure(&impl_method("fn act(&self) {}"));

@@ -18,7 +18,7 @@ impl FunctionPurity {
 
     pub fn has_mut_param(sig: &Signature) -> bool {
         sig.inputs.iter().any(|arg| match arg {
-            FnArg::Receiver(recv) => matches!(recv.kind, ReceiverKind::Reference(_, _, Some(_))),
+            FnArg::Receiver(recv) => Self::is_mut_receiver(&recv.kind),
             FnArg::Typed(pat_type) => Self::has_mut_in_type(&pat_type.ty),
         })
     }
@@ -47,6 +47,14 @@ impl FunctionPurity {
         match ty {
             Type::Reference(reference) => reference.mutability.is_some(),
             Type::Paren(inner) => Self::has_mut_in_type(&inner.elem),
+            _ => false,
+        }
+    }
+
+    fn is_mut_receiver(kind: &ReceiverKind) -> bool {
+        match kind {
+            ReceiverKind::Reference(_, _, mutability) => mutability.is_some(),
+            ReceiverKind::Typed(_, ty) => Self::has_mut_in_type(ty),
             _ => false,
         }
     }

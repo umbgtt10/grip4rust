@@ -315,6 +315,63 @@ impl Members {
 }
 
 #[test]
+fn is_known_pure_method_typed_mut_self_returns_false() {
+    // Arrange
+    let source = r#"
+struct Counter {
+    values: Vec<i32>,
+}
+impl Counter {
+    pub fn get(self: &mut Self, index: usize) -> i32 {
+        self.values[index]
+    }
+}
+"#;
+    let files = vec![SourceFile {
+        path: String::from("counter.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
+    let struct_registry = StructRegistry::build(&files);
+    let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
+
+    // Act
+    let result = method_purity.is_known_pure_method("Counter", "get");
+
+    // Assert
+    assert!(
+        !result,
+        "self: &mut Self is &mut self written out, never trusted as a pure accessor"
+    );
+}
+
+#[test]
+fn is_known_pure_method_typed_self_returns_true() {
+    // Arrange
+    let source = r#"
+struct Members {
+    ids: Vec<i32>,
+}
+impl Members {
+    pub fn len(self: &Self) -> usize { self.ids.len() }
+}
+"#;
+    let files = vec![SourceFile {
+        path: String::from("members.rs"),
+        source: source.to_string(),
+        ..Default::default()
+    }];
+    let struct_registry = StructRegistry::build(&files);
+    let method_purity = MethodPurityRegistry::build(&files, &struct_registry);
+
+    // Act
+    let result = method_purity.is_known_pure_method("Members", "len");
+
+    // Assert
+    assert!(result, "self: &Self is &self written out");
+}
+
+#[test]
 fn is_known_pure_method_unknown_type_returns_false() {
     // Arrange
     let method_purity = MethodPurityRegistry::default();
