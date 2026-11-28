@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (development)
+- `just sync` and `cargo xtask sync` are gone: stage 1 no longer starts with
+  `cargo update`. `just ripe` plans each compatible move and the round applies
+  it under both stages; a blind sync inside them moved more than the upgrade
+  being checked.
+
 ## [0.12.0] — 2026-11-28
 
 Breaking, three ways: `grip4rust-core`'s public API takes syn 3's syntax types
